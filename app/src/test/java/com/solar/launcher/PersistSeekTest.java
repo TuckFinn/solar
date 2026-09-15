@@ -22,6 +22,26 @@ public class PersistSeekTest {
         assertEquals(0, PersistSeek.sane(GARBAGE, 0));
     }
 
+    /**
+     * The case that escaped the first attempt at this fix. Duration is read from
+     * the same MediaPlayer as the position, so a wrecked player reports both as
+     * nonsense; checking the seek against that duration let 1376183452 through to
+     * disk a second time. A bad duration must not be able to bless a bad seek.
+     */
+    @Test
+    public void garbageCannotValidateGarbage() {
+        assertEquals(0, PersistSeek.sane(GARBAGE, GARBAGE));
+        assertEquals(0, PersistSeek.sane(GARBAGE, GARBAGE + 5000));
+        assertEquals(0, PersistSeek.sane(GARBAGE, Integer.MAX_VALUE));
+    }
+
+    /** A real position stays, even when the duration alongside it is nonsense. */
+    @Test
+    public void aGoodSeekSurvivesABadDuration() {
+        assertEquals(42000, PersistSeek.sane(42000, GARBAGE));
+        assertEquals(42000, PersistSeek.sane(42000, -7));
+    }
+
     @Test
     public void ordinaryPositionsSurvive() {
         assertEquals(42000, PersistSeek.sane(42000, 175000));

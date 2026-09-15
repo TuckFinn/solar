@@ -30,12 +30,21 @@ public final class PersistSeek {
     public static int sane(int seekMs, int durationMs) {
         if (seekMs < 0) return -1;      // unknown, and the writer understands -1
         if (seekMs == 0) return 0;
-        if (durationMs > 0) {
+        // 2026-09-15 — The ceiling applies FIRST, whatever the duration claims.
+        // An earlier version only fell back to it when duration was unknown, and
+        // checked seekMs against durationMs otherwise. But the duration comes off
+        // the same MediaPlayer as the position, so when that player is wrecked
+        // BOTH are nonsense: seekMs=1376183452 was compared against an equally
+        // bogus duration, passed, and reached disk. Garbage cannot validate
+        // garbage.
+        if (seekMs > MAX_SANE_MS) return 0;
+        if (durationMs > 0 && durationMs <= MAX_SANE_MS) {
             // A little slack: a position may legitimately sit a touch past the
             // reported duration at the very end of a stream.
             return seekMs <= durationMs + 5000 ? seekMs : 0;
         }
-        // Duration unknown, so fall back to an absolute ceiling.
-        return seekMs <= MAX_SANE_MS ? seekMs : 0;
+        // Duration unknown, or itself out of range and so not worth trusting.
+        // seekMs is already under the ceiling by the check above.
+        return seekMs;
     }
 }

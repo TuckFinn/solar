@@ -29382,7 +29382,20 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // reproduced run on 2Y1 saved seekMs=1376183262, about 15.9 days, which
         // would come back as a resume point. Never persist a position the track
         // cannot contain.
+        int seekRaw = seek;
         seek = PersistSeek.sane(seek, durationMs);
+        // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON && seekRaw != seek) {
+        try {
+            org.json.JSONObject d = new org.json.JSONObject();
+            d.put("seekRaw", seekRaw);
+            d.put("durationRaw", durationMs);
+            d.put("seekSaved", seek);
+            com.solar.launcher.debug.AgentDebugLog.log(
+                    "MainActivity.persistPlaybackQueue", "E", "seek clamped", d);
+        } catch (Exception ignored) {}
+        }
+        // #endregion
         AsyncPlayQueueWriter.bumpEpoch();
         AsyncPlayQueueWriter.scheduleSave(getApplicationContext(), playback.unifiedQueue(),
                 seek, playing);
