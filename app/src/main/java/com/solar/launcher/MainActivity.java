@@ -13038,6 +13038,8 @@ public class MainActivity extends Activity {
         } else if (HomeMenuConfig.ID_SOULSEEK.equals(id)) {
             if (!requireInternet(R.string.toast_internet_required)) return;
             openGetMusicScreen();
+        } else if (HomeMenuConfig.ID_NAVIDROME.equals(id)) {
+            openNavidrome(); // 2026-09-14 — home shortcut; openNavidrome() handles Wi-Fi/setup gating
         } else if (HomeMenuConfig.ID_THEMES.equals(id) || HomeMenuConfig.ID_GET_THEMES.equals(id)) {
             openThemesScreen(null);
         } else if (HomeMenuConfig.ID_MORE.equals(id)) {
