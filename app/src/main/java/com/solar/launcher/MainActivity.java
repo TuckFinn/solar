@@ -15003,7 +15003,15 @@ public class MainActivity extends Activity {
                     openNavidromeSettings();
                 }
             } else if (navidromeScreenHost != null) {
-                navidromeScreenHost.open();
+                // 2026-09-14 — Back from Now Playing returns to the level the user left
+                // (owning playlist/album), focused on the playing song. Was: open() → root,
+                // forcing Playlists → selection → … again after every stream.
+                if (leavingScreen == STATE_PLAYER) {
+                    PlayQueue.QueueItem cur = playback.currentItem();
+                    navidromeScreenHost.reopen(cur != null ? cur.navidromeSongId : null);
+                } else {
+                    navidromeScreenHost.open();
+                }
             }
         } else if (state == STATE_PLEX) {
             // 2026-07-14: Soft-bail when Debug experiment is off.
@@ -64277,6 +64285,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 if (listVirtualSongs == null) return 0;
                 int pos = listVirtualSongs.getSelectedItemPosition();
                 return pos >= 0 ? pos : 0;
+            }
+            @Override public void setListSelectedPosition(int position) {
+                if (listVirtualSongs == null) return;
+                if (position < 0 || position >= listVirtualSongs.getCount()) return;
+                listVirtualSongs.setSelection(position);
             }
             @Override public void applyListRowParams(View row, int heightPx) {
                 MainActivity.this.applyLibraryListRowParams(row, heightPx > 0 ? heightPx : y1RowHeightPx);
