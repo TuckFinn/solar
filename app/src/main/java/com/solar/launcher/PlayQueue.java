@@ -340,15 +340,39 @@ public final class PlayQueue {
     }
 
     /** ponytail: O(n) filter — fine for Y1 queue sizes; Navidrome rows have no File. */
+    /**
+     * 2026-09-14 — Index-aligned with {@link #musicLikeCount()} / PlaybackCoordinator.musicIndex().
+     * The music index counts every music-like slot (server streams included) but this list
+     * used to hold file-backed items only, so any queue mixing Navidrome/Plex/Jellyfin streams
+     * with a file-backed item made get(musicIndex()) hit the wrong file or throw
+     * "Invalid index N, size is M" on skip (thesolarproject/solar#77). Server-stream slots
+     * now contribute a placeholder File (see {@link #isStreamPlaceholder(File)}) that never
+     * exists on disk; file-backed slots without a file yet (an in-flight Reach/Deezer stream)
+     * get one too, for the same reason.
+     */
     public List<File> musicFiles() {
         List<File> out = new ArrayList<File>();
         for (QueueItem q : items) {
             if (q.kind == ItemKind.MUSIC_FILE || q.kind == ItemKind.REACH_STREAM
                     || q.kind == ItemKind.DEEZER_STREAM) {
-                if (q.file != null) out.add(q.file);
+                out.add(q.file != null ? q.file : streamPlaceholder(q));
+            } else if (q.kind == ItemKind.NAVIDROME_STREAM || q.kind == ItemKind.PLEX_STREAM
+                    || q.kind == ItemKind.JELLYFIN_STREAM) {
+                out.add(streamPlaceholder(q));
             }
         }
         return out;
+    }
+    private static final String STREAM_PLACEHOLDER_DIR = "/dev/null/solar-stream";
+    private static File streamPlaceholder(QueueItem q) {
+        String id = q.navidromeSongId != null ? q.navidromeSongId
+                : q.plexMediaPartKey != null ? q.plexMediaPartKey
+                : String.valueOf(System.identityHashCode(q));
+        return new File(STREAM_PLACEHOLDER_DIR + "/" + q.kind.name().toLowerCase() + "/" + id);
+    }
+    /** True for the placeholder a server-stream slot contributes to {@link #musicFiles()}. */
+    public static boolean isStreamPlaceholder(File f) {
+        return f != null && f.getPath().startsWith(STREAM_PLACEHOLDER_DIR + "/");
     }
 
     /** 2026-07-06: Music-like slots incl. Navidrome — for track N/M UI and index mapping. */
