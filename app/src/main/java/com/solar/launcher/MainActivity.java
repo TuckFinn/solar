@@ -48535,7 +48535,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             String name = "Queue " + System.currentTimeMillis();
             File dest = new File(dir, name.replace(' ', '_') + ".m3u");
             java.util.List<PlayQueue.QueueItem> musicItems = collectMusicQueueItemsForPlaylist();
-            PlaylistManager.saveM3u(PlaylistManager.fromTracks(name, playback.musicPlaylist()), dest);
+            // 2026-09-14 — musicPlaylist() now carries placeholders for server-stream slots
+            // (index alignment, #77); playlists must not persist them. Stream rows are
+            // materialised separately below.
+            java.util.List<File> fileTracks = new java.util.ArrayList<File>();
+            for (File f : playback.musicPlaylist()) {
+                if (!PlayQueue.isStreamPlaceholder(f)) fileTracks.add(f);
+            }
+            PlaylistManager.saveM3u(PlaylistManager.fromTracks(name, fileTracks), dest);
             materializePlaylistStreamTracksAsync(dest, musicItems);
             Toast.makeText(this, getString(R.string.library_playlist_saved, dest.getName()), Toast.LENGTH_SHORT).show();
             if (currentBrowserMode == BROWSER_PLAYLISTS) buildPlaylistsUI();
