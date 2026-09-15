@@ -335,7 +335,7 @@ public final class LibraryScanner {
                 TagResult r = new TagResult(file, tags.title, artist, album, tags.genre,
                         tags.albumArtist, tags.durationMs, tags.trackNumber, tags.year);
                 // #region agent log
-                if (tags.year > 0) {
+                if (com.solar.launcher.debug.DebugGate.ON && tags.year > 0) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("path", file.getName());

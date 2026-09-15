@@ -5918,7 +5918,7 @@ public class MainActivity extends Activity {
         setLoadingOverlayText(text);
         refreshBlockingOverlayVisible();
         // #region agent log
-        if (owner == OVERLAY_LIB_SCAN) {
+        if (com.solar.launcher.debug.DebugGate.ON && owner == OVERLAY_LIB_SCAN) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("owners", blockingOverlayOwners);
@@ -11637,7 +11637,7 @@ public class MainActivity extends Activity {
             clickFeedback();
         }
         // #region agent log
-        if (event.getRepeatCount() == 0) {
+        if (com.solar.launcher.debug.DebugGate.ON && event.getRepeatCount() == 0) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);
@@ -12781,7 +12781,7 @@ public class MainActivity extends Activity {
         final long t0 = android.os.SystemClock.uptimeMillis();
         boolean a5Strip = A5PortraitChrome.usePortraitChrome(this);
         // #region agent log
-        if ((!a5Strip && isFullWidthMenus) || index < 0 || index >= homeMenuEntries.size()) {
+        if (com.solar.launcher.debug.DebugGate.ON && (!a5Strip && isFullWidthMenus) || index < 0 || index >= homeMenuEntries.size()) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("earlyReturn", true);
@@ -14703,7 +14703,7 @@ public class MainActivity extends Activity {
             hideBrowsePreviewChromeForNowPlaying("finalizeScreenVisibility");
         }
         // #region agent log
-        if (state == STATE_PLAYER) {
+        if (com.solar.launcher.debug.DebugGate.ON && state == STATE_PLAYER) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("browserVis", layoutBrowserMode != null ? layoutBrowserMode.getVisibility() : -1);
@@ -15550,7 +15550,7 @@ public class MainActivity extends Activity {
         if (themedContextMenu != null && themedContextMenu.isShowing()) return;
         if (System.currentTimeMillis() < suppressListClickUntil) return;
         // #region agent log
-        if (MediaSuiteHost.isMediaSuiteState(currentScreenState)) {
+        if (com.solar.launcher.debug.DebugGate.ON && MediaSuiteHost.isMediaSuiteState(currentScreenState)) {
             try {
                 View fc = getCurrentFocus();
                 org.json.JSONObject d = new org.json.JSONObject();
@@ -15750,7 +15750,7 @@ public class MainActivity extends Activity {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         // #region agent log
-        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0
+        if (com.solar.launcher.debug.DebugGate.ON && event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0
                 && Y1InputKeys.isWheelKey(event.getKeyCode())) {
             try {
                 boolean overlayUp = layoutLoadingOverlay != null
@@ -15782,7 +15782,7 @@ public class MainActivity extends Activity {
                 Y1InputKeys.isVolumeUpKey(event.getKeyCode())
                         || Y1InputKeys.isVolumeDownKey(event.getKeyCode()))) {
             // #region agent log
-            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            if (com.solar.launcher.debug.DebugGate.ON && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", event.getKeyCode());
@@ -15803,7 +15803,7 @@ public class MainActivity extends Activity {
         }
         // #region agent log
         // 2026-07-20 — Key passed startup gate; prove hardware/inject reaches past swallow.
-        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0
+        if (com.solar.launcher.debug.DebugGate.ON && event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0
                 && (Y1InputKeys.isWheelKey(event.getKeyCode())
                 || Y1InputKeys.isCenterKey(event.getKeyCode())
                 || Y1InputKeys.isBackKey(event.getKeyCode()))) {
@@ -15852,7 +15852,7 @@ public class MainActivity extends Activity {
             boolean npWheelSkip = currentScreenState == STATE_PLAYER
                     && !themedContextMenuOwnsKeys();
             // #region agent log
-            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            if (com.solar.launcher.debug.DebugGate.ON && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("runId", "pre-fix");
@@ -15903,7 +15903,7 @@ public class MainActivity extends Activity {
         // Reversal: drop face-nav / landscape from gate; NP face becomes wheel volume again.
         if (event != null && DeviceFeatures.isA5()) {
             // #region agent log
-            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            if (com.solar.launcher.debug.DebugGate.ON && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("rawCode", event.getKeyCode());
@@ -16038,7 +16038,7 @@ public class MainActivity extends Activity {
             }
         }
         // #region agent log
-        if (event != null && DeviceFeatures.isA5()
+        if (com.solar.launcher.debug.DebugGate.ON && event != null && DeviceFeatures.isA5()
                 && (event.getKeyCode() == KeyEvent.KEYCODE_POWER
                 || event.getKeyCode() == KeyEvent.KEYCODE_MEDIA_STOP
                 || event.getKeyCode() == 86
@@ -16144,7 +16144,7 @@ public class MainActivity extends Activity {
                     || code == KeyEvent.KEYCODE_DPAD_DOWN || code == KeyEvent.KEYCODE_DPAD_CENTER
                     || code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_HOME) {
                 // #region agent log
-                if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+                if (com.solar.launcher.debug.DebugGate.ON && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("keyCode", code);
@@ -16256,7 +16256,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         resetInactivityTimer();
         // #region agent log
         // 2026-07-14 — f0e28c H-A/H-B: did wheel arrive, or did an early gate own it already?
-        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+        if (com.solar.launcher.debug.DebugGate.ON && event != null && event.getAction() == KeyEvent.ACTION_DOWN
                 && event.getRepeatCount() == 0
                 && (Y1InputKeys.isWheelKey(event.getKeyCode()) || event.getKeyCode() == 19
                 || event.getKeyCode() == 20 || event.getKeyCode() == 24 || event.getKeyCode() == 25)) {
@@ -16283,7 +16283,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         // #endregion
         // #region agent log
-        if (DebugB85099Log.ENABLED && event != null && event.getAction() == KeyEvent.ACTION_DOWN
+        if (com.solar.launcher.debug.DebugGate.ON && DebugB85099Log.ENABLED && event != null && event.getAction() == KeyEvent.ACTION_DOWN
                 && (Y1InputKeys.isWheelKey(event.getKeyCode()) || Y1InputKeys.isBackKey(event.getKeyCode()))) {
             long perfT0 = android.os.SystemClock.uptimeMillis();
             try {
@@ -16333,7 +16333,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
             }
             // #region agent log
-            if (Y1InputKeys.isWheelKey(event.getKeyCode()) || Y1InputKeys.isVolumeUpKey(event.getKeyCode())
+            if (com.solar.launcher.debug.DebugGate.ON && Y1InputKeys.isWheelKey(event.getKeyCode()) || Y1InputKeys.isVolumeUpKey(event.getKeyCode())
                     || Y1InputKeys.isVolumeDownKey(event.getKeyCode())
                     || event.getKeyCode() == 19 || event.getKeyCode() == 20) {
                 try {
@@ -16387,7 +16387,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             // #endregion
             if (isWakingKeyEvent(event)) {
                 // #region agent log
-                if (Y1InputKeys.isBackKey(event.getKeyCode())) {
+                if (com.solar.launcher.debug.DebugGate.ON && Y1InputKeys.isBackKey(event.getKeyCode())) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("action", event.getAction());
@@ -16498,7 +16498,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (handleHomeSettingsMenuWheelKeyDown(event.getKeyCode(), event)) return true;
         if (handleY2DpadSideKeyEvent(event)) return true;
         // #region agent log
-        if (event.getAction() == KeyEvent.ACTION_DOWN && currentScreenState == STATE_PLAYER
+        if (com.solar.launcher.debug.DebugGate.ON && event.getAction() == KeyEvent.ACTION_DOWN && currentScreenState == STATE_PLAYER
                 && (Y1InputKeys.isWheelKey(event.getKeyCode())
                 || Y1InputKeys.isVolumeUpKey(event.getKeyCode())
                 || Y1InputKeys.isVolumeDownKey(event.getKeyCode()))) {
@@ -16520,7 +16520,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         // #endregion
         // #region agent log
-        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+        if (com.solar.launcher.debug.DebugGate.ON && event != null && event.getAction() == KeyEvent.ACTION_DOWN
                 && Y1InputKeys.isWheelKey(event.getKeyCode())) {
             long elapsed = android.os.SystemClock.uptimeMillis() - dispatchT0;
             if (elapsed > 50L) {
@@ -20371,7 +20371,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     * (a5Land ? A5NavigationMode.landscapeThemeScale(this) : 1f)));
         }
         // #region agent log
-        if (DeviceFeatures.isA5()) {
+        if (com.solar.launcher.debug.DebugGate.ON && DeviceFeatures.isA5()) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("a5Land", a5Land);
@@ -22844,7 +22844,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 && (isBluetoothContextExpanded() || btContextPendingEnable || btContextPendingDisable);
         boolean active = ctxWifi || ctxBt;
         // #region agent log
-        if (DebugAgentLog.ENABLED && themedContextMenu != null && themedContextMenu.isShowing()) {
+        if (com.solar.launcher.debug.DebugGate.ON && DebugAgentLog.ENABLED && themedContextMenu != null && themedContextMenu.isShowing()) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("ctxWifi", ctxWifi);
@@ -22894,7 +22894,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return true;
         }
         // #region agent log
-        if (isConversationThreadActive()) {
+        if (com.solar.launcher.debug.DebugGate.ON && isConversationThreadActive()) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("delta", delta);
@@ -23222,7 +23222,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         // #region agent log
         // 2026-07-20 — Session 6eff1e: Music hub wheel (Artists/Albums/Folders/Playlists).
-        if (currentScreenState == STATE_BROWSER
+        if (com.solar.launcher.debug.DebugGate.ON && currentScreenState == STATE_BROWSER
                 && currentBrowserMode == BROWSER_ROOT
                 && Debug6eff1eLog.allowFocusSample()) {
             try {
@@ -25175,7 +25175,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void refreshContextBluetoothTierImmediate(boolean resetFocus, boolean force) {
         syncBluetoothContextPendingFlags();
         // #region agent log
-        if (DebugAgentLog.ENABLED) {
+        if (com.solar.launcher.debug.DebugGate.ON && DebugAgentLog.ENABLED) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("pendingOn", btContextPendingEnable);
@@ -25291,7 +25291,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 headers, actions, resetFocus);
         refreshContextQuickBarIfShowing();
         // #region agent log
-        if (DebugAgentLog.ENABLED) {
+        if (com.solar.launcher.debug.DebugGate.ON && DebugAgentLog.ENABLED) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("rowCount", labels.size());
@@ -27301,7 +27301,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         // #endregion
         // #region agent log
-        if (!hasFocus && usbFocusHelper != null && usbFocusHelper.isHostConnected()) {
+        if (com.solar.launcher.debug.DebugGate.ON && !hasFocus && usbFocusHelper != null && usbFocusHelper.isHostConnected()) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("hasFocus", hasFocus);
@@ -29926,7 +29926,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.ui.UiBusy.clear(com.solar.launcher.ui.UiBusy.REASON_FLOW_OPEN);
         }
         // #region agent log
-        if (wasArmed) {
+        if (com.solar.launcher.debug.DebugGate.ON && wasArmed) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("screen", currentScreenState);
@@ -29954,7 +29954,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         com.solar.launcher.ui.UiBusy.clear(com.solar.launcher.ui.UiBusy.REASON_CONTEXT_HOLD);
         hideNpLiveHoldHint();
         // #region agent log
-        if (wasArmed || wasBusy) {
+        if (com.solar.launcher.debug.DebugGate.ON && wasArmed || wasBusy) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("wasArmed", wasArmed);
@@ -34705,7 +34705,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 int w = btn.getWidth() > 0 ? btn.getWidth()
                         : (listRowWidthPx > 0 ? listRowWidthPx : y1ActiveRowWidthPx());
                 // #region agent log
-                if (hasFocus && DebugF0e28cLog.ENABLED) {
+                if (com.solar.launcher.debug.DebugGate.ON && hasFocus && DebugF0e28cLog.ENABLED) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("runId", "pre-fix");
@@ -44780,7 +44780,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     private void probeRemoteStreamHttp(final String url, final String service, final String hypothesisId) {
         // #region agent log
-        if (url == null || url.isEmpty()) {
+        if (com.solar.launcher.debug.DebugGate.ON && url == null || url.isEmpty()) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("service", service);
@@ -52464,7 +52464,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void updateSoulseekSharePolicy() {
         final long policyStartMs = System.currentTimeMillis();
         // #region agent log
-        if (isScreenSleeping) {
+        if (com.solar.launcher.debug.DebugGate.ON && isScreenSleeping) {
             try {
                 DebugSessionLog.log("MainActivity.updateSoulseekSharePolicy",
                         "policy tick while screen off", "H1", soulseekSleepDecisionSnapshot());
@@ -58263,7 +58263,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (playback.musicPlaylist().isEmpty()) {
             // #region agent log
-            if (hasMusicPlaybackQueue()) {
+            if (com.solar.launcher.debug.DebugGate.ON && hasMusicPlaybackQueue()) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("index", index);
@@ -61014,7 +61014,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             if (isMediaPlayPauseKey(keyCode)) {
                 // #region agent log
-                if (event.getRepeatCount() == 0) {
+                if (com.solar.launcher.debug.DebugGate.ON && event.getRepeatCount() == 0) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("keyCode", keyCode);
@@ -61078,7 +61078,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
         if (isMediaPrevKey(keyCode) || isMediaNextKey(keyCode)) {
             // #region agent log
-            if (event != null && event.getRepeatCount() == 0) {
+            if (com.solar.launcher.debug.DebugGate.ON && event != null && event.getRepeatCount() == 0) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("runId", "pre-fix");
@@ -61409,7 +61409,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     }
                     // #region agent log
                     // Sparse: only interesting coast signals (age/vel/ghost/multi-step).
-                    if (faAge > 60L || wheelResult.rowSteps > 1
+                    if (com.solar.launcher.debug.DebugGate.ON && faAge > 60L || wheelResult.rowSteps > 1
                             || wheelResult.velocity > 2f || listWheelCoalescer.pendingDepth() > 0
                             || listCount >= 500) {
                         try {
@@ -61464,7 +61464,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 return true;
             }
             // #region agent log
-            if (currentScreenState == STATE_SETTINGS && isReachBrowseListActive()
+            if (com.solar.launcher.debug.DebugGate.ON && currentScreenState == STATE_SETTINGS && isReachBrowseListActive()
                     && event.getRepeatCount() == 0
                     && (Y1InputKeys.isWheelKey(keyCode) || keyCode == 19 || keyCode == 20)) {
                 try {
@@ -61508,7 +61508,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     }
                 }, true);
                 // #region agent log
-                if (event.getRepeatCount() == 0) {
+                if (com.solar.launcher.debug.DebugGate.ON && event.getRepeatCount() == 0) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("runId", "pre-fix");
@@ -61543,7 +61543,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     }
                 }, true);
                 // #region agent log
-                if (event.getRepeatCount() == 0) {
+                if (com.solar.launcher.debug.DebugGate.ON && event.getRepeatCount() == 0) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("runId", "post-fix");
@@ -61582,7 +61582,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
 
         // #region agent log
-        if (MediaSuiteHost.isMediaListBrowseState(currentScreenState) && Y1InputKeys.isWheelKey(keyCode)) {
+        if (com.solar.launcher.debug.DebugGate.ON && MediaSuiteHost.isMediaListBrowseState(currentScreenState) && Y1InputKeys.isWheelKey(keyCode)) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("screen", currentScreenState);
@@ -63966,7 +63966,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     : (showSearchHeader ? HierarchySearchChrome.dataIndex(position) : position);
             // #region agent log
             // 2026-07-20 — Session 6eff1e: blank titles near top of All Songs (placeholders).
-            if (songListSegmentedMode && dataPos >= 0 && dataPos < 8
+            if (com.solar.launcher.debug.DebugGate.ON && songListSegmentedMode && dataPos >= 0 && dataPos < 8
                     && Debug6eff1eLog.allowBlankSample()) {
                 try {
                     SongItem probe = songAtData(dataPos);
@@ -69297,7 +69297,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         int action = event.getAction();
 
         // #region agent log
-        if (action == KeyEvent.ACTION_UP && event.getRepeatCount() == 0) {
+        if (com.solar.launcher.debug.DebugGate.ON && action == KeyEvent.ACTION_UP && event.getRepeatCount() == 0) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("code", code);
@@ -70462,7 +70462,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (handoff) hidePlayerAlbumSlotForHandoff();
         precookFlowHandoffForPlayingTrack();
         // #region agent log
-        if (handoff) {
+        if (com.solar.launcher.debug.DebugGate.ON && handoff) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("show3d", show3d);

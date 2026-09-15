@@ -192,7 +192,7 @@ public final class A5EdgeGestures {
                 handler.postDelayed(holdContext, HOLD_CONTEXT_MS);
             }
             // #region agent log
-            if (reorderSession || capturingLeftRightEdge || downEdge != Edge.NONE) {
+            if (com.solar.launcher.debug.DebugGate.ON && reorderSession || capturingLeftRightEdge || downEdge != Edge.NONE) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("action", "DOWN");
@@ -227,7 +227,7 @@ public final class A5EdgeGestures {
                 }
             }
             // #region agent log
-            if (reorderSession && capturingLeftRightEdge) {
+            if (com.solar.launcher.debug.DebugGate.ON && reorderSession && capturingLeftRightEdge) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("action", "MOVE");

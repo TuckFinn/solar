@@ -115,7 +115,7 @@ public final class A5FocusConfirm {
         if (hit == null || hit.isFocused()) return;
         boolean ok = hit.requestFocus();
         // #region agent log
-        if (action == MotionEvent.ACTION_DOWN || ok) {
+        if (com.solar.launcher.debug.DebugGate.ON && action == MotionEvent.ACTION_DOWN || ok) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("action", action);

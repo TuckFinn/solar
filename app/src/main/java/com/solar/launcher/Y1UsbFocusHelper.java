@@ -560,7 +560,7 @@ public final class Y1UsbFocusHelper {
         lastBringToFrontFullMs = System.currentTimeMillis();
         String topBefore = topResumedActivityName();
         // #region agent log
-        if (DebugSessionLog.ENABLED) {
+        if (com.solar.launcher.debug.DebugGate.ON && DebugSessionLog.ENABLED) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("topBefore", topBefore);

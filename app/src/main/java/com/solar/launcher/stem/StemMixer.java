@@ -238,7 +238,7 @@ public final class StemMixer {
             }
             stutterTickCount++;
             // #region agent log
-            if (stutterTickCount == 1 || stutterTickCount % 25 == 0) {
+            if (com.solar.launcher.debug.DebugGate.ON && stutterTickCount == 1 || stutterTickCount % 25 == 0) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("zone", stutterZone);
