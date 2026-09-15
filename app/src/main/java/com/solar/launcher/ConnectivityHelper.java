@@ -228,6 +228,12 @@ public final class ConnectivityHelper {
         if (HomeMenuConfig.ID_SOULSEEK.equals(id)) {
             return internetAvailable && isGetMusicShortcutAvailable(prefs);
         }
+        // 2026-09-14 — Navidrome home shortcut: any network (LAN or tailnet/internet) and a
+        // configured server; otherwise the row would only lead to the setup screen.
+        if (HomeMenuConfig.ID_NAVIDROME.equals(id)) {
+            return (internetAvailable || localNetworkAvailable)
+                    && prefs != null && com.solar.launcher.navidrome.NavidromePrefs.isConfigured(prefs);
+        }
         if (itemNeedsInternetForDiscovery(id)) return internetAvailable;
         if (itemNeedsLocalNetwork(id)) return localNetworkAvailable;
         if (HomeMenuConfig.ID_PODCASTS.equals(id)) return internetAvailable || podcastsSaved;

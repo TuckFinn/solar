@@ -563,6 +563,7 @@
     <string name="home_menu_youtube_audio">YouTube Audio</string>
     <string name="home_menu_soulseek">Get Music</string>
     <string name="home_menu_deezer">Deezer</string>
+    <string name="home_menu_navidrome">Navidrome</string>
     <string name="home_menu_themes">Themes</string>
     <string name="home_menu_more">More</string>
     <string name="more_menu_empty">No shortcuts in More</string>
