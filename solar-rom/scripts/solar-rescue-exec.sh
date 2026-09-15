@@ -10,6 +10,11 @@ SOLAR_PKG="com.solar.launcher"
 HELPER_PKG="com.solar.launcher.homehelper"
 ROCKBOX_PKG="org.rockbox"
 JJ_PKG="com.themoon.y1"
+# 2026-09-14 — Solar-only ROMs ship neither Rockbox nor JJ. `pm disable` on a package
+# that is not registered crashes the pm helper VM ("FATAL EXCEPTION IN SYSTEM PROCESS:
+# Unknown package: com.themoon.y1"); MTK's exception handler then spawns an
+# EXCEPTION_HAPPEND broadcast helper for each one — seen stacked 3 deep on 2Y1. Every
+# pm enable/disable below is now gated on `pm path` (registered) first.
 LAUNCHER_EXEC="/system/etc/solar/solar-launcher-exec.sh"
 SET_HOME_ACTION="com.solar.launcher.action.SET_PREFERRED_HOME"
 HOME_RECEIVER="com.solar.launcher/.LauncherHomeReceiver"
@@ -60,7 +65,7 @@ disable_extra_home_launchers() {
                 continue ;;
         esac
         if dumpsys package "$_pkg" 2>/dev/null | grep -q "android.intent.category.HOME"; then
-            pm disable "$_pkg" 2>/dev/null
+            pm path "$_pkg" >/dev/null 2>&1 && pm disable "$_pkg" 2>/dev/null
             am force-stop "$_pkg" 2>/dev/null
         fi
     done
@@ -84,9 +89,9 @@ if [ -f "$LAUNCHER_EXEC" ]; then
     sh "$LAUNCHER_EXEC" switch solar 2>/dev/null
 else
     am force-stop "$ROCKBOX_PKG" 2>/dev/null
-    pm disable "$ROCKBOX_PKG" 2>/dev/null
+    pm path "$ROCKBOX_PKG" >/dev/null 2>&1 && pm disable "$ROCKBOX_PKG" 2>/dev/null
     am force-stop "$JJ_PKG" 2>/dev/null
-    pm disable "$JJ_PKG" 2>/dev/null
+    pm path "$JJ_PKG" >/dev/null 2>&1 && pm disable "$JJ_PKG" 2>/dev/null
     pm enable "$SOLAR_PKG" 2>/dev/null
     pm enable "$HELPER_PKG" 2>/dev/null
     setprop persist.solar.home.target solar 2>/dev/null
