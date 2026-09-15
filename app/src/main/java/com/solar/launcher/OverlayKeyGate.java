@@ -83,12 +83,14 @@ public final class OverlayKeyGate {
             writeProperty(ACTIVE_AT_PROPERTY, "0");
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
             d.put("visible", visible);
             DebugOverlayStuckLog.log("OverlayKeyGate.setOverlayUiVisible",
                     "ui prop write", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -129,6 +131,7 @@ public final class OverlayKeyGate {
         }
         boolean ok = writeProperty(ACTIVE_PROPERTY, active ? "1" : "0");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("active", active);
@@ -136,6 +139,7 @@ public final class OverlayKeyGate {
             d.put("propAfter", readProperty(ACTIVE_PROPERTY, "0"));
             DebugEdc27bLog.log("OverlayKeyGate.setOverlayActive", "prop write", "H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }
@@ -180,6 +184,7 @@ public final class OverlayKeyGate {
         clearLegacyActiveProperty();
         forceOverlayInactiveProperty();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("cooldownUntil", now + POST_OVERLAY_COOLDOWN_MS);
@@ -189,6 +194,7 @@ public final class OverlayKeyGate {
             d2.put("propAfter", readProperty(ACTIVE_PROPERTY, "0"));
             DebugAgentLog.log(null, "OverlayKeyGate.disarm", "overlay disarmed", "H1", d2);
         } catch (Exception ignored) {}
+        }
         // #endregion
         SolarImeKeyGate.clearPausedForHigherOverlay();
         ExternalInputHandoff.resumeFromGlobalOverlay();
@@ -239,6 +245,7 @@ public final class OverlayKeyGate {
      */
     public static void disarmStaleIfNeeded(Context context) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
             d.put("opening", readProperty(OPENING_PROPERTY, "0"));
@@ -248,6 +255,7 @@ public final class OverlayKeyGate {
             DebugOverlayStuckLog.log("OverlayKeyGate.disarmStaleIfNeeded",
                     "stale gate probe", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         boolean overlayRunning = isOverlayProcessRunning(context);
         if (!overlayRunning && ("1".equals(readProperty(ACTIVE_PROPERTY, "0")) || "1".equals(readProperty(OPENING_PROPERTY, "0")))) {
@@ -294,6 +302,7 @@ public final class OverlayKeyGate {
             SolarOverlayHost.ensureStarted(context);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
             DebugOverlayStuckLog.log("OverlayKeyGate.disarmStaleIfNeeded",
@@ -301,6 +310,7 @@ public final class OverlayKeyGate {
             DebugInputLog.log("OverlayKeyGate.disarmStaleIfNeeded",
                     "cleared stale overlay gate", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -309,11 +319,13 @@ public final class OverlayKeyGate {
         if ("1".equals(readProperty(LEGACY_ACTIVE_PROPERTY, "0"))) {
             writeProperty(LEGACY_ACTIVE_PROPERTY, "0");
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("cleared", LEGACY_ACTIVE_PROPERTY);
                 DebugOverlayKeyLog.log("OverlayKeyGate.clearLegacy", "legacy prop cleared", "H6", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
     }
@@ -346,6 +358,7 @@ public final class OverlayKeyGate {
         Handler h = handler;
         boolean consumed = h != null && h.onKeyDown(keyCode);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("keyCode", keyCode);
@@ -354,6 +367,7 @@ public final class OverlayKeyGate {
             d.put("prop", readProperty(ACTIVE_PROPERTY, "0"));
             DebugEdc27bLog.log("OverlayKeyGate.deliver", "deliver down", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return consumed;
     }

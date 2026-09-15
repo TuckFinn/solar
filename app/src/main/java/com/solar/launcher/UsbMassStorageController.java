@@ -72,6 +72,7 @@ public final class UsbMassStorageController {
     public static boolean enable(Context context, String caller) {
         if (!UsbMassStorageExperiment.isEnabled(context)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("caller", caller);
@@ -80,12 +81,14 @@ public final class UsbMassStorageController {
                 Debug1fc727Log.log(context, "UsbMassStorageController.enable",
                         "experiment off", "H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
         if (!isEnablePermitted(context, caller)) {
             logEnableDenied(context, caller);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = Debug266f21Log.usbSnapshot();
                 d.put("caller", caller);
@@ -93,11 +96,13 @@ public final class UsbMassStorageController {
                 Debug266f21Log.log(context, "UsbMassStorageController.enable", "denied", "H1,H4", d);
                 Debug1fc727Log.log(context, "UsbMassStorageController.enable", "denied", "H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
         logEnablePermitted(context, caller);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug266f21Log.usbSnapshot();
             d.put("caller", caller);
@@ -107,6 +112,7 @@ public final class UsbMassStorageController {
             Debug266f21Log.log(context, "UsbMassStorageController.enable", "permitted", "H1,H4", d);
             Debug1fc727Log.log(context, "UsbMassStorageController.enable", "permitted→toggle", "H1,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-15 — Arm before setprop so USB_STATE re-enum cannot tear LUN mid-enable.
         markUserSessionActive();
@@ -116,6 +122,7 @@ public final class UsbMassStorageController {
             clearUserSession();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("caller", caller);
@@ -127,6 +134,7 @@ public final class UsbMassStorageController {
             d.put("userSession", isUserSessionActive());
             Debug1fc727Log.log(context, "UsbMassStorageController.enable", "toggle done", "H1,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }

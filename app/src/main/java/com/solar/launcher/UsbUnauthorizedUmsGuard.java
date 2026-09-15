@@ -45,6 +45,7 @@ public final class UsbUnauthorizedUmsGuard {
         }
         boolean ok = UsbMassStorageController.disable(context);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("ok", ok);
@@ -53,6 +54,7 @@ public final class UsbUnauthorizedUmsGuard {
             Debug531722Log.log("UsbUnauthorizedUmsGuard.teardownIfUnauthorizedBlocking",
                     "cleared kernel UMS without consent", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }

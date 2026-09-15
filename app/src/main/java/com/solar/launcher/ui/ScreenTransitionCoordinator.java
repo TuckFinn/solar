@@ -82,6 +82,7 @@ public final class ScreenTransitionCoordinator {
             @Override
             public void run() {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     JSONObject d = new JSONObject();
                     d.put("from", from);
@@ -91,6 +92,7 @@ public final class ScreenTransitionCoordinator {
                     com.solar.launcher.Debug54d8beLog.log("ScreenTransitionCoordinator.complete",
                             "transition complete", "H1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (outView != null && outView != inView) {
                     outView.setVisibility(View.GONE);
@@ -100,6 +102,7 @@ public final class ScreenTransitionCoordinator {
                 host.finalizeScreenVisibility(to);
                 // Destination interactive — drop transition spinner (library may re-arm library_load).
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("from", from);
@@ -108,6 +111,7 @@ public final class ScreenTransitionCoordinator {
                     com.solar.launcher.DebugCb4747Log.log("ScreenTransitionCoordinator.complete",
                             "clear TRANSITION after anim", "D", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 UiBusy.clearNextFrame(UiBusy.REASON_TRANSITION);
             }
@@ -167,6 +171,7 @@ public final class ScreenTransitionCoordinator {
                 host.applyScreenChange(to, true);
                 host.prepareTransitionBackdrop(from, to);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     JSONObject d = new JSONObject();
                     d.put("from", from);
@@ -177,6 +182,7 @@ public final class ScreenTransitionCoordinator {
                     TransitionPerfLog.log("ScreenTransitionCoordinator.run",
                             "applyScreenChange done", "H4", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 // Layout pass for incoming root before translate/alpha anim.
                 if (inView != null) {

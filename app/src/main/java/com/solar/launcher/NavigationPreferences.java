@@ -48,12 +48,14 @@ public final class NavigationPreferences {
                 .commit();
         writeProp(enabled ? "1" : "0");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("enabled", enabled);
             DebugE93bdbLog.log("NavigationPreferences.setInfiniteScrollEnabled",
                     "infinite scroll pref", "H-WRAP", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

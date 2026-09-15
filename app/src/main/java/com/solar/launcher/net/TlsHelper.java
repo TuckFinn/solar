@@ -68,6 +68,7 @@ public final class TlsHelper {
                         + (provider != null ? provider.getName() : "none") + ", bundledRoots="
                         + bundledRootCount() + ")");
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("api", Build.VERSION.SDK_INT);
@@ -79,11 +80,13 @@ public final class TlsHelper {
                     com.solar.launcher.Debug543e15Log.log(
                             "TlsHelper.init", "tls bootstrap", "H-CERT-B", d);
                 } catch (Throwable ignored) {}
+                }
                 // #endregion
                 scheduleTlsProbe();
             } catch (Exception e) {
                 logE("Modern TLS setup failed", e);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("err", e.getClass().getName());
@@ -91,6 +94,7 @@ public final class TlsHelper {
                     com.solar.launcher.Debug543e15Log.log(
                             "TlsHelper.init", "tls bootstrap failed", "H-CERT-C", d);
                 } catch (Throwable ignored) {}
+                }
                 // #endregion
                 try {
                     cachedClient = buildOkHttpClient();
@@ -167,6 +171,7 @@ public final class TlsHelper {
         } catch (Exception e) {
             logW("probeProtocol failed " + urlStr, e);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("url", urlStr);
@@ -181,6 +186,7 @@ public final class TlsHelper {
                 com.solar.launcher.Debug543e15Log.log(
                         "TlsHelper.probeProtocol", "probe failed", "H-CERT-A", d);
             } catch (Throwable ignored) {}
+            }
             // #endregion
             return null;
         }
@@ -215,6 +221,7 @@ public final class TlsHelper {
                     String lalal = probeProtocol("https://www.lalal.ai/");
                     logI("TLS probe LE=" + le + " tls13-only-host=" + t13 + " lalal=" + lalal);
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("le", le != null ? le : org.json.JSONObject.NULL);
@@ -226,6 +233,7 @@ public final class TlsHelper {
                         com.solar.launcher.Debug543e15Log.log(
                                 "TlsHelper.scheduleTlsProbe", "probe results", "H-CERT-A", d);
                     } catch (Throwable ignored) {}
+                    }
                     // #endregion
                 }
             }, "SolarTlsProbe").start();

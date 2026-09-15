@@ -34,6 +34,7 @@ public final class SessionLifecycle {
             final boolean serviceOn = activity.soulseekActiveForSession();
             final boolean keepClient = shouldKeepSoulseekClient(keepForScreen, serviceOn);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("from", from);
@@ -43,6 +44,7 @@ public final class SessionLifecycle {
                 d.put("keepClient", keepClient);
                 Debug843b96Log.log(null, "SessionLifecycle.onLeaveScreen", "soulseek leave", "GM-C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // Always cancel search + UI flush (no result spam off-screen).
             activity.pauseSoulseekUiOnly();

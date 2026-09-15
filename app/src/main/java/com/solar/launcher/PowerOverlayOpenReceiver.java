@@ -23,6 +23,7 @@ public final class PowerOverlayOpenReceiver extends BroadcastReceiver {
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("action", action);
@@ -33,6 +34,7 @@ public final class PowerOverlayOpenReceiver extends BroadcastReceiver {
             Debug383b4eLog.log(context, "PowerOverlayOpenReceiver.onReceive",
                     "open overlay via router", "DUAL", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         OverlayHandoffRestoreReceiver.notifyPause(context);
         // One shell — Solar ThemedContextMenu unless companion_shell=1.

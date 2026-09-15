@@ -131,6 +131,7 @@ public final class A5PortraitChrome {
                 bottomStrip.setLayoutParams(lp);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("sessionId", "b4208e");
@@ -143,6 +144,7 @@ public final class A5PortraitChrome {
                 d.put("previewVis", homePreview != null ? homePreview.getVisibility() : -1);
                 DebugB4208eLog.log("A5PortraitChrome.apply", "strip visibility set", "S-A,S-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
 
@@ -287,6 +289,7 @@ public final class A5PortraitChrome {
             row.setGravity(Gravity.TOP);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             Context ctx = playerContentRow.getContext();
             DisplayMetrics dm = ctx != null ? ctx.getResources().getDisplayMetrics() : null;
@@ -353,6 +356,7 @@ public final class A5PortraitChrome {
                 });
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

@@ -694,6 +694,7 @@ public final class StemPlayerHost {
                 event != null ? event.getDownTime() : 0L,
                 event != null ? event.getEventTime() : 0L);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("holdFired", holdFired);
@@ -703,6 +704,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                     "StemPlayerHost.finishPadOptionsHoldIfSpurious", "options hold gate", "G", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (syntheticHold || StemControls.isIntentionalPadOptionsHold(holdFired, held)) {
             // Intentional hold confirmed at UP — open Options here, never eagerly from
@@ -1300,6 +1302,7 @@ public final class StemPlayerHost {
                         onStemKey(1);
                     } else {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("pad", "prev/drums");
@@ -1311,6 +1314,7 @@ public final class StemPlayerHost {
                             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                                     "StemPlayerHost.prevUP", "skipped onStemKey", "G", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                     }
                     // Other side still down alone → arm pad Options for Next. 2026-07-21
@@ -1379,6 +1383,7 @@ public final class StemPlayerHost {
                         onStemKey(2);
                     } else {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("pad", "next/bass");
@@ -1390,6 +1395,7 @@ public final class StemPlayerHost {
                             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                                     "StemPlayerHost.nextUP", "skipped onStemKey", "G", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                     }
                     if (prevDown && !exitHoldFired && transitionPanel == null) {
@@ -1467,6 +1473,7 @@ public final class StemPlayerHost {
                 // Hold just armed scrub — release keeps scrub; do not shuffle/commit yet. 2026-07-21
                 if (StemControls.centerReleaseKeepsFaceScrub(holdEntered)) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("holdEntered", holdEntered);
@@ -1477,6 +1484,7 @@ public final class StemPlayerHost {
                                 "StemPlayerHost.centerUP", "scrub hold keep (no shuffle)",
                                 "B", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return true;
                 }
@@ -1487,6 +1495,7 @@ public final class StemPlayerHost {
                 }
                 if (ready && hasMixers()) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("holdEntered", holdEntered);
@@ -1497,6 +1506,7 @@ public final class StemPlayerHost {
                         com.solar.launcher.Debug897e32Log.log(host.appContext(),
                                 "StemPlayerHost.centerUP", "dispatch onCenterTap", "A", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     onCenterTap();
                 }
@@ -1729,6 +1739,7 @@ public final class StemPlayerHost {
         boolean willCycle = StemControls.stemKeyShouldCycleSong(
                 session.activeZone(), zone, session.songCount());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("zone", zone);
@@ -1742,11 +1753,13 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                     "StemPlayerHost.onStemKey", "focus/cycle decide", "F", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         boolean cycled = session.onStemKey(zone);
         activeZone = session.activeZone();
         armed = true;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("zone", zone);
@@ -1757,6 +1770,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                     "StemPlayerHost.onStemKey", "after session.onStemKey", "F", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (cycled && session.isMulti()) {
             // 2026-08-02 — The instant forceSyncSlaves(now, 10) that used to run here
@@ -2197,6 +2211,7 @@ public final class StemPlayerHost {
         if (!session.isMulti() || trackFile == null || !trackFile.isFile()) return;
         if (songIndex < 0 || songIndex >= session.songCount()) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("songIndex", songIndex);
@@ -2207,6 +2222,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                     "StemPlayerHost.softReplaceSong", "softReplace enter", "D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (session != null && session.isDuplicateTrack(songIndex, trackFile)) {
             host.toast("Cannot mix a track with itself");
@@ -2473,6 +2489,7 @@ public final class StemPlayerHost {
         if (j == null || j.gen != gen || j.failed) return;
         if (!j.fadeOutDone || !j.stemsReady) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("song", j.song);
@@ -2483,6 +2500,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                     "StemPlayerHost.tryCommitSoftReplace", "commit reload+fadeIn", "D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         softReplaceJob = null;
         final Runnable fadeInHook = j.onFadeIn;
@@ -3663,6 +3681,7 @@ public final class StemPlayerHost {
         // First OK starts timelines; later OK shuffles (mashup) or loop dial (single). 2026-07-21
         if (!playbackStarted) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("padsIdle", padsIdle);
@@ -3670,6 +3689,7 @@ public final class StemPlayerHost {
                 com.solar.launcher.Debug897e32Log.log(host.appContext(),
                         "StemPlayerHost.onCenterTap", "startUserPlayback (first OK)", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             startUserPlayback();
             return;
@@ -3680,6 +3700,7 @@ public final class StemPlayerHost {
         if (session.isMulti()) {
             boolean wakeOnly = StemControls.centerTapWhilePadIdleIsWakeOnly(padsIdle, activeZone);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("padsIdle", padsIdle);
@@ -3691,6 +3712,7 @@ public final class StemPlayerHost {
                         wakeOnly ? "wakeOnly NO flip" : "flipMashupPads",
                         "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (wakeOnly) {
                 notePadInteraction();
@@ -3699,6 +3721,7 @@ public final class StemPlayerHost {
             long t0 = android.os.SystemClock.uptimeMillis();
             flipMashupPads();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("flipMs", android.os.SystemClock.uptimeMillis() - t0);
@@ -3708,6 +3731,7 @@ public final class StemPlayerHost {
                 com.solar.launcher.Debug897e32Log.log(host.appContext(),
                         "StemPlayerHost.onCenterTap", "flip done", "E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -4038,6 +4062,7 @@ public final class StemPlayerHost {
     private void startJob() {
         final int gen = jobGen.incrementAndGet();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
@@ -4050,6 +4075,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug543e15Log.log(
                     "StemPlayerHost.startJob", "startJob enter", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (tracks.isEmpty()) {
             statusView.setText("No local track file");
@@ -4236,6 +4262,7 @@ public final class StemPlayerHost {
             String key, android.content.Context ctx, int gen) throws Exception {
         File readyDir = LalalClient.findReadyStemDir(ctx, src, premix, host.appCacheDir());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("name", src != null ? src.getName() : "");
@@ -4250,11 +4277,13 @@ public final class StemPlayerHost {
                     "LOCAL",
                     d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         List<LalalClient.StemFile> cached = null;
         if (readyDir != null) {
             cached = LalalClient.resolveStemsFromReadyDir(ctx, src, premix, readyDir);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("srcName", src != null ? src.getName() : "");
@@ -4267,6 +4296,7 @@ public final class StemPlayerHost {
                 com.solar.launcher.Debug8b0481Log.log(
                         "StemPlayerHost.resolveStemsForTrack", "loaded cache", "H-A,H-B,H-C,H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (cached != null && !cached.isEmpty()) {
                 // Re-entered before flush finished — keep a pending publish for work leaves. 2026-07-21
@@ -4277,6 +4307,7 @@ public final class StemPlayerHost {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("name", src != null ? src.getName() : "");
@@ -4284,6 +4315,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug543e15Log.log(
                     "StemPlayerHost.resolveStemsForTrack", "separateToMp3 begin", "LOCAL", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (key == null || key.length() < 8) {
             throw new IOException("Lalal key missing for " + src.getName());
@@ -4397,6 +4429,7 @@ public final class StemPlayerHost {
         final int gen = jobGen.get();
         final int n = session.songCount();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("songCount", n);
@@ -4406,6 +4439,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug543e15Log.log(
                     "StemPlayerHost.beginMixers", "beginMixers enter", "C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (n < 1 || root == null) {
             statusView.setText("No songs ready");
@@ -4487,6 +4521,7 @@ public final class StemPlayerHost {
                     @Override
                     public void onReady() {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("songIndex", songIndex);
@@ -4496,6 +4531,7 @@ public final class StemPlayerHost {
                             com.solar.launcher.Debug543e15Log.log(
                                     "StemPlayerHost.beginMixers", "mixer onReady", "A", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         if (loadFailed.get()) return;
                         if (readyLeft.decrementAndGet() == 0) {
@@ -4507,6 +4543,7 @@ public final class StemPlayerHost {
                     public void onError(String message) {
                         if (!loadFailed.compareAndSet(false, true)) return;
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("songIndex", songIndex);
@@ -4514,6 +4551,7 @@ public final class StemPlayerHost {
                             com.solar.launcher.Debug543e15Log.log(
                                     "StemPlayerHost.beginMixers", "mixer onError", "C", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         loading = false;
                         ready = false;
@@ -4549,6 +4587,7 @@ public final class StemPlayerHost {
                 }
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("loadCalled", true);
@@ -4556,16 +4595,19 @@ public final class StemPlayerHost {
                 com.solar.launcher.Debug543e15Log.log(
                         "StemPlayerHost.beginMixers", "load() issued", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } catch (Exception e) {
             loadFailed.set(true);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("err", e.getMessage() != null ? e.getMessage() : e.getClass().getName());
                 com.solar.launcher.Debug543e15Log.log(
                         "StemPlayerHost.beginMixers", "load threw", "C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             loading = false;
             statusView.setText(e.getMessage() != null ? e.getMessage() : "Mixer failed");
@@ -4589,6 +4631,7 @@ public final class StemPlayerHost {
                 pendingCompleteMask |= (1 << finishedSong);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("finishedSong", finishedSong);
@@ -4597,6 +4640,7 @@ public final class StemPlayerHost {
                         "StemPlayerHost.onSongPlaybackComplete", "deferred (handoff busy)",
                         "D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -4608,6 +4652,7 @@ public final class StemPlayerHost {
         int qSize = stemQueueSize();
         boolean pairRestart = StemMixQueuePolicy.pairSoftRestartsEitherSeat(qSize, finishedSong);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("finishedSong", finishedSong);
@@ -4617,6 +4662,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug897e32Log.log(host.appContext(),
                     "StemPlayerHost.onSongPlaybackComplete", "complete decision enter", "C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Closed pair: either finished seat soft-restarts; sibling mixer untouched. 2026-07-21
         if (pairRestart) {
@@ -4630,6 +4676,7 @@ public final class StemPlayerHost {
         } catch (Exception ignored) {}
         boolean gotNext = nextFile != null && nextFile.isFile();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("finishedSong", finishedSong);
@@ -4641,6 +4688,7 @@ public final class StemPlayerHost {
                     gotNext ? "softReplace next-up" : "no next → self restart",
                     "C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (gotNext) {
             mashupHandoffBusy = true;
@@ -4910,6 +4958,7 @@ public final class StemPlayerHost {
         // Cold start: all pads on the seed → dominant 0; face emphasis + key set. 2026-08-02
         recomputeDominantSong();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             int totalPlayers = 0;
             int z3 = 0;
@@ -4930,6 +4979,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug8b0481Log.log(
                     "StemPlayerHost.onAllMixersReady", "mashup player budget", "H1,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Prepare timelines paused — OK starts play so user can set levels / scrub first. 2026-07-21
         // Was: m.play() here. Reversal: restore auto-play loop below.
@@ -4954,6 +5004,7 @@ public final class StemPlayerHost {
             main.postDelayed(tempoDriftRunnable, 250);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("ready", ready);
@@ -4963,6 +5014,7 @@ public final class StemPlayerHost {
             com.solar.launcher.Debug543e15Log.log(
                     "StemPlayerHost.onAllMixersReady", "all timelines started gains0", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         refreshFace();
         if (statusView != null) {

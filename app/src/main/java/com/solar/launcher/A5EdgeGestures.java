@@ -105,6 +105,7 @@ public final class A5EdgeGestures {
         public void run() {
             if (!tracking || holdFired || deferHoldToChild || host == null) return;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reorderSession", MoveRibbonTouch.isSessionActive());
@@ -117,6 +118,7 @@ public final class A5EdgeGestures {
                 com.solar.launcher.debug.Debug31d3d8Log.log(c,
                         "A5EdgeGestures.holdContext", "hold-still OPEN_CONTEXT fire", "B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // Hold-still anywhere (including edges) opens context — user asked for one-spot hold.
             holdFired = true;
@@ -142,6 +144,7 @@ public final class A5EdgeGestures {
         // Was: edge L/R capture + hold-context raced MoveRibbonTouch. Reversal: drop early return.
         if (MoveRibbonTouch.isSessionActive()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("action", event.getActionMasked());
@@ -154,6 +157,7 @@ public final class A5EdgeGestures {
                 com.solar.launcher.debug.Debug31d3d8Log.log(c,
                         "A5EdgeGestures.process", "skip — reorder session", "A,C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -259,6 +263,7 @@ public final class A5EdgeGestures {
             if (holdFired || consumeNextUp) {
                 consumeNextUp = false;
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("action", cancel ? "CANCEL" : "UP");
@@ -273,6 +278,7 @@ public final class A5EdgeGestures {
                     com.solar.launcher.debug.Debug31d3d8Log.log(c,
                             "A5EdgeGestures.process", "hold context ate UP during/after reorder", "B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return true;
             }
@@ -280,6 +286,7 @@ public final class A5EdgeGestures {
             Gesture g = classify(downEdge, dx, dy);
             if (g == Gesture.NONE) return captured;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("action", "UP");
@@ -296,6 +303,7 @@ public final class A5EdgeGestures {
                 com.solar.launcher.debug.Debug31d3d8Log.log(c,
                         "A5EdgeGestures.process", "edge gesture applied", "A,C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             apply(g);
             return true;

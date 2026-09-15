@@ -457,6 +457,7 @@ public abstract class MediaScreenHost  <AL, S, P,
 
     protected void bindFastList(List<R> rows, List<String> indexNames) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("uiMode", uiMode);
@@ -464,6 +465,7 @@ public abstract class MediaScreenHost  <AL, S, P,
             com.solar.launcher.DebugSessionLog.log(
                     debugTag() + ".bindFastList", "list bind", "53fa55", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         ui.showFastListBrowse();
         ui.setScrollIndexNames(indexNames);

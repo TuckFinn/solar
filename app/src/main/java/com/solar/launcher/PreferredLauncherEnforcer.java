@@ -65,6 +65,7 @@ public final class PreferredLauncherEnforcer implements Runnable {
         }
         RockboxRestartGrace.arm(appContext);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("target", target);
@@ -73,6 +74,7 @@ public final class PreferredLauncherEnforcer implements Runnable {
             DebugD68c5cLog.log("PreferredLauncherEnforcer.maybeEnforcePreferredHome",
                     "relaunch", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         LauncherPreference.launchHomeForTarget(appContext, target);
     }

@@ -127,6 +127,7 @@ public final class HardwareButtonGlyph {
             return decoded;
         } catch (Exception e) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("path", button.assetPath);
@@ -134,6 +135,7 @@ public final class HardwareButtonGlyph {
                 com.solar.launcher.Debug0f5debLog.log(ctx, "HardwareButtonGlyph.loadRaw",
                         "asset miss", "KB-H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return null;
         } finally {

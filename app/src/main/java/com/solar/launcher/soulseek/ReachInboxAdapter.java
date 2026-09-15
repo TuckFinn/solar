@@ -165,6 +165,7 @@ public final class ReachInboxAdapter extends BaseAdapter {
             row = rows.get(position);
         } catch (IndexOutOfBoundsException e) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("position", position);
@@ -172,6 +173,7 @@ public final class ReachInboxAdapter extends BaseAdapter {
                 d.put("statusMode", statusMode);
                 DebugAgentLog.log(activity, "ReachInboxAdapter.getView", "index oob", "H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             TextView tv = new TextView(activity);
             tv.setText(statusText);

@@ -62,6 +62,7 @@ public final class FlowScreenTransition {
         flowLayout.setVisibility(View.VISIBLE);
         flowLayout.setAlpha(0f);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("flowW", flowLayout.getWidth());
@@ -70,6 +71,7 @@ public final class FlowScreenTransition {
             DebugB8b871Log.log(flowLayout.getContext(), "FlowScreenTransition.crossfadeToFlow",
                     "start", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (playerLayout != null) {
             playerLayout.setVisibility(View.VISIBLE);
@@ -93,6 +95,7 @@ public final class FlowScreenTransition {
                 ScreenTransition.clearHardwareLayer(playerLayout);
                 ScreenTransition.clearHardwareLayer(bgBlur);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("flowAlpha", flowLayout.getAlpha());
@@ -101,6 +104,7 @@ public final class FlowScreenTransition {
                     Debug1cf0c7Log.log(flowLayout.getContext(),
                             "FlowScreenTransition.crossfadeToFlow", "complete", "H-A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (onComplete != null) onComplete.run();
             }

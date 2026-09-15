@@ -94,6 +94,9 @@ android {
         // updates — for forks and test devices that must keep the build they were given.
         // Unset (the default) keeps upstream behaviour.
         buildConfigField "boolean", "FEATURE_OTA_UPDATE", (System.getenv("SOLAR_DISABLE_OTA") ? "false" : "true")
+        // SOLAR_AGENT_LOGS_OFF=1 compiles the agent-log instrumentation out (see
+        // com.solar.launcher.debug.DebugGate). Unset (the default) keeps upstream behaviour.
+        buildConfigField "boolean", "AGENT_LOGS", (System.getenv("SOLAR_AGENT_LOGS_OFF") ? "false" : "true")
         buildConfigField "String", "OTA_UPDATES_URL", "\"https://thesolarproject.github.io/solar-update/updates.xml\""
         def podcastIndexKey = project.findProperty("PODCAST_INDEX_API_KEY") ?: ""
         def podcastIndexSecret = project.findProperty("PODCAST_INDEX_API_SECRET") ?: ""

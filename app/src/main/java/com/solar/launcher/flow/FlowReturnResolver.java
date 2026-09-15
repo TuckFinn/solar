@@ -103,6 +103,7 @@ public final class FlowReturnResolver {
                 null,
                 0f);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("durationMs", System.currentTimeMillis() - resolveStartMs);
@@ -113,6 +114,7 @@ public final class FlowReturnResolver {
             com.solar.launcher.DebugSessionLog.log(
                     "FlowReturnResolver.resolve", "resolve done", "H1-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return new Resolved(state, index, catalog);
     }

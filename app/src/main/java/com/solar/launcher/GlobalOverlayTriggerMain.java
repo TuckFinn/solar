@@ -68,6 +68,7 @@ public final class GlobalOverlayTriggerMain {
             backLongFired = true;
             long holdMs = com.solar.input.policy.GlobalInputPolicy.backModalHoldMsForPackage(fg);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fg", fg != null ? fg : "");
@@ -77,6 +78,7 @@ public final class GlobalOverlayTriggerMain {
                 DebugBee1b8Log.log("GlobalOverlayTriggerMain.backLongRunnable",
                         "launch Solar Home", "c54726-H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             try {
                 Runtime.getRuntime().exec(new String[]{"sh", "-c",

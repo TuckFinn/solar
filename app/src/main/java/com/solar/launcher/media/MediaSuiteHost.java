@@ -558,6 +558,7 @@ public final class MediaSuiteHost {
                                     @Override
                                     public void run() {
                                         // #region agent log
+                                        if (com.solar.launcher.debug.DebugGate.ON) {
                                         try {
                                             DebugAgentLog.log(
                                                     host.context(),
@@ -566,6 +567,7 @@ public final class MediaSuiteHost {
                                                     "E",
                                                     new org.json.JSONObject().put("reason", reason));
                                         } catch (Exception ignored) {}
+                                        }
                                         // #endregion
                                         if (host.playback().isInternetRadioActive()) {
                                             Toast.makeText(
@@ -858,11 +860,13 @@ public final class MediaSuiteHost {
                 return handleNetBrowseBack();
             case STATE_RADIO:
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("action", "exitToHomeMenu");
                     DebugAgentLog.log(host.context(), "MediaSuiteHost.handleBack", "radio root back", "H-BACK", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 host.exitToHomeMenu();
                 return true;
@@ -1915,6 +1919,7 @@ public final class MediaSuiteHost {
         addBackRow(host.getString(R.string.common_cancel_back));
         final Button status = addStatusButton(host.getString(R.string.radio_fm_scan_starting));
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             DebugF9ef0bLog.log(
                     host.context(),
@@ -1923,6 +1928,7 @@ public final class MediaSuiteHost {
                     "H4",
                     new org.json.JSONObject().put("available", fmEngine.isAvailable()));
         } catch (Exception ignored) {}
+        }
         // #endregion
         new Thread(
                 new Runnable() {
@@ -1969,6 +1975,7 @@ public final class MediaSuiteHost {
                                         @Override
                                         public void onError(final String reason) {
                                             // #region agent log
+                                            if (com.solar.launcher.debug.DebugGate.ON) {
                                             try {
                                                 DebugF9ef0bLog.log(
                                                         host.context(),
@@ -1977,6 +1984,7 @@ public final class MediaSuiteHost {
                                                         "H4",
                                                         new org.json.JSONObject().put("reason", reason));
                                             } catch (Exception ignored) {}
+                                            }
                                             // #endregion
                                             host.runOnUiThread(
                                                     new Runnable() {
@@ -1994,6 +2002,7 @@ public final class MediaSuiteHost {
                                     });
                         } catch (Throwable t) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 DebugF9ef0bLog.log(
                                         host.context(),
@@ -2003,6 +2012,7 @@ public final class MediaSuiteHost {
                                         new org.json.JSONObject()
                                                 .put("err", t.getClass().getSimpleName()));
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             host.runOnUiThread(
                                     new Runnable() {
@@ -2211,6 +2221,7 @@ public final class MediaSuiteHost {
         }
         host.refreshPlayerUi();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             DebugF9ef0bLog.log(
                     host.context(),
@@ -2221,6 +2232,7 @@ public final class MediaSuiteHost {
                             .put("freqKhz", freqKhz)
                             .put("scrubMode", radioScrubMode.name()));
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -2980,6 +2992,7 @@ public final class MediaSuiteHost {
         stopOtherRadioPlayback(false);
         host.stopNonFmPlayback();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             DebugAgentLog.log(
                     host.context(),
@@ -2990,12 +3003,14 @@ public final class MediaSuiteHost {
                             .put("name", station.name)
                             .put("urlLen", station.urlResolved.length()));
         } catch (Exception ignored) {}
+        }
         // #endregion
         try {
             internetRadioPlayer.play(station.urlResolved);
         } catch (Exception e) {
             Toast.makeText(host.context(), R.string.radio_net_play_error, Toast.LENGTH_SHORT).show();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 DebugAgentLog.log(
                         host.context(),
@@ -3004,6 +3019,7 @@ public final class MediaSuiteHost {
                         "E",
                         new org.json.JSONObject().put("err", e.getClass().getSimpleName()));
             } catch (Exception ignored2) {}
+            }
             // #endregion
             return;
         }
@@ -4147,6 +4163,7 @@ public final class MediaSuiteHost {
         youtubeLoading = true;
         final int gen = ++youtubeLoadGen;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("query", query != null ? query : "");
@@ -4154,6 +4171,7 @@ public final class MediaSuiteHost {
             com.solar.launcher.Debug712c71Log.log(host.context(),
                     "MediaSuiteHost.loadYouTubeSearch", "ui search start", "F", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         updateYouTubeStatusPath();
         rebuildYouTubeVirtualRows();
@@ -4164,6 +4182,7 @@ public final class MediaSuiteHost {
             public void onSuccess(String payloadJson) {
                 if (gen != youtubeLoadGen) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("gen", gen);
@@ -4173,6 +4192,7 @@ public final class MediaSuiteHost {
                                 "MediaSuiteHost.loadYouTubeSearch",
                                 "success stale gen", "D", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return;
                 }
@@ -4186,6 +4206,7 @@ public final class MediaSuiteHost {
                 } catch (Exception e) {
                     youtubeVideos.clear();
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("err", e.getMessage() != null ? e.getMessage() : "");
@@ -4194,9 +4215,11 @@ public final class MediaSuiteHost {
                                 "MediaSuiteHost.loadYouTubeSearch",
                                 "parse failed", "C", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("query", query != null ? query : "");
@@ -4206,6 +4229,7 @@ public final class MediaSuiteHost {
                             "MediaSuiteHost.loadYouTubeSearch",
                             "ui search success", "B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 // Prefer incremental notify over full rebind (keeps selection).
                 updateYouTubeStatusPath();
@@ -4220,6 +4244,7 @@ public final class MediaSuiteHost {
                 youtubeLoading = false;
                 youtubeVideos.clear();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("query", query != null ? query : "");
@@ -4228,6 +4253,7 @@ public final class MediaSuiteHost {
                             "MediaSuiteHost.loadYouTubeSearch",
                             "ui search error", "A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 updateYouTubeStatusPath();
                 rebuildYouTubeVirtualRows();
@@ -4262,6 +4288,7 @@ public final class MediaSuiteHost {
         youtubeNowPlayingTitle = video.title;
         youtubeNowPlayingId = video.id;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("id", video.id);
@@ -4271,6 +4298,7 @@ public final class MediaSuiteHost {
             com.solar.launcher.Debug0f5debLog.log(host.context(),
                     "MediaSuiteHost.playYouTubeAudio", "play audio start", "YT-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         final int gen = ++youtubeLoadGen;
         youtubeResolvingStream = true;
@@ -4302,6 +4330,7 @@ public final class MediaSuiteHost {
                 setYoutubeResolveStatus("");
                 clearYouTubeResolveUi();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("path", savedFile != null ? savedFile.getAbsolutePath() : "");
@@ -4311,6 +4340,7 @@ public final class MediaSuiteHost {
                     com.solar.launcher.Debug0f5debLog.log(host.context(),
                             "MediaSuiteHost.playYouTubeAudio.onComplete", "cache ready", "YT-B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (savedFile != null && savedFile.isFile()) {
                     // 2026-07-19 — Pass browse title/author so NP never shows “Failed” from empty m4a tags.
@@ -4361,6 +4391,7 @@ public final class MediaSuiteHost {
                     youtubeStreamUrl = null;
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("quality", quality != null ? quality : "");
@@ -4373,6 +4404,7 @@ public final class MediaSuiteHost {
                     com.solar.launcher.Debug9d82a5Log.log(host.context(),
                             "MediaSuiteHost.resolve.onSuccess", "ui has stream url", "C", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (youtubeStreamUrl == null || youtubeStreamUrl.isEmpty()) {
                     // Fail-open: YtApi always has a constructible progressive URL.
@@ -4406,6 +4438,7 @@ public final class MediaSuiteHost {
                 youtubeLoading = false;
                 setYoutubeResolveStatus("");
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("quality", quality != null ? quality : "");
@@ -4413,6 +4446,7 @@ public final class MediaSuiteHost {
                     com.solar.launcher.Debug9d82a5Log.log(host.context(),
                             "MediaSuiteHost.resolve.onError", "resolve failed", "A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 String next = YouTubeClient.fallbackVideoQuality(quality);
                 if (next != null) {
@@ -5226,6 +5260,7 @@ public final class MediaSuiteHost {
             public void onError(int what, int extra) {
                 if (!videoPlaybackYoutube) return;
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("what", what);
@@ -5235,6 +5270,7 @@ public final class MediaSuiteHost {
                             "MediaSuiteHost.videoListener.onError", "ijk error → fallback",
                             "E", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 // During playback/buffering — natural wait window; damped one-liner to SolarDev.
                 try {
@@ -5975,6 +6011,7 @@ public final class MediaSuiteHost {
             public void onClick(View v) {
                 host.clickFeedback();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("label", label);
@@ -5982,6 +6019,7 @@ public final class MediaSuiteHost {
                     DebugAgentLog.log(host.context(), "MediaSuiteHost.actionRow",
                             "scroll row click", "H-D", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 action.run();
             }
@@ -6168,6 +6206,7 @@ public final class MediaSuiteHost {
                     // (used to return Button when full_width_menus off → crash).
                     View created = host.createTwoLineBrowseRow(title, subtitle);
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("createdClass", created != null
@@ -6176,6 +6215,7 @@ public final class MediaSuiteHost {
                         com.solar.launcher.Debug9d82a5Log.log(host.context(),
                                 "SimpleListAdapter.getView", "two-line create", "F", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     if (!(created instanceof android.widget.LinearLayout)
                             || ((android.widget.LinearLayout) created).getChildCount() < 2) {
@@ -6382,6 +6422,7 @@ public final class MediaSuiteHost {
 
     private FmBandPlan currentFmPlan() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             android.content.Context c = host.context();
             boolean auto = RadioSettings.getAutoDetectRegion(c);
@@ -6398,6 +6439,7 @@ public final class MediaSuiteHost {
                         "band resolve", "F2", d);
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
         return FmBandPlan.fromRegionCode(RadioSettings.getFmBandRegion(host.context()));
     }

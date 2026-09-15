@@ -102,6 +102,7 @@ public final class Y1RomPrep {
                     Log.i(TAG, "patched " + patched + "/4 switch script paths"
                             + (legacy ? " (replaced legacy rockbox-y1 script)" : ""));
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         JSONObject d = new JSONObject();
                         d.put("patched", patched);
@@ -110,6 +111,7 @@ public final class Y1RomPrep {
                         DebugAgentLog.log(context, "Y1RomPrep.ensureSwitchScripts", "switch scripts patched",
                                 "H-patch", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 } catch (Exception e) {
                     Log.w(TAG, "switch script patch failed: " + e.getMessage());

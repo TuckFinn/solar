@@ -223,6 +223,7 @@ public final class StemMixer {
                 seekZone(stutterZone, stutterAnchorMs);
             } catch (Exception e) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("zone", stutterZone);
@@ -230,6 +231,7 @@ public final class StemMixer {
                     com.solar.launcher.Debug543e15Log.log(
                             "StemMixer.stutterTick", "seek failed — stop roll", "F1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 clearStutterInternal();
                 return;
@@ -1193,6 +1195,7 @@ public final class StemMixer {
             bassBodyPath = null;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("players", playerCount);
@@ -1205,6 +1208,7 @@ public final class StemMixer {
             com.solar.launcher.Debug8b0481Log.log(
                     "StemMixer.load", "players after load", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -1622,6 +1626,7 @@ public final class StemMixer {
         rollOriginElapsedRealtime = SystemClock.elapsedRealtime();
         rollOriginPosMs = stutterAnchorMs;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("zone", zone);
@@ -1630,6 +1635,7 @@ public final class StemMixer {
             com.solar.launcher.Debug543e15Log.log(
                     "StemMixer.startBeatRoll", "beat-roll start", "F1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         seekZone(zone, stutterAnchorMs);
         main.removeCallbacks(stutterTick);
@@ -1677,6 +1683,7 @@ public final class StemMixer {
                 seekZone(zone, catchUp);
             } catch (Exception ignored) {}
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("zone", zone);
@@ -1686,6 +1693,7 @@ public final class StemMixer {
                 com.solar.launcher.Debug543e15Log.log(
                         "StemMixer.stopBeatRoll", "beat-roll stop catch-up", "F1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         clearStutterInternal();

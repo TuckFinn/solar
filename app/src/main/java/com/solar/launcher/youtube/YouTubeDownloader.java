@@ -62,6 +62,7 @@ public final class YouTubeDownloader {
             final boolean audioOnly, final boolean playCacheOnly, final Callback cb) {
         if (video == null || video.id == null || video.id.isEmpty()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("audioOnly", audioOnly);
@@ -70,11 +71,13 @@ public final class YouTubeDownloader {
                 com.solar.launcher.Debug88eea4Log.log(ctx, "YouTubeDownloader.save",
                         "reject no video", "E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             postError(cb, "no video");
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("audioOnly", audioOnly);
@@ -95,6 +98,7 @@ public final class YouTubeDownloader {
                             + ",\"titleLen\":" + t.length()
                             + ",\"id\":\"" + video.id.replace("\"", "") + "\"}");
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Permanent library hits only for explicit Save — never promote Play into Music/YouTube.
         if (!playCacheOnly) {
@@ -103,6 +107,7 @@ public final class YouTubeDownloader {
                     : YouTubeSavePaths.findSavedVideo(ctx, video);
             if (existing != null && existing.length() > 1024L) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("audioOnly", audioOnly);
@@ -111,6 +116,7 @@ public final class YouTubeDownloader {
                     com.solar.launcher.Debug88eea4Log.log(ctx, "YouTubeDownloader.save",
                             "already on disk", "C", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 main.post(new Runnable() {
                     @Override public void run() {
@@ -152,6 +158,7 @@ public final class YouTubeDownloader {
                             YouTubeResultJson.parseStreamResult(payloadJson);
                     if (stream == null || stream.url == null || stream.url.isEmpty()) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("audioOnly", audioOnly);
@@ -159,11 +166,13 @@ public final class YouTubeDownloader {
                             com.solar.launcher.Debug88eea4Log.log(ctx,
                                     "YouTubeDownloader.resolveCb", "empty stream", "A", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         postError(cb, "no stream");
                         return;
                     }
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("audioOnly", audioOnly);
@@ -176,6 +185,7 @@ public final class YouTubeDownloader {
                         com.solar.launcher.debug.Debug2241b1Log.log(
                                 "YouTubeDownloader.resolveCb", "resolve ok", "YT1", "post-fix", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     final File dest;
                     if (playCacheOnly && audioOnly) {
@@ -198,6 +208,7 @@ public final class YouTubeDownloader {
             @Override
             public void onError(String message) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("audioOnly", audioOnly);
@@ -205,6 +216,7 @@ public final class YouTubeDownloader {
                     com.solar.launcher.Debug88eea4Log.log(ctx,
                             "YouTubeDownloader.resolveCb", "resolve error", "A,D", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 postError(cb, message);
             }
@@ -225,6 +237,7 @@ public final class YouTubeDownloader {
                     File parent = dest.getParentFile();
                     if (parent != null && !parent.exists()) parent.mkdirs();
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("dest", dest.getName());
@@ -233,6 +246,7 @@ public final class YouTubeDownloader {
                         com.solar.launcher.Debug88eea4Log.log(ctx,
                                 "YouTubeDownloader.downloadResolved", "http start", "B", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     final AtomicLong lastUiMs = new AtomicLong(0L);
                     SolarHttp.downloadToFile(url, dest, new SolarHttp.DownloadProgress() {
@@ -249,6 +263,7 @@ public final class YouTubeDownloader {
                         }
                     });
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("dest", dest.getName());
@@ -257,6 +272,7 @@ public final class YouTubeDownloader {
                         com.solar.launcher.Debug88eea4Log.log(ctx,
                                 "YouTubeDownloader.downloadResolved", "http done", "B", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     // #region agent log
                     // 2026-07-20 — 0b8f80 H3/H4: file landed; Music/YouTube vs play-cache path.
@@ -283,6 +299,7 @@ public final class YouTubeDownloader {
                     });
                 } catch (Exception e) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("err", e.getMessage() != null ? e.getMessage() : "");
@@ -293,6 +310,7 @@ public final class YouTubeDownloader {
                                 "{\"err\":\"" + (e.getMessage() != null
                                         ? e.getMessage().replace("\"", "") : "") + "\"}");
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     postError(cb, e.getMessage());
                 }

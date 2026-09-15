@@ -350,6 +350,7 @@ public final class ScreenTransition {
     /** Scrim fade + panel scale/alpha for global context modal — caller must prepare first. */
     public static void animateModalPresent(final View scrim, final View panel, final Runnable onComplete) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hasScrim", scrim != null);
@@ -361,6 +362,7 @@ public final class ScreenTransition {
                     panel != null ? panel.getContext() : (scrim != null ? scrim.getContext() : null),
                     "ScreenTransition.animateModalPresent", "present start", "MOD-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (scrim == null && panel == null) {
             if (onComplete != null) onComplete.run();
@@ -648,12 +650,14 @@ public final class ScreenTransition {
                 animating = false;
                 modalAnimating = false;
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("hadComplete", onComplete != null);
                     com.solar.launcher.Debug54d8beLog.log("ScreenTransition.endListener",
                             "anim cancel — onComplete NOT run", "H1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         };
@@ -676,11 +680,13 @@ public final class ScreenTransition {
                     long gapMs = (frameTimeNanos - lastFrameNanos) / 1_000_000L;
                     if (gapMs > 20L) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("gapMs", gapMs);
                             TransitionPerfLog.log("ScreenTransition.frameProbe", "slow frame", "B", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                     }
                 }
@@ -698,6 +704,7 @@ public final class ScreenTransition {
 
     private static void logAnimStart(String kind, boolean forward, int distance) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("kind", kind);
@@ -705,16 +712,19 @@ public final class ScreenTransition {
             d.put("distance", distance);
             TransitionPerfLog.log("ScreenTransition", "anim start", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
     private static void logAnimEnd(String kind) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("kind", kind);
             TransitionPerfLog.log("ScreenTransition", "anim end", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 }

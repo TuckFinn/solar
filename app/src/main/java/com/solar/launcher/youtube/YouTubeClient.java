@@ -99,6 +99,7 @@ public final class YouTubeClient {
 
     public void search(final String query, final Callback cb) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("query", query != null ? query : "");
@@ -106,6 +107,7 @@ public final class YouTubeClient {
             d.put("timeoutMs", DEFAULT_TIMEOUT_MS);
             Debug712c71Log.log(appCtx, "YouTubeClient.search", "search start", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         runTimed(DEFAULT_TIMEOUT_MS, cb, new Work() {
             @Override
@@ -123,6 +125,7 @@ public final class YouTubeClient {
                 List<YouTubeVideo> videos = pool.search(q);
                 String json = videosToJson(videos);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("query", query != null ? query : "");
@@ -131,6 +134,7 @@ public final class YouTubeClient {
                     Debug712c71Log.log(appCtx, "YouTubeClient.search",
                             "search work done", "B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return json;
             }
@@ -150,6 +154,7 @@ public final class YouTubeClient {
                 com.solar.launcher.youtube.api.InstancePool.StreamPick pick =
                         pool.getVideoUrlPick(videoId, q);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("videoId", videoId != null ? videoId : "");
@@ -166,6 +171,7 @@ public final class YouTubeClient {
                     com.solar.launcher.Debug9d82a5Log.log(appCtx,
                             "YouTubeClient.resolveStream", "stream resolved", "A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return streamJson(pick.url, videoId, guessExt(pick.url, "mp4"));
             }
@@ -206,6 +212,7 @@ public final class YouTubeClient {
                     done[0] = true;
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("timeoutMs", timeoutMs);
@@ -213,6 +220,7 @@ public final class YouTubeClient {
                     Debug712c71Log.log(appCtx, "YouTubeClient.runTimed",
                             "client timeout fired", "A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 cb.onError("timeout");
             }
@@ -225,6 +233,7 @@ public final class YouTubeClient {
                     synchronized (gate) {
                         if (done[0]) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("jsonLen", json != null ? json.length() : 0);
@@ -232,6 +241,7 @@ public final class YouTubeClient {
                                 Debug712c71Log.log(appCtx, "YouTubeClient.runTimed",
                                         "success discarded after timeout", "D", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             return;
                         }
@@ -248,6 +258,7 @@ public final class YouTubeClient {
                     synchronized (gate) {
                         if (done[0]) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("err", msg);
@@ -255,6 +266,7 @@ public final class YouTubeClient {
                                 Debug712c71Log.log(appCtx, "YouTubeClient.runTimed",
                                         "error discarded after timeout", "D", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             return;
                         }

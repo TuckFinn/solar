@@ -102,6 +102,7 @@ public final class AvrcpTrackInfoWriter {
         }
         lastFlushedAudioId = newId;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("titleLen", title.length());
@@ -111,6 +112,7 @@ public final class AvrcpTrackInfoWriter {
             d.put("filesPrepared", filesPrepared);
             DebugAgentLog.log(appContext, "AvrcpTrackInfoWriter.syncFromPlayback", "flush", "H-AV2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

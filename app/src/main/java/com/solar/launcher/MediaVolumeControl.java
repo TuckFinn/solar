@@ -153,6 +153,7 @@ public final class MediaVolumeControl {
         // #endregion
         int result = adjustStream(ctx, AudioManager.STREAM_MUSIC, up);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("up", up);
@@ -168,6 +169,7 @@ public final class MediaVolumeControl {
             d.put("fmForeground", ExternalInputHandoff.FM_RADIO_PACKAGE.equals(fg));
             Debug6d1aeeLog.log("MediaVolumeControl.adjustMedia", "volume step", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return result;
     }
@@ -185,6 +187,7 @@ public final class MediaVolumeControl {
         int musicDisplay = getDisplayVolume(ctx, AudioManager.STREAM_MUSIC);
         int fmDisplay = getDisplayVolume(ctx, STREAM_FM);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("musicDisplay", musicDisplay);
@@ -193,6 +196,7 @@ public final class MediaVolumeControl {
             d.put("sliderShowsMusic", true);
             Debug6d1aeeLog.log("MediaVolumeControl.syncVolumeSliderUi", "slider sync", "H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         menu.updateVolumeSlider(musicDisplay, getDisplayMaxVolume(ctx));
     }

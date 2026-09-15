@@ -111,6 +111,7 @@ public final class UsbStorageSessionFlags {
         boolean stock = preferStockUsbUi(ctx);
         writeSysprop(SYSPROP_STOCK_UI, stock ? "1" : "0");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("skip", true);
@@ -119,6 +120,7 @@ public final class UsbStorageSessionFlags {
             Debug543e15Log.log("UsbStorageSessionFlags.syncSkipPromptSysprop",
                     "usb sysprops synced", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

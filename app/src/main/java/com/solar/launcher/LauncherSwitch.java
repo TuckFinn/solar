@@ -180,6 +180,7 @@ public final class LauncherSwitch {
         String out = RootShell.runCapture("pm install -r " + sysApk.getAbsolutePath());
         boolean ok = isRockboxInstalled(context);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = debugState(context);
             d.put("installOutput", out != null && out.length() > 200 ? out.substring(0, 200) : out);
@@ -187,6 +188,7 @@ public final class LauncherSwitch {
             DebugSessionLog.logAlways("LauncherSwitch.ensureRockboxRegistered",
                     ok ? "registered" : "failed", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }
@@ -294,6 +296,7 @@ public final class LauncherSwitch {
         if (context == null) return;
         if (!LauncherPreference.isSolarHome(context)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("homeTarget", LauncherPreference.getHomeTarget(context));
@@ -301,19 +304,23 @@ public final class LauncherSwitch {
                 Debug434250Log.log("LauncherSwitch.assertRockboxDisabledWhileSolarHome",
                         "skipped rockbox home", "H-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("homeTarget", LauncherPreference.getHomeTarget(context));
             Debug434250Log.log("LauncherSwitch.assertRockboxDisabledWhileSolarHome",
                     "solar home enforce", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         ensureSolarPreferredHome(context);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("homeTarget", LauncherPreference.getHomeTarget(context));
@@ -321,6 +328,7 @@ public final class LauncherSwitch {
             DebugD68c5cLog.log("LauncherSwitch.assertRockboxDisabledWhileSolarHome",
                     "solar home enforce", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

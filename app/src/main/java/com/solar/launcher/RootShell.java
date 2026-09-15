@@ -54,12 +54,14 @@ public final class RootShell {
         // 2026-07-14 — A5 stock su prompts SuperSU over Solar and can stall; skip by default.
         if (DeviceFeatures.isA5() && !allowA5) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("cmdPrefix", command.length() > 48 ? command.substring(0, 48) : command);
                 d.put("a5", true);
                 Debug1fc727Log.log(null, "RootShell.run", "A5 skip — no su", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }

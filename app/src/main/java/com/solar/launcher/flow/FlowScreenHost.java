@@ -312,6 +312,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
      */
     public void precookCatalogAfterLibraryScan(final int libGen, final int optionsKey) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("libGen", libGen);
@@ -319,6 +320,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug898913Log.log("FlowScreenHost.precookCatalogAfterLibraryScan",
                     "precook queued", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         FLOW_WORKER.execute(new Runnable() {
             @Override
@@ -365,6 +367,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 final int bakeCenter = center;
                 final long buildMs = System.currentTimeMillis() - t0;
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("libGen", libGen);
@@ -373,6 +376,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                     com.solar.launcher.Debug898913Log.log("FlowScreenHost.precookCatalogAfterLibraryScan",
                             "precook built", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 actions.runOnUi(new Runnable() {
                     @Override
@@ -586,15 +590,18 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         coverGovernor.cancelAll();
         flowView.resetFlip();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("focusKey", req.focusKey != null ? req.focusKey : "");
             d.put("enteredFromSection", req.enteredFromSection);
             com.solar.launcher.Debug898913Log.log("FlowScreenHost.open", "open", "H-FLOW", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         flowView.resetHandoffRevealForDisplay();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("skipPicker", req.skipPicker());
@@ -602,6 +609,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             d.put("libRows", actions.libraryRows().size());
             DebugSessionLog.log("FlowScreenHost.open", "host open", "H1-H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         showCarousel(FlowMode.ALBUM, req.focusKey);
     }
@@ -619,6 +627,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             applyReturnState(saved, true);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("index", flowView.engine().getFocusIndex());
@@ -627,6 +636,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             d.put("flipped", saved.flipSnapshot != null);
             DebugSessionLog.log("FlowScreenHost.restoreAfterPlayer", "flow restored", "H-FLOW-BACK", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -650,11 +660,13 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         }
         finishPlayerReturnHandoffPrep(handoffCover);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("prepMs", System.currentTimeMillis() - prepStartMs);
             DebugSessionLog.log("FlowScreenHost.preparePlayerReturnForHandoff", "prep done", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -695,6 +707,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         flowView.prepareHandoffFlyerOnly();
         flowReturnPrepared = true;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("catalogSize", catalog != null ? catalog.size() : 0);
@@ -703,6 +716,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             DebugSessionLog.log(
                     "FlowScreenHost.prepareReturnForResolvedState", "carousel prep", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -840,6 +854,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 handoffReturnRect, handoffReturnRotY);
         rememberCenterHandoffRect(handoffReturnRect);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hasState", returnAfterPlayer != null);
@@ -847,16 +862,19 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             d.put("returnRectW", handoffReturnRect != null ? handoffReturnRect.width() : 0f);
             DebugSessionLog.log("FlowScreenHost.capturePlayerReturn", "captured", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
     public void finishPlayerReturnAfterHandoff() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hadState", returnAfterPlayer != null);
             DebugSessionLog.log("FlowScreenHost.finishPlayerReturnAfterHandoff", "cleared", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         returnAfterPlayer = null;
         // flowReturnPrepared cleared by changeScreen → consumeReturnPrepared()
@@ -953,6 +971,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         flowView.invalidate();
         if (requestFocus) flowView.requestFocus();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("durationMs", System.currentTimeMillis() - applyStartMs);
@@ -962,6 +981,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             d.put("libRows", actions.libraryRows().size());
             DebugSessionLog.log("FlowScreenHost.applyReturnState", "applyReturnState done", "H-PERF", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -1145,6 +1165,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         flowReturnPrepared = true;
         flowView.invalidate();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("focusKey", effectiveKey != null ? effectiveKey : "");
@@ -1155,6 +1176,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug898913Log.log("FlowScreenHost.prepareNpToFlowCrossfade",
                     "carousel pre-bound for crossfade", "H-C,H-BACK", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return catalog != null && !catalog.isEmpty();
     }
@@ -1232,6 +1254,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
     public boolean syncCarouselToNowPlayingIfActive() {
         if (flowView == null || catalog == null || catalog.isEmpty()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("skip", "no_catalog");
@@ -1239,6 +1262,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 DebugB8b871Log.log(actions.activity(), "FlowScreenHost.syncCarouselToNowPlayingIfActive",
                         "skipped", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -1249,6 +1273,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         int index = flowView.engine().findIndexForKey(catalog, key);
         if (index < 0) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("matchKey", key);
@@ -1256,6 +1281,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 DebugB8b871Log.log(actions.activity(), "FlowScreenHost.syncCarouselToNowPlayingIfActive",
                         "key not in catalog", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -1265,6 +1291,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         updateLaunchFocusKey(key);
         flowView.invalidate();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("matchKey", key);
@@ -1275,6 +1302,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug1cf0c7Log.log(actions.activity(),
                     "FlowScreenHost.syncCarouselToNowPlayingIfActive", "synced", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return true;
     }
@@ -1373,6 +1401,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             item = flowView.itemAt(flowView.engine().getFocusIndex());
             if (item == null) return true;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("kind", item.kind.name());
@@ -1382,6 +1411,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 d.put("flipped", flowView.isFlipped());
                 DebugSessionLog.log("FlowScreenHost.handleCenterOk", "center ok", "H-OK", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (actions.isFlowOkOpensLibrary() && !flowView.isFlipped()) {
                 actions.openLibraryBrowse(item);
@@ -1399,6 +1429,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
 
     public boolean handleBack() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("uiMode", uiMode);
@@ -1411,6 +1442,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             d.put("musicActive", actions.isMusicPlaybackActive());
             FlowBackDebugLog.log("FlowScreenHost.handleBack", "entry", "H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (uiMode == UI_PICKER) {
             // #region agent log
@@ -1438,11 +1470,13 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         if (uiMode == UI_CAROUSEL) {
             boolean npReturn = tryReturnToNowPlayingOnBack();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("npReturnConsumed", npReturn);
                 FlowBackDebugLog.log("FlowScreenHost.handleBack", "carousel back", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (npReturn) return true;
             // #region agent log
@@ -1464,23 +1498,27 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
     private boolean tryReturnToNowPlayingOnBack() {
         if (!isNowPlayingBackReturnEnabled() || !actions.isMusicPlaybackActive()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("enabled", isNowPlayingBackReturnEnabled());
                 d.put("musicActive", actions.isMusicPlaybackActive());
                 FlowBackDebugLog.log("FlowScreenHost.tryReturnToNowPlayingOnBack", "skip disabled", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
         if (actions.isFlowHandoffAnimating() || isHandoffOrFlipAnimating()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("handoffAnim", actions.isFlowHandoffAnimating());
                 d.put("flipHandoff", isHandoffOrFlipAnimating());
                 FlowBackDebugLog.log("FlowScreenHost.tryReturnToNowPlayingOnBack", "blocked animating", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -1495,11 +1533,13 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         int playingIdx = flowView.engine().findIndexForKey(catalog, nowPlayingBackMatchKey);
         if (playingIdx < 0) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("matchKey", nowPlayingBackMatchKey);
                 FlowBackDebugLog.log("FlowScreenHost.tryReturnToNowPlayingOnBack", "key not in catalog", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             clearNowPlayingBackReturn();
             return false;
@@ -1510,12 +1550,14 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 : flowView.engine().getFocusIndex();
         if (current != playingIdx || flowView.engine().isAnimating()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("current", current);
                 d.put("playingIdx", playingIdx);
                 FlowBackDebugLog.log("FlowScreenHost.tryReturnToNowPlayingOnBack", "guided scroll start", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             flowView.animateScrollToIndexForHandoff(playingIdx, new Runnable() {
                 @Override
@@ -1543,6 +1585,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             Runnable onComplete) {
         if (flowView == null || cover == null || cover.isRecycled()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("flowViewNull", flowView == null);
@@ -1552,10 +1595,12 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                         "FlowScreenHost.performNpToFlowHandoffFromNowPlaying",
                         "ABORT — morph cannot start", "H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("warm", warmState != null);
@@ -1564,6 +1609,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug898913Log.log(
                     "FlowScreenHost.performNpToFlowHandoffFromNowPlaying", "morph prep start", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         syncCarouselToNowPlayingIfActive();
         if (warmState != null) {
@@ -1599,6 +1645,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
     private void performNowPlayingHandoffFromCarousel() {
         if (flowView == null || !actions.isMusicPlaybackActive()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("flowViewNull", flowView == null);
@@ -1606,6 +1653,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 FlowBackDebugLog.log("FlowScreenHost.performNowPlayingHandoffFromCarousel",
                         "early return no-op", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -1748,6 +1796,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             final String focusKey, final int loadGen, final long showCarouselStartMs) {
         if (items == null || items.isEmpty()) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("size", items.size());
@@ -1756,6 +1805,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug898913Log.log("FlowScreenHost.bindCarouselWithWorkerWarm",
                     "warm bind", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         bindCarouselCatalog(items, mode, focusKey, loadGen);
         logShowCarouselTiming(showCarouselStartMs, true, items.size());
@@ -1794,6 +1844,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             @Override
             public void run() {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("mode", mode != null ? mode.name() : "null");
@@ -1803,6 +1854,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                     com.solar.launcher.Debug898913Log.log("FlowScreenHost.scheduleCatalogRebuild",
                             "rebuild worker start", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (buildGen != catalogBuildGen) {
                     return;
@@ -1824,6 +1876,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                     public void run() {
                         if (err != null) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("mode", mode != null ? mode.name() : "null");
@@ -1833,12 +1886,14 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                                         "FlowScreenHost.scheduleCatalogRebuild",
                                         "catalog build failed", "H-LOAD", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             hideCarouselLoading();
                             return;
                         }
                         if (buildGen != catalogBuildGen || loadGen != carouselLoadGen) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("loadGen", loadGen);
@@ -1850,6 +1905,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                                         "FlowScreenHost.scheduleCatalogRebuild",
                                         "stale rebuild discarded", "H-LOAD", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             recoverOrphanedCarouselLoader(mode, focusKey, libGen, optionsKey);
                             return;
@@ -1919,6 +1975,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             return built;
         } catch (Throwable t) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("mode", mode != null ? mode.name() : "null");
@@ -1927,6 +1984,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 d.put("message", t.getMessage() != null ? t.getMessage() : "");
                 DebugSessionLog.log("FlowScreenHost.buildCatalog", "build failed", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             throw t;
         }
@@ -2006,6 +2064,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
 
     private void bindCarouselCatalog(List<FlowItem> built, FlowMode mode, String focusKey, int loadGen) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("flowViewNull", flowView == null);
@@ -2015,6 +2074,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug898913Log.log("FlowScreenHost.bindCarouselCatalog",
                     "bind entry", "H1,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (flowView == null) {
             // #region agent log
@@ -2026,6 +2086,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         }
         if (loadGen != carouselLoadGen) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("loadGen", loadGen);
@@ -2034,6 +2095,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                 com.solar.launcher.Debug898913Log.log("FlowScreenHost.bindCarouselCatalog",
                         "stale bind skipped", "H-LOAD", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // Orphan loader when a newer rebind superseded this bind.
             if (flowLoadingVisible) hideCarouselLoading();
@@ -2065,6 +2127,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         ensureFlowBlockingOverlayDismissed();
         flowView.requestFocus();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("mode", mode.name());
@@ -2084,9 +2147,11 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug1cf0c7Log.log(actions.activity(),
                     "FlowScreenHost.bindCarouselCatalog", "bound", "H-A-H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         schedulePostBindCoverWarm(catalog, index, loadGen);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("mode", mode.name());
@@ -2095,12 +2160,14 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             d.put("loadingOverlayUsed", flowLoadingVisible);
             DebugSessionLog.log("FlowScreenHost.showCarousel", "carousel ready", "H1-H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
     private void showCarouselLoading() {
         flowLoadingVisible = true;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("asyncBuild", true);
@@ -2109,6 +2176,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             com.solar.launcher.Debug1cf0c7Log.log(actions.activity(),
                     "FlowScreenHost.showCarouselLoading", "catalog loading", "H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         actions.showFlowLoading(actions.activity().getString(R.string.flow_starting));
     }
@@ -2117,12 +2185,14 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
         if (!flowLoadingVisible) return;
         flowLoadingVisible = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("catalogSize", catalog != null ? catalog.size() : 0);
             com.solar.launcher.Debug898913Log.log("FlowScreenHost.hideCarouselLoading",
                     "catalog loading hidden", "H-LOAD", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         actions.hideFlowLoading();
     }

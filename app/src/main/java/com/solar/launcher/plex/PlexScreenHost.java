@@ -457,12 +457,14 @@ public final class PlexScreenHost {
 
     private void bindFastList(List<PlexBrowseRow> rows, List<String> indexNames) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("uiMode", uiMode);
             d.put("rowCount", rows.size());
             AgentDebugLog.log("PlexScreenHost.bindFastList", "B", "list bind", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         actions.showFastListBrowse();
         actions.setScrollIndexNames(indexNames);
@@ -504,6 +506,7 @@ public final class PlexScreenHost {
             openPlaylistSongs(row.playlist);
         } else if (row.kind == PlexBrowseRow.Kind.SONG && row.song != null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("songId", row.song.id != null ? row.song.id : "");
@@ -514,6 +517,7 @@ public final class PlexScreenHost {
                 com.solar.launcher.Debug5c1a93Log.log(
                         "PlexScreenHost.onRowClick", "song selected", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (!actions.requireInternet(R.string.plex_wifi_required)) return;
             int idx = indexOfSongRow(row.song);

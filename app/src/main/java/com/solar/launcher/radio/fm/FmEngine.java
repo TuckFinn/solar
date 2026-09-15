@@ -835,6 +835,7 @@ public final class FmEngine {
       }
       mute(false);
       // #region agent log
+      if (com.solar.launcher.debug.DebugGate.ON) {
       try {
         org.json.JSONObject d = new org.json.JSONObject();
         d.put("mhz", mhz);
@@ -843,6 +844,7 @@ public final class FmEngine {
         com.solar.launcher.debug.SessionDebugLog.log(appCtx, "FmEngine.playStationViaService",
             "service tune + audio start", "F1", d);
       } catch (Exception ignored) {}
+      }
       // #endregion
     }
     return ok;

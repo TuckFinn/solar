@@ -75,6 +75,7 @@ public final class MoveRibbonTouch {
                 disallowParentIntercept(row, true);
                 setSessionActive(true);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("gen", sessionGen);
@@ -82,6 +83,7 @@ public final class MoveRibbonTouch {
                     com.solar.launcher.debug.Debug31d3d8Log.log(row.getContext(),
                             "MoveRibbonTouch.lift", "touch reorder lift", "B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 callbacks.onLift();
             }
@@ -148,6 +150,7 @@ public final class MoveRibbonTouch {
                         setSessionActive(true);
                         disallowParentIntercept(v, true);
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("gen", sessionGen);
@@ -155,6 +158,7 @@ public final class MoveRibbonTouch {
                             com.solar.launcher.debug.Debug31d3d8Log.log(v.getContext(),
                                     "MoveRibbonTouch.dragDown", "active drag start", "A,C", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return true;
                     case MotionEvent.ACTION_MOVE:
@@ -177,12 +181,14 @@ public final class MoveRibbonTouch {
                             tracking[0] = false;
                             disallowParentIntercept(v, false);
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("gen", sessionGen);
                                 com.solar.launcher.debug.Debug31d3d8Log.log(v.getContext(),
                                         "MoveRibbonTouch.dragUp", "active drag confirm", "A,B", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             callbacks.onConfirm();
                             setSessionActive(false);
@@ -194,12 +200,14 @@ public final class MoveRibbonTouch {
                         disallowParentIntercept(v, false);
                         setSessionActive(false);
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("gen", sessionGen);
                             com.solar.launcher.debug.Debug31d3d8Log.log(v.getContext(),
                                     "MoveRibbonTouch.dragCancel", "active drag cancel", "A,C", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return true;
                     default:

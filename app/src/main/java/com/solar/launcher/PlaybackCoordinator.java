@@ -386,6 +386,7 @@ public final class PlaybackCoordinator {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             PlexSong probe = songs.get(clamped);
             org.json.JSONObject d = new org.json.JSONObject();
@@ -397,6 +398,7 @@ public final class PlaybackCoordinator {
             com.solar.launcher.debug.Debug2241b1Log.log(
                     "PlaybackCoordinator.activatePlex", "queue carries part meta", "A", "post-fix", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         queue.setAll(items, qStart);
     }

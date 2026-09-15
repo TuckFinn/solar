@@ -19,12 +19,14 @@ public final class SystemUiUsbSuppressor {
     public static void dismissIfNeeded(final Context context) {
         if (context == null) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("noop", true);
             Debug050a40Log.log(context, "SystemUiUsbSuppressor.dismissIfNeeded",
                     "no-op — never dismiss stock USB", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

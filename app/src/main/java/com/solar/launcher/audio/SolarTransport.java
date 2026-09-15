@@ -132,6 +132,7 @@ public final class SolarTransport {
         playing = autoStart;
         layerMode = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("file", file != null ? file.getName() : "null");
@@ -142,6 +143,7 @@ public final class SolarTransport {
             d.put("hasPreparedNext", preparedNext != null);
             com.solar.launcher.Debug290fecLog.log("SolarTransport.playFile", "playFile intent", "H2,H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         audio.post(new Runnable() {
             @Override
@@ -309,6 +311,7 @@ public final class SolarTransport {
     public void pause() {
         playing = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("layerMode", layerMode);
@@ -317,6 +320,7 @@ public final class SolarTransport {
             d.put("hasPreparedNext", preparedNext != null);
             com.solar.launcher.Debug290fecLog.log("SolarTransport.pause", "pause intent", "H1,H2,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         audio.post(new Runnable() {
             @Override
@@ -328,12 +332,14 @@ public final class SolarTransport {
                     active.pause();
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d2 = new org.json.JSONObject();
                     d2.put("activePlayingAfter", active != null && active.isPlaying());
                     d2.put("idlePlayingAfter", idleSlot() != null && idleSlot().isPlaying());
                     com.solar.launcher.Debug290fecLog.log("SolarTransport.pause", "pause after", "H2", d2);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 notifyPlaybackStateChanged();
             }
@@ -619,6 +625,7 @@ public final class SolarTransport {
                     boolean attached = false;
                     if (active != null) attached = active.attachNextMediaPlayer(d);
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d0 = new org.json.JSONObject();
                         d0.put("role", "preparedNext");
@@ -629,6 +636,7 @@ public final class SolarTransport {
                         com.solar.launcher.Debug290fecLog.log("SolarTransport.onReady",
                                 "next slot ready", "H2,H5", d0);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return;
                 }
@@ -638,6 +646,7 @@ public final class SolarTransport {
                 pendingSeekMs = -1;
                 if (seek > 0) d.seekTo(seek);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d1 = new org.json.JSONObject();
                     d1.put("role", "active");
@@ -647,6 +656,7 @@ public final class SolarTransport {
                     com.solar.launcher.Debug290fecLog.log("SolarTransport.onReady",
                             "active ready", "H2,H4,H5", d1);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (playing) d.start();
                 notifyPrepared();
@@ -704,6 +714,7 @@ public final class SolarTransport {
 
     private void clearPreparedNextLocked() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             TransportDeck idle = idleSlot();
             org.json.JSONObject d = new org.json.JSONObject();
@@ -714,6 +725,7 @@ public final class SolarTransport {
             com.solar.launcher.Debug290fecLog.log("SolarTransport.clearPreparedNext",
                     "clear next ptr only", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         preparedNext = null;
         nextSlotReady = false;

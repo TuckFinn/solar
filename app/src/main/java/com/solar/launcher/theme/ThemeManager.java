@@ -944,6 +944,7 @@ public class ThemeManager {
         blockSdcardThemeAssets = true;
         releaseSdcardFileHandles();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             ThemeEntry t = getCurrentTheme();
@@ -952,6 +953,7 @@ public class ThemeManager {
             com.solar.launcher.DebugSessionLog.log(
                     "ThemeManager.prepareThemeForUsbStorage", "mmc cache ready", "H-THEME-MMC", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         warmOverlayThemeCache(ctx);
     }
@@ -2745,6 +2747,7 @@ public class ThemeManager {
             // #endregion
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             if (relativePath != null && (relativePath.contains("Music")
                     || relativePath.contains("Videos")
@@ -2767,6 +2770,7 @@ public class ThemeManager {
                         "ThemeManager.decodeThemeBitmapForEntry", "decode", "B,C,E", d);
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
         return bmp;
     }

@@ -124,6 +124,7 @@ public class Y1SafeListView extends ListView {
             super.draw(canvas);
         } catch (Throwable t) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("sdk", android.os.Build.VERSION.SDK_INT);
@@ -131,6 +132,7 @@ public class Y1SafeListView extends ListView {
                 d.put("h", getHeight());
                 DebugLibraryMenuLog.logError("Y1SafeListView.draw", "draw fallback", "H1", t, d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             final int scrollX = getScrollX();
             final int scrollY = getScrollY();

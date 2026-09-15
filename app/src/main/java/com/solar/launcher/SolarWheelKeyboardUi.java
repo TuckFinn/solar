@@ -264,6 +264,7 @@ public final class SolarWheelKeyboardUi {
                 @Override
                 public void onClick(View v) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("offset", offset);
@@ -273,6 +274,7 @@ public final class SolarWheelKeyboardUi {
                         Debug670453Log.log(slot != null ? slot.getContext() : null,
                                 "SolarWheelKeyboardUi.attachTouchSlots", "activate click", "H5", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     if (drag.consumedAsDrag()) return;
                     int len = host.charsetLength();

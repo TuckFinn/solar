@@ -49,6 +49,7 @@ public final class SolarImeDismiss {
         }
         boolean textLike = isTextLikeInput(info.inputType);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("pkg", pkg);
@@ -60,6 +61,7 @@ public final class SolarImeDismiss {
             d.put("inputType", DebugImeLog.inputTypeFields(info.inputType));
             DebugImeLog.log(null, "SolarImeDismiss.shouldShowSystemImeTray", "gate", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return textLike;
     }

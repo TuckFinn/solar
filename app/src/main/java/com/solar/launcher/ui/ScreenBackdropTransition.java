@@ -145,6 +145,7 @@ public final class ScreenBackdropTransition {
         resetSlotTransforms(backdropInSlot);
 
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("from", from);
@@ -153,6 +154,7 @@ public final class ScreenBackdropTransition {
             d.put("playerTarget", playerTarget);
             TransitionPerfLog.log("ScreenBackdropTransition.prepareIncoming", "ready", "E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

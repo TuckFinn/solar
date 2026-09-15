@@ -363,6 +363,7 @@ public final class LalalClient {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("source", source.getName());
@@ -377,6 +378,7 @@ public final class LalalClient {
             com.solar.launcher.Debug072d46Log.log(
                     "LalalClient.publishSoloSiblings", "published", "H-F", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -527,6 +529,7 @@ public final class LalalClient {
         File sibling = SoloStemPaths.findReadySibling(track, mode);
         if (sibling != null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", track.getName());
@@ -539,6 +542,7 @@ public final class LalalClient {
                 com.solar.launcher.Debug072d46Log.log(
                         "LalalClient.findReadySoloFile", "hit", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return sibling;
         }
@@ -550,6 +554,7 @@ public final class LalalClient {
                     : resolveInstrumentalFile(dir);
             if (f != null && f.isFile() && f.length() >= 100) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("track", track.getName());
@@ -562,12 +567,14 @@ public final class LalalClient {
                     com.solar.launcher.Debug072d46Log.log(
                             "LalalClient.findReadySoloFile", "hit", "H-B,H-E", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return f;
             }
         }
         File fromFull = findSoloFromFullStems(ctx, track, mode, cache);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("track", track.getName());
@@ -579,6 +586,7 @@ public final class LalalClient {
                     "LalalClient.findReadySoloFile",
                     fromFull != null ? "hit" : "miss", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return fromFull;
     }
@@ -1069,6 +1077,7 @@ public final class LalalClient {
         final CountDownLatch latch = new CountDownLatch(n);
         final long t0 = System.currentTimeMillis();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("stemCount", n);
@@ -1080,6 +1089,7 @@ public final class LalalClient {
                     "STEM_DL",
                     d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         ExecutorService pool = Executors.newFixedThreadPool(Math.min(n, 6));
         try {
@@ -1100,6 +1110,7 @@ public final class LalalClient {
                             slots[idx] = new StemFile(id, labelForStemId(id), dest, zone);
                             int done = finished.incrementAndGet();
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("id", id);
@@ -1113,6 +1124,7 @@ public final class LalalClient {
                                         "STEM_DL",
                                         d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             if (progress != null) {
                                 // Download band 70–87.
@@ -1143,6 +1155,7 @@ public final class LalalClient {
             out.add(slots[i]);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("totalMs", System.currentTimeMillis() - t0);
@@ -1168,6 +1181,7 @@ public final class LalalClient {
                     "B",
                     d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return out;
     }
@@ -1285,6 +1299,7 @@ public final class LalalClient {
         body.put("presets", presets);
 
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("stem_list", listCsv.toString());
@@ -1296,6 +1311,7 @@ public final class LalalClient {
                     "H-A",
                     d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         Request req = new Request.Builder()
@@ -1309,6 +1325,7 @@ public final class LalalClient {
         try {
             String text = bodyString(resp);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("http", resp.code());
@@ -1321,6 +1338,7 @@ public final class LalalClient {
                         resp.code() == 422 ? "H-A" : "H-C",
                         d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             checkLalalError(resp, text, "Multistem");
             JSONObject json = new JSONObject(text);
@@ -1643,6 +1661,7 @@ public final class LalalClient {
     public static List<StemFile> loadCached(File dir, boolean premixExperimental) {
         List<StemFile> flex = loadStemDirFlexible(dir);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("dir", dir != null ? dir.getName() : "");
@@ -1667,6 +1686,7 @@ public final class LalalClient {
                     premixExperimental ? "C" : "A",
                     d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (premixExperimental) {
             int others = 0;
@@ -1746,6 +1766,7 @@ public final class LalalClient {
             if (byZone[z] != null) out.add(byZone[z]);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("z3Candidates", z3Ids.toString());
@@ -1768,6 +1789,7 @@ public final class LalalClient {
                     "A",
                     d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return out;
     }
@@ -2081,6 +2103,7 @@ public final class LalalClient {
         if (track == null || !track.isFile()) return null;
         if (userStemsReady(track)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", track.getName());
@@ -2090,6 +2113,7 @@ public final class LalalClient {
                 com.solar.launcher.Debug8b0481Log.log(
                         "LalalClient.findReadyStemDir", "hit", "H-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return userStemsDir(track);
         }
@@ -2097,6 +2121,7 @@ public final class LalalClient {
         File hit = firstReadyAmong(stemCacheCandidates(ctx, track, preferPremix, appCache));
         if (hit != null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", track.getName());
@@ -2108,6 +2133,7 @@ public final class LalalClient {
                 com.solar.launcher.Debug8b0481Log.log(
                         "LalalClient.findReadyStemDir", "hit", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             writeTrackMarkerIfOwned(hit, track);
             return hit;
@@ -2115,6 +2141,7 @@ public final class LalalClient {
         hit = firstReadyAmong(stemCacheCandidates(ctx, track, !preferPremix, appCache));
         if (hit != null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", track.getName());
@@ -2125,6 +2152,7 @@ public final class LalalClient {
                 com.solar.launcher.Debug8b0481Log.log(
                         "LalalClient.findReadyStemDir", "hit", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             writeTrackMarkerIfOwned(hit, track);
             return hit;
@@ -2132,6 +2160,7 @@ public final class LalalClient {
         hit = scanStemRootsForTrack(ctx, track, appCache, preferPremix);
         if (hit != null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", track.getName());
@@ -2142,6 +2171,7 @@ public final class LalalClient {
                 com.solar.launcher.Debug8b0481Log.log(
                         "LalalClient.findReadyStemDir", "hit", "H-C,H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             writeTrackMarkerIfOwned(hit, track);
             return hit;
@@ -2149,6 +2179,7 @@ public final class LalalClient {
         hit = scanStemRootsForTrack(ctx, track, appCache, !preferPremix);
         if (hit != null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", track.getName());
@@ -2159,10 +2190,12 @@ public final class LalalClient {
                 com.solar.launcher.Debug8b0481Log.log(
                         "LalalClient.findReadyStemDir", "hit", "H-C,H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             writeTrackMarkerIfOwned(hit, track);
         } else {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", track.getName());
@@ -2171,6 +2204,7 @@ public final class LalalClient {
                 com.solar.launcher.Debug8b0481Log.log(
                         "LalalClient.findReadyStemDir", "miss will Lalal", "H-E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         return hit;
@@ -2295,6 +2329,7 @@ public final class LalalClient {
                         }
                     }
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject dlog = new org.json.JSONObject();
                         dlog.put("track", track.getName());
@@ -2304,6 +2339,7 @@ public final class LalalClient {
                         com.solar.launcher.Debug8b0481Log.log(
                                 "LalalClient.scanStemRootsForTrack", "candidate", "H-C", dlog);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 }
                 // Duration fallback removed 2026-07-19 (H-D false positives).

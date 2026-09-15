@@ -388,6 +388,7 @@ public class SolarApplication extends Application {
                     }
                     MediaButtonRegistrar.ensureRegistered(SolarApplication.this);
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("homeTarget", homeTarget);
@@ -396,6 +397,7 @@ public class SolarApplication extends Application {
                         DebugE93bdbLog.log("SolarApplication.bootstrap",
                                 "alternate HOME boot arm", "H2", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 }
                 LauncherSwitch.ensurePreferredHome(SolarApplication.this);
@@ -430,11 +432,13 @@ public class SolarApplication extends Application {
                 OverlayKeyGate.disarmStaleIfNeeded(SolarApplication.this);
                 ThemeManager.markAppThemeBootstrapComplete();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("bootstrapMs", System.currentTimeMillis());
                     Debug86bbe0Log.log("SolarApplication.bootstrap", "complete", "H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         }, "SolarAppBootstrap").start();

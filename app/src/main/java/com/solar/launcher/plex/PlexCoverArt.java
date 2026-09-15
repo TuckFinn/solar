@@ -69,6 +69,7 @@ public final class PlexCoverArt {
                         return;
                     }
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("coverArtId", coverArtId);
@@ -78,6 +79,7 @@ public final class PlexCoverArt {
                         com.solar.launcher.debug.AgentDebugLog.log(
                                 "PlexCoverArt.load", "E", "cover decoded", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     postBitmap(listener, bmp);
                 } catch (Exception e) {

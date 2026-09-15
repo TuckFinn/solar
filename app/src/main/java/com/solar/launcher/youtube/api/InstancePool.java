@@ -285,6 +285,7 @@ public final class InstancePool {
                     android.util.Log.i("SolarYouTube", "meta ok backend=" + b.getName()
                             + " host=" + b.getHost() + " n=" + v.size());
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("backend", b.getName());
@@ -297,6 +298,7 @@ public final class InstancePool {
                         com.solar.launcher.Debug712c71Log.log(
                                 "InstancePool.runMetadata", "meta ok", "B", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return v;
                 }
@@ -336,6 +338,7 @@ public final class InstancePool {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("tried", tried);
@@ -348,6 +351,7 @@ public final class InstancePool {
             com.solar.launcher.Debug712c71Log.log(
                     "InstancePool.runMetadata", "meta exhausted", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (last != null) throw last;
         return new ArrayList<YouTubeVideo>();
