@@ -19,6 +19,16 @@ public final class WirelessAdbEnabler {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                // 2026-09-15 — Use the already-configured guard the class defines but never
+                // called. Without it every launcher start ran the whole block and ended it
+                // with "stop adbd; start adbd; setprop ctl.restart adbd" — three restarts of
+                // the debug daemon, from three callers (SolarApplication, BootReceiver,
+                // MainActivity), even when network debugging was already up and healthy.
+                // That is enough to drop an in-flight adb session: during this session the
+                // transport died mid-command repeatedly, and a TCP entry went stale to
+                // "offline" the moment the launcher restarted. Nothing below changes any
+                // setting when the port is already 5555 and adbd is running.
+                if (isPort5555AndRunning()) return;
                 if (!canRunSu()) return;
                 String randomId = prefs.getString("adb_id_randomized_value_v1", null);
                 if (randomId == null) {
