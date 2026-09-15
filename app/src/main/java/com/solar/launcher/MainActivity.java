@@ -1276,10 +1276,19 @@ public class MainActivity extends Activity {
     private final Runnable globalPpHeartHoldRunnable = new Runnable() {
         @Override
         public void run() {
+            android.util.Log.i("SolarHeart", "heart runnable reached");
             triggerNavidromeHeartHoldIfEligible();
         }
     };
     private void triggerNavidromeHeartHoldIfEligible() {
+        // 2026-09-15 — Both early returns below were silent, so on the device "never
+        // fired" and "fired then bailed" looked identical: no SolarHeart line either
+        // way. Print the live queue item up front so the two are separable.
+        PlayQueue.QueueItem curDbg = playback.currentItem();
+        android.util.Log.i("SolarHeart", "hold fired: flowHandled=" + globalPpLongFlowHandled
+                + " kind=" + (curDbg == null ? "null" : String.valueOf(curDbg.kind))
+                + " navId=" + (curDbg == null ? "-" : String.valueOf(curDbg.navidromeSongId))
+                + " screen=" + currentScreenState);
         if (globalPpLongFlowHandled) return;
         final PlayQueue.QueueItem cur = playback.currentItem();
         if (cur == null || cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
