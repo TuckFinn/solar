@@ -751,7 +751,7 @@ public final class FlowView extends View {
                     callback.prefetchCarouselCovers(engine.getVisualCenterIndex(), 5);
                 }
                 // #region agent log
-                if (com.solar.launcher.DebugSessionLog.ENABLED) {
+                if (com.solar.launcher.debug.DebugGate.ON && com.solar.launcher.DebugSessionLog.ENABLED) {
                     if (now - lastScrollWheelLogMs >= 300L) {
                         lastScrollWheelLogMs = now;
                         try {
@@ -1740,7 +1740,7 @@ public final class FlowView extends View {
                 reflectH = skipReflect ? 0f : metrics.reflectHeight * coverScale;
                 deferScreenReflection = REFLECTION_SCREEN_SPACE && !skipReflect && reflectH > 0f;
                 // #region agent log
-                if (isVisualCenter && com.solar.launcher.Debug898913Log.ENABLED
+                if (com.solar.launcher.debug.DebugGate.ON && isVisualCenter && com.solar.launcher.Debug898913Log.ENABLED
                         && System.currentTimeMillis() - debugReflectLogMs > 800L) {
                     debugReflectLogMs = System.currentTimeMillis();
                     try {
@@ -1903,7 +1903,7 @@ public final class FlowView extends View {
         flip.setMaxVisibleRows(maxFit);
 
         // #region agent log
-        if (!debugBackFaceLogged) {
+        if (com.solar.launcher.debug.DebugGate.ON && !debugBackFaceLogged) {
             debugBackFaceLogged = true;
             try {
                 org.json.JSONObject d = new org.json.JSONObject();

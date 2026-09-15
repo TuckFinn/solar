@@ -363,7 +363,7 @@ public final class UsbHostSessionPolicy {
         boolean allow = host && !dismissed && !evaluated && settle;
         // #region agent log
         // Throttle: gate is hot; log only when decision would allow (first plug) or flips deny.
-        if (allow || evaluated || dismissed) {
+        if (com.solar.launcher.debug.DebugGate.ON && allow || evaluated || dismissed) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("host", host);

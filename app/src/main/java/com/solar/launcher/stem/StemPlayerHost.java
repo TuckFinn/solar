@@ -1837,7 +1837,7 @@ public final class StemPlayerHost {
         // Pad routing changed (cycle) → dominance may flip. 2026-08-02
         recomputeDominantSong();
         // #region agent log
-        if (session.songCount() >= 2) {
+        if (com.solar.launcher.debug.DebugGate.ON && session.songCount() >= 2) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("zone", zone);

@@ -121,7 +121,7 @@ public final class RockboxForegroundMonitor implements Runnable {
             MediaButtonRegistrar.ensureRegistered(appContext);
             ExternalInputHandoff.armJjShim(appContext);
             // #region agent log
-            if (fgChanged) {
+            if (com.solar.launcher.debug.DebugGate.ON && fgChanged) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("fg", fg);

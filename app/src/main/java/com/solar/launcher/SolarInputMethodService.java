@@ -181,7 +181,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             public boolean onTouch(View v, MotionEvent event) {
                 boolean consumed = a5EdgeGestures != null && a5EdgeGestures.process(event);
                 // #region agent log
-                if (event != null && event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                if (com.solar.launcher.debug.DebugGate.ON && event != null && event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("x", event.getX());

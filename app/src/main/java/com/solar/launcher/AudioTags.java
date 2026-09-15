@@ -104,7 +104,7 @@ public final class AudioTags {
         resolveArtist(info, file.getName());
 
         // #region agent log
-        if (DebugAgentLog.ENABLED) {
+        if (com.solar.launcher.debug.DebugGate.ON && DebugAgentLog.ENABLED) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("file", file.getName());

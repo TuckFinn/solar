@@ -414,7 +414,7 @@ public final class MixPlayerHost {
             return true;
         }
         // #region agent log
-        if (action == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+        if (com.solar.launcher.debug.DebugGate.ON && action == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);

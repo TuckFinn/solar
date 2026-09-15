@@ -1961,7 +1961,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
                         actions.podcastShows());
             }
             // #region agent log
-            if (buildStartMs > 0L) {
+            if (com.solar.launcher.debug.DebugGate.ON && buildStartMs > 0L) {
                 try {
                     JSONObject d = new JSONObject();
                     d.put("mode", mode != null ? mode.name() : "null");
@@ -2618,7 +2618,7 @@ public final class FlowScreenHost implements FlowView.Callback, FlowCoverResolve
             }
         }
         // #region agent log
-        if (warmStartMs > 0L) {
+        if (com.solar.launcher.debug.DebugGate.ON && warmStartMs > 0L) {
             long warmMs = System.currentTimeMillis() - warmStartMs;
             if (warmMs > 8L || warmed > 0) {
                 try {

@@ -1895,7 +1895,7 @@ public final class ThemedContextMenu {
         }
         // #endregion
         // #region agent log
-        if (overlay != null) {
+        if (com.solar.launcher.debug.DebugGate.ON && overlay != null) {
             overlay.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -3393,7 +3393,7 @@ public final class ThemedContextMenu {
             itemsHost.setPadding(0, 0, 0, 0);
         }
         // #region agent log
-        if (queueMode) {
+        if (com.solar.launcher.debug.DebugGate.ON && queueMode) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("padBefore", padBefore);

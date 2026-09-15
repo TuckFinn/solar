@@ -319,7 +319,7 @@ public class SolarApplication extends Application {
         DebugImeLog.ENABLED = false;
         Debug62b1bbLog.ENABLED = false;
         // #region agent log
-        if (DebugPerfLog.ENABLED) {
+        if (com.solar.launcher.debug.DebugGate.ON && DebugPerfLog.ENABLED) {
             DebugPerfLog.markStart();
             final android.os.Handler perfHandler = new android.os.Handler(android.os.Looper.getMainLooper());
             final Runnable perfSampler = new Runnable() {
@@ -413,7 +413,7 @@ public class SolarApplication extends Application {
                 UsbMassStorageController.ensureStockMtpWhenExperimentOff(SolarApplication.this);
                 UsbStorageSessionFlags.syncUsbSessionSysprops(SolarApplication.this);
                 // #region agent log
-                if (DeviceFeatures.isY1()) {
+                if (com.solar.launcher.debug.DebugGate.ON && DeviceFeatures.isY1()) {
                     try {
                         org.json.JSONObject d = Debug705932Log.usbSnapshot();
                         d.put("experimentOn", UsbMassStorageExperiment.isEnabled(SolarApplication.this));
