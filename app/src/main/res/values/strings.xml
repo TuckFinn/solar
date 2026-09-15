@@ -742,6 +742,8 @@
     <string name="plex_wifi_required">Wi‑Fi required for Plex streaming</string>
     <string name="plex_stream_fail">Could not play this Plex track</string>
     <string name="navidrome_stream_fail">Could not play this Navidrome track</string>
+    <string name="navidrome_hearted">♥ %1$s</string>
+    <string name="navidrome_heart_failed">Could not heart this track</string>
     <string name="path_plex_artists">Plex / Artists</string>
     <string name="path_plex_root">Plex</string>
     <string name="path_plex_all_albums">Plex / Albums</string>

@@ -287,6 +287,28 @@ public final class NavidromeClient {
         });
     }
 
+    /**
+     * 2026-09-14: Heart the song — Subsonic star.view. Used by the Play/Pause hold on Now
+     * Playing while a Navidrome stream is active. The server decides what a star means
+     * (Navidrome: starred; nookTunes' shim: favourite + Get Music history + Hearts playlist).
+     */
+    public void star(final String songId, final Callback<Boolean> cb) {
+        executor.execute(new Runnable() {
+            @Override public void run() {
+                try {
+                    JSONObject root = fetchJson(buildUrl("star", "id=" + enc(songId)));
+                    JSONObject sr = root.getJSONObject("subsonic-response");
+                    if (!"ok".equals(sr.getString("status"))) {
+                        postError(cb, extractError(root));
+                        return;
+                    }
+                    postSuccess(cb, Boolean.TRUE);
+                } catch (final Exception e) {
+                    postError(cb, e.getMessage());
+                }
+            }
+        });
+    }
     /** 2026-07-06: Flat song catalog — search3 wildcard, songs only (cap 500). */
     public void getAllTracks(final Callback<List<NavidromeSong>> cb) {
         executor.execute(new Runnable() {

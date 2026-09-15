@@ -1265,6 +1265,55 @@ public class MainActivity extends Activity {
             triggerGlobalPpFlowHoldIfEligible();
         }
     };
+    /**
+     * 2026-09-14 — Heart on Play/Pause hold while a Navidrome stream plays. A hold of
+     * FLOW_LAUNCH_HOLD_MS already suppresses the play/pause toggle on key-up, and Flow only
+     * claims it for local library albums, so for server streams the hold was a no-op. Now it
+     * stars the current song on the server (Subsonic star.view); the server decides what a
+     * star means. Short buzz + toast on success, long buzz on failure. Replaces the
+     * getevent-based init.d heart hook that did the same through nookTunes' API.
+     */
+    private final Runnable globalPpHeartHoldRunnable = new Runnable() {
+        @Override
+        public void run() {
+            triggerNavidromeHeartHoldIfEligible();
+        }
+    };
+    private void triggerNavidromeHeartHoldIfEligible() {
+        if (globalPpLongFlowHandled) return;
+        PlayQueue.QueueItem cur = playback.currentItem();
+        if (cur == null || cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
+                || cur.navidromeSongId == null || cur.navidromeSongId.isEmpty()) {
+            return;
+        }
+        globalPpLongFlowHandled = true; // consume the hold: no play/pause toggle on key-up
+        clearFlowHoldThrobber();
+        hideNpLiveHoldHint();
+        heartVibrate(120L);
+        final String title = cur.navidromeTitle != null ? cur.navidromeTitle : "";
+        com.solar.launcher.navidrome.NavidromeClient.getInstance().star(cur.navidromeSongId,
+                new com.solar.launcher.navidrome.NavidromeClient.Callback<Boolean>() {
+            @Override public void onSuccess(Boolean ok) {
+                Toast.makeText(MainActivity.this,
+                        getString(R.string.navidrome_hearted, title), Toast.LENGTH_SHORT).show();
+            }
+            @Override public void onError(String message) {
+                heartVibrate(600L);
+                Toast.makeText(MainActivity.this,
+                        getString(R.string.navidrome_heart_failed), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    /** Heart feedback needs a longer buzz than vibrateCached()'s 25 ms cap. */
+    private void heartVibrate(long ms) {
+        if (!isVibrationEnabled) return;
+        try {
+            if (cachedVibrator == null) {
+                cachedVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            }
+            if (cachedVibrator != null) cachedVibrator.vibrate(ms);
+        } catch (Exception ignored) {}
+    }
     private int startupMountRetryAttempt = 0;
     private final Handler startupMountHandler = new Handler();
     private final Handler persistQueueHandler = new Handler();
@@ -29479,12 +29528,18 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             globalPpKeyDownAt = System.currentTimeMillis();
             globalPpLongFlowHandled = false;
             clockHandler.removeCallbacks(globalPpFlowHoldRunnable);
+            clockHandler.removeCallbacks(globalPpHeartHoldRunnable);
             if (isFlowEnabled() && currentScreenState != STATE_FLOW) {
                 clockHandler.postDelayed(globalPpFlowHoldRunnable, FLOW_LAUNCH_HOLD_MS);
                 // 2026-07-18 — NP: keep holding Play/Pause for Flow tip while finger is down.
                 showNpLiveHoldHintForFlow();
                 // 2026-07-18 — Throbber from hold start until Flow paints (or abort).
                 armFlowHoldThrobber();
+            }
+            // 2026-09-14 — Heart hold for Navidrome streams (Flow never claims those).
+            PlayQueue.QueueItem heartCur = playback.currentItem();
+            if (heartCur != null && heartCur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM) {
+                clockHandler.postDelayed(globalPpHeartHoldRunnable, FLOW_LAUNCH_HOLD_MS);
             }
             // #region agent log
             if (com.solar.launcher.debug.DebugGate.ON) {
@@ -29568,6 +29623,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (currentScreenState == STATE_WIFI_KEYBOARD) return false;
         hideNpLiveHoldHint();
         clockHandler.removeCallbacks(globalPpFlowHoldRunnable);
+        clockHandler.removeCallbacks(globalPpHeartHoldRunnable);
         // 2026-07-18 — Abort Flow-hold throbber only when hold did not open Flow.
         // Was: nothing armed on PP hold. Keep FLOW_OPEN while handoff/open runs.
         if (!globalPpLongFlowHandled) {
