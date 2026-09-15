@@ -1281,7 +1281,7 @@ public class MainActivity extends Activity {
     };
     private void triggerNavidromeHeartHoldIfEligible() {
         if (globalPpLongFlowHandled) return;
-        PlayQueue.QueueItem cur = playback.currentItem();
+        final PlayQueue.QueueItem cur = playback.currentItem();
         if (cur == null || cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
                 || cur.navidromeSongId == null || cur.navidromeSongId.isEmpty()) {
             return;
@@ -1294,10 +1294,12 @@ public class MainActivity extends Activity {
         com.solar.launcher.navidrome.NavidromeClient.getInstance().star(cur.navidromeSongId,
                 new com.solar.launcher.navidrome.NavidromeClient.Callback<Boolean>() {
             @Override public void onSuccess(Boolean ok) {
+                android.util.Log.i("SolarHeart", "starred " + cur.navidromeSongId + " (" + title + ")");
                 Toast.makeText(MainActivity.this,
                         getString(R.string.navidrome_hearted, title), Toast.LENGTH_SHORT).show();
             }
             @Override public void onError(String message) {
+                android.util.Log.w("SolarHeart", "star failed for " + cur.navidromeSongId + ": " + message);
                 heartVibrate(600L);
                 Toast.makeText(MainActivity.this,
                         getString(R.string.navidrome_heart_failed), Toast.LENGTH_SHORT).show();
