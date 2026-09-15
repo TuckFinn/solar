@@ -39,6 +39,7 @@ public final class NavidromeScreenHost {
         boolean requireInternet(int messageRes);
         void openSearchKeyboard(String prefill);
         int getListSelectedPosition();
+        void setListSelectedPosition(int position);
         void applyListRowParams(View row, int heightPx);
         int rowHeightPx();
         void onRowFocused(NavidromeBrowseRow row);
@@ -122,6 +123,91 @@ public final class NavidromeScreenHost {
         }
     }
 
+    /**
+     * 2026-09-14: Re-show the level the user left — the owning playlist/album/list —
+     * instead of resetting to the root. Back from Now Playing used to land on the
+     * Navidrome root and force Playlists → selection → … all over again. Cached rows
+     * are re-bound without a server round trip; the playing song's row is focused when
+     * it is in the list. Levels with nothing cached reload as their entry points do.
+     * Was: changeScreen(STATE_NAVIDROME) always called open() → showRoot().
+     */
+    public void reopen(String focusSongId) {
+        if (!NavidromeClient.getInstance().isConfigured()) {
+            return;
+        }
+        switch (uiMode) {
+            case UI_SONGS:
+                if (songs.isEmpty()) {
+                    if (selectedPlaylist != null) {
+                        openPlaylistSongs(selectedPlaylist);
+                    } else if (selectedAlbum != null) {
+                        openSongs(selectedAlbum);
+                    } else {
+                        showRoot();
+                    }
+                    return;
+                }
+                if (selectedPlaylist != null) {
+                    showSongRows(selectedPlaylist.name);
+                } else if (selectedAlbum != null) {
+                    showSongRows(selectedAlbum.name);
+                } else {
+                    showRoot();
+                    return;
+                }
+                focusSong(focusSongId);
+                return;
+            case UI_TRACKS:
+                if (songs.isEmpty()) {
+                    loadAllTracks();
+                    return;
+                }
+                showSongRows(null);
+                focusSong(focusSongId);
+                return;
+            case UI_PLAYLISTS:
+                if (playlists.isEmpty()) {
+                    loadPlaylists();
+                } else {
+                    showPlaylistRows();
+                }
+                return;
+            case UI_ARTISTS:
+                if (artists.isEmpty()) {
+                    loadArtists();
+                } else {
+                    showArtistRows();
+                }
+                return;
+            case UI_ALBUMS:
+                if (albums.isEmpty()) {
+                    if (selectedArtist != null) {
+                        openAlbums(selectedArtist);
+                    } else {
+                        loadAlbums();
+                    }
+                } else {
+                    showAlbumRows(selectedArtist != null ? selectedArtist.name : null);
+                }
+                return;
+            case UI_SEARCH:
+                finishSearchKeyboard(searchQuery);
+                return;
+            default:
+                showRoot();
+        }
+    }
+    /** Song rows are bound 1:1 from {@link #songs}, so the list index is the song index. */
+    private void focusSong(String songId) {
+        if (songId == null || songId.isEmpty()) return;
+        for (int i = 0; i < songs.size(); i++) {
+            NavidromeSong s = songs.get(i);
+            if (s != null && songId.equals(s.id)) {
+                actions.setListSelectedPosition(i);
+                return;
+            }
+        }
+    }
     public NavidromeSong getFocusedSong() {
         if (uiMode != UI_SONGS && uiMode != UI_TRACKS) return null;
         int pos = actions.getListSelectedPosition();
