@@ -29533,22 +29533,19 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             globalPpLongFlowHandled = false;
             clockHandler.removeCallbacks(globalPpFlowHoldRunnable);
             clockHandler.removeCallbacks(globalPpHeartHoldRunnable);
-            // 2026-09-14 — Heart hold for Navidrome streams. Posted BEFORE the Flow hold so it
-            // runs first at the same delay and Flow then sees the hold as handled; on Home the
-            // Flow hold otherwise won the race and only showed "Nothing to show".
-            PlayQueue.QueueItem heartCur = playback.currentItem();
-            boolean heartArmed = heartCur != null && heartCur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM;
-            if (heartArmed) {
-                clockHandler.postDelayed(globalPpHeartHoldRunnable, FLOW_LAUNCH_HOLD_MS);
-            }
+            // 2026-09-15 — Always arm the heart and let it decide when it FIRES. Deciding
+            // here from playback.currentItem() read the queue before the hold completed: a
+            // track that was selected but not yet playing, or a hold started from Home,
+            // left no NAVIDROME_STREAM current item, so the heart was never posted and
+            // Flow ran alone and drew "Nothing to show". Posting it first also means that
+            // when it does fire it sets globalPpLongFlowHandled, which makes Flow's
+            // runnable a no-op at the same delay.
+            clockHandler.postDelayed(globalPpHeartHoldRunnable, FLOW_LAUNCH_HOLD_MS);
             if (isFlowEnabled() && currentScreenState != STATE_FLOW) {
                 clockHandler.postDelayed(globalPpFlowHoldRunnable, FLOW_LAUNCH_HOLD_MS);
-                if (!heartArmed) {
-                    // 2026-07-18 — NP: keep holding Play/Pause for Flow tip while finger is down.
-                    showNpLiveHoldHintForFlow();
-                    // 2026-07-18 — Throbber from hold start until Flow paints (or abort).
-                    armFlowHoldThrobber();
-                }
+                // The hint/throbber are Flow's; the heart shows its own toast instead.
+                showNpLiveHoldHintForFlow();
+                armFlowHoldThrobber();
             }
             // #region agent log
             if (com.solar.launcher.debug.DebugGate.ON) {
@@ -29571,6 +29568,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     /** Play/Pause long-hold — A–Z jump on song lists; else open Flow from home/library/NP. */
     private void triggerGlobalPpFlowHoldIfEligible() {
+        // 2026-09-15 — the heart runs first at the same delay; if it took the hold, stand down.
+        if (globalPpLongFlowHandled) return;
         if (globalPpLongFlowHandled || currentScreenState == STATE_FLOW) return;
         if (globalPpKeyDownAt <= 0) return;
         if (System.currentTimeMillis() - globalPpKeyDownAt < FLOW_LAUNCH_HOLD_MS) return;
