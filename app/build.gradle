@@ -90,7 +90,10 @@ android {
         targetSdk 35
         versionCode 3488287
         versionName "20260819-1007"
-        buildConfigField "boolean", "FEATURE_OTA_UPDATE", "true"
+        // SOLAR_DISABLE_OTA=1 builds a launcher that never offers/installs upstream OTA
+        // updates — for forks and test devices that must keep the build they were given.
+        // Unset (the default) keeps upstream behaviour.
+        buildConfigField "boolean", "FEATURE_OTA_UPDATE", (System.getenv("SOLAR_DISABLE_OTA") ? "false" : "true")
         buildConfigField "String", "OTA_UPDATES_URL", "\"https://thesolarproject.github.io/solar-update/updates.xml\""
         def podcastIndexKey = project.findProperty("PODCAST_INDEX_API_KEY") ?: ""
         def podcastIndexSecret = project.findProperty("PODCAST_INDEX_API_SECRET") ?: ""
@@ -121,6 +124,9 @@ android {
             signingConfig platformSigningRequested ? signingConfigs.platform : signingConfigs.debug
         }
         release {
+            // SOLAR_VERSION_SUFFIX (e.g. "-nook.1a2b3c4") is appended to versionName so the
+            // About screen and logs show which build a device runs. Unset = upstream naming.
+            versionNameSuffix(System.getenv("SOLAR_VERSION_SUFFIX") ?: "")
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig platformSigningRequested ? signingConfigs.platform : signingConfigs.debug
