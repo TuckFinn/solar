@@ -48,7 +48,19 @@ public final class WirelessAdbEnabler {
             @Override
             public void run() {
                 SharedPreferences prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-                if (prefs.getBoolean(PREF_RANDOMIZED, false)) return;
+                // 2026-09-15 — This ran once per launcher start and rebooted the device two
+                // seconds later. Its "already done" flag lived in SOLAR_SETTINGS, and that
+                // reboot lands while Solar is still flushing preferences, so the file came
+                // back empty, the flag was gone, and the next start randomized and rebooted
+                // again: a self-sustaining reboot loop that also explains the device's adb
+                // serial flipping between boots. Record it durably as well — a file in the
+                // app's own storage and a persist property, neither of which rides on the
+                // preferences file — and honour any of the three.
+                java.io.File marker = new java.io.File(activity.getFilesDir(), "adb_id_randomized_v1");
+                if (prefs.getBoolean(PREF_RANDOMIZED, false) || marker.exists()
+                        || "1".equals(getProp("persist.solar.adb_id_randomized"))) {
+                    return;
+                }
                 if (!canRunSu()) return;
                 String randomId = prefs.getString("adb_id_randomized_value_v1", null);
                 if (randomId == null) {
@@ -62,7 +74,12 @@ public final class WirelessAdbEnabler {
                         + "if [ -f /sys/class/android_usb/android0/iSerial ]; then echo -n " + randomId + " > /sys/class/android_usb/android0/iSerial; fi; "
                         + "if [ -f /sys/devices/virtual/android_usb/android0/iSerial ]; then echo -n " + randomId + " > /sys/devices/virtual/android_usb/android0/iSerial; fi; "
                         + "if [ -f /config/usb_gadget/g1/strings/0x409/serialnumber ]; then echo -n " + randomId + " > /config/usb_gadget/g1/strings/0x409/serialnumber; fi";
-                runSu(cmd);
+                runSu(cmd + "; setprop persist.solar.adb_id_randomized 1");
+                // Durable markers first: if anything below loses the preferences file, this
+                // must still never run a second time.
+                try {
+                    if (!marker.exists()) marker.createNewFile();
+                } catch (java.io.IOException ignored) {}
                 prefs.edit().putBoolean(PREF_RANDOMIZED, true).commit();
                 activity.runOnUiThread(new Runnable() {
                     @Override
@@ -76,6 +93,16 @@ public final class WirelessAdbEnabler {
                 runSu("sync; reboot; /system/bin/reboot; /system/xbin/reboot");
             }
         }, "AdbRandomize").start();
+    }
+
+    /** Read a system property without a hard dependency on the hidden API. */
+    private static String getProp(String key) {
+        try {
+            Class<?> sp = Class.forName("android.os.SystemProperties");
+            return (String) sp.getMethod("get", String.class, String.class).invoke(null, key, "");
+        } catch (Exception ignored) {
+            return "";
+        }
     }
 
     private static boolean isPort5555AndRunning() {
