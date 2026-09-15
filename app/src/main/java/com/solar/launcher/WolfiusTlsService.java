@@ -228,6 +228,13 @@ public final class WolfiusTlsService extends Service {
                         return;
                     }
                     executeRoot("iptables -t nat -N " + CHAIN_NAME);
+                    // 2026-09-14 — Leave root-owned and tailnet traffic alone. Redirecting every
+                    // 443/53 flow also captured tailscaled (root) and anything sent to the CGNAT
+                    // range 100.64.0.0/10, so a Y1 on a foreign network lost its VPN, its DNS and
+                    // its Navidrome until an init.d hook undid it. Same effect as that hook, in
+                    // the place the rules are made. Was: unconditional DNAT of all 53/443.
+                    executeRoot("iptables -t nat -A " + CHAIN_NAME + " -m owner --uid-owner 0 -j RETURN");
+                    executeRoot("iptables -t nat -A " + CHAIN_NAME + " -d 100.64.0.0/10 -j RETURN");
                     executeRoot("iptables -t nat -A " + CHAIN_NAME + " -p 17 --dport 53 ! --sport 24000:24999 -j DNAT --to-destination " + localIp + ":5353");
                     executeRoot("iptables -t nat -A " + CHAIN_NAME + " -p 6 --dport 443 ! --sport 15000:25000 -j DNAT --to-destination " + localIp + ":7998");
                     executeRoot("iptables -t nat -I OUTPUT -j " + CHAIN_NAME);
