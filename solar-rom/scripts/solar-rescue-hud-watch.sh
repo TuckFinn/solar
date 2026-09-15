@@ -60,9 +60,13 @@ log -p i -t "$TAG" "watch started pid=$$"
 
 while true; do
     dl=$(getprop "$HOLD_DEADLINE_PROP" 0)
-    now=$(uptime_ms)
+    # 2026-09-14 — uptime_ms forks awk; only needed while a hold deadline is armed.
+    now=""
     sec=0
     rem=0
+    if [ -n "$dl" ] && [ "$dl" != "0" ]; then
+        now=$(uptime_ms)
+    fi
     if [ -n "$dl" ] && [ "$dl" != "0" ] && [ -n "$now" ]; then
         rem=$((dl - now))
         if [ "$rem" -gt 0 ]; then
@@ -89,7 +93,8 @@ while true; do
         sleep 0.5
     elif [ -z "$dl" ] || [ "$dl" = "0" ]; then
         set_hud_second_if_changed 0
-        sleep 1.0
+        # 2026-09-14 — idle: was 1.0 s (getprop+setprop-check every second, forever).
+        sleep 2
     else
         sleep 0.5
     fi

@@ -51,45 +51,38 @@ resolve_solar_apk() {
 
 log -p i -t "$PID_TAG" "starting watchdog pid=$$"
 
+# 2026-09-14 — Process scans: one grep -l over /proc/*/cmdline instead of tr|grep per
+# process (the old loops forked ~2× the process count, every pass, in four places).
+# grep -l matches across the NUL-separated argv. pids_matching prints one pid per line.
+pids_matching() {
+    grep -lE "$1" /proc/[0-9]*/cmdline 2>/dev/null | cut -d/ -f3
+}
 daemon_running() {
-    for _pf in /proc/[0-9]*/cmdline; do
-        tr '\0' ' ' < "$_pf" 2>/dev/null | grep -qE 'CompanionRootInputDaemon|GlobalOverlayTriggerMain' && return 0
-    done
-    return 1
+    pids_matching 'CompanionRootInputDaemon|GlobalOverlayTriggerMain' | grep -q .
 }
-
 hud_watch_running() {
-    for _pf in /proc/[0-9]*/cmdline; do
-        tr '\0' ' ' < "$_pf" 2>/dev/null | grep -q 'solar-rescue-hud-watch' && return 0
-        tr '\0' ' ' < "$_pf" 2>/dev/null | grep -q 'SolarRescueHudMain' && return 0
-    done
-    return 1
+    pids_matching 'solar-rescue-hud-watch|SolarRescueHudMain' | grep -q .
 }
-
+prune_extra() {
+    _keep=""
+    for _pid in $(pids_matching "$1"); do
+        if [ -z "$_keep" ]; then
+            _keep="$_pid"
+        else
+            kill "$_pid" 2>/dev/null
+        fi
+    done
+}
 prune_extra_daemons() {
-    _keep=""
-    for _pf in /proc/[0-9]*/cmdline; do
-        tr '\0' ' ' < "$_pf" 2>/dev/null | grep -qE 'CompanionRootInputDaemon|GlobalOverlayTriggerMain' || continue
-        _pid=$(echo "$_pf" | cut -d/ -f3)
-        if [ -z "$_keep" ]; then
-            _keep="$_pid"
-        else
-            kill "$_pid" 2>/dev/null
-        fi
-    done
+    prune_extra 'CompanionRootInputDaemon|GlobalOverlayTriggerMain'
 }
-
 prune_extra_hud_watches() {
-    _keep=""
-    for _pf in /proc/[0-9]*/cmdline; do
-        tr '\0' ' ' < "$_pf" 2>/dev/null | grep -q 'solar-rescue-hud-watch' || continue
-        _pid=$(echo "$_pf" | cut -d/ -f3)
-        if [ -z "$_keep" ]; then
-            _keep="$_pid"
-        else
-            kill "$_pid" 2>/dev/null
-        fi
-    done
+    prune_extra 'solar-rescue-hud-watch'
+}
+# 2026-09-14 — Never spawn helpers into an already-thrashing system (see platform daemon).
+load_ok() {
+    read _l1 _rest < /proc/loadavg
+    [ "${_l1%%.*}" -lt 8 ]
 }
 
 start_daemon() {
@@ -130,13 +123,10 @@ fi
 while true; do
     prune_extra_daemons
     prune_extra_hud_watches
-    if ! daemon_running; then
+    if ! daemon_running && load_ok; then
         start_daemon
     fi
-    _dc=0
-    for _pf in /proc/[0-9]*/cmdline; do
-        tr '\0' ' ' < "$_pf" 2>/dev/null | grep -qE 'CompanionRootInputDaemon|GlobalOverlayTriggerMain' && _dc=$((_dc + 1))
-    done
+    _dc=$(pids_matching 'CompanionRootInputDaemon|GlobalOverlayTriggerMain' | grep -c .)
     if [ "$_dc" -gt 1 ]; then
         log -p w -t "$PID_TAG" "daemon_count=$_dc pruning"
     fi
@@ -154,6 +144,6 @@ while true; do
     elif [ "$_dc" -gt 1 ]; then
         sleep 10
     else
-        sleep 45
+        sleep 60
     fi
 done

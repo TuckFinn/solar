@@ -27,20 +27,31 @@ start_rescue_daemon() {
     fi
 }
 
+# 2026-09-14 — One grep over /proc/*/cmdline instead of tr|grep per process (~2 forks ×
+# every process, every loop). grep -l matches across the NUL-separated argv just fine.
 rescue_running() {
-    for _pf in /proc/[0-9]*/cmdline; do
-        tr '\0' ' ' < "$_pf" 2>/dev/null | grep -q 'solar-rescue-daemon' && return 0
-    done
-    return 1
+    grep -l 'solar-rescue-daemon' /proc/[0-9]*/cmdline 2>/dev/null | grep -q .
+}
+# 2026-09-14 — Do not poke services while the system is already struggling: each
+# `am startservice` is a fresh app_process VM (~15 MB, seconds of CPU on an MT6572) and
+# they were piling up 20+ deep behind a starved system_server. Pure-shell load read.
+load_ok() {
+    read _l1 _rest < /proc/loadavg
+    [ "${_l1%%.*}" -lt 8 ]
 }
 
 start_rescue_daemon
 
 while true; do
-    am startservice -n "$HELPER_ENFORCER" 2>/dev/null
-    am startservice -n "$COORDINATOR" 2>/dev/null
-    if ! rescue_running; then
-        start_rescue_daemon
+    if load_ok; then
+        am startservice -n "$HELPER_ENFORCER" 2>/dev/null
+        am startservice -n "$COORDINATOR" 2>/dev/null
+        if ! rescue_running; then
+            start_rescue_daemon
+        fi
+    else
+        log -p w -t "$TAG" "load high ($(cut -d' ' -f1 /proc/loadavg)) — skipping service pokes"
     fi
-    sleep 30
+    # Was: 30 s. The services are sticky once started; 60 s is plenty for re-assertion.
+    sleep 60
 done
