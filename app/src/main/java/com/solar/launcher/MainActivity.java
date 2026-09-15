@@ -2624,6 +2624,20 @@ public class MainActivity extends Activity {
      * which cascaded through whole Navidrome queues (thesolarproject/solar#78).
      */
     private volatile boolean mediaPlayerPreparing;
+    /**
+     * 2026-09-15 — Which prepare owns the shared MediaPlayer's callbacks.
+     *
+     * mediaPlayerPreparing answers "is A prepare in flight", which is not the
+     * same question as "is THIS callback still relevant". Skipping twice in
+     * quick succession leaves a Navidrome prepareAsync in flight while the
+     * play-head moves to a local file playing through musicIjkPlayer; that path
+     * clears the flag, so when the abandoned prepare fails seconds later its
+     * listener sees preparing=false and treats a stale error as a real stream
+     * failure. Reproduced on 2Y1: -38 arriving 8s after the skip, then
+     * getCurrentPosition() on the wrecked player persisting seekMs=1376183262.
+     * Each prepare takes a generation; callbacks from an older one are ignored.
+     */
+    private volatile int mediaPrepareGen;
     private int activeAudioPositionMs() {
         try {
             // NP Stems pad mix owns the clock while master is on. 2026-07-21
@@ -29357,10 +29371,18 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         int seek = -1;
         boolean playing = false;
+        int durationMs = 0;
         try {
             seek = activeAudioPositionMs();
             playing = isActiveAudioPlaying();
+            durationMs = activeAudioDurationMs();
         } catch (Exception ignored) {}
+        // 2026-09-15 — A MediaPlayer left in Error state by an abandoned prepare
+        // answers getCurrentPosition() with nonsense instead of throwing: a
+        // reproduced run on 2Y1 saved seekMs=1376183262, about 15.9 days, which
+        // would come back as a resume point. Never persist a position the track
+        // cannot contain.
+        seek = PersistSeek.sane(seek, durationMs);
         AsyncPlayQueueWriter.bumpEpoch();
         AsyncPlayQueueWriter.scheduleSave(getApplicationContext(), playback.unifiedQueue(),
                 seek, playing);
@@ -44865,8 +44887,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             // 2026-07-18 — Remote Subsonic stream: YouTube-style scrub past buffer.
             markAudioSourceNetwork(true);
             attachMediaPlayerBufferListeners(mediaPlayer);
+            // Claimed before the listeners below capture it, so each callback can
+            // tell whether it still speaks for the current prepare.
+            final int gen = ++mediaPrepareGen;
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override public void onPrepared(MediaPlayer mp) {
+                    if (gen != mediaPrepareGen) {
+                        return; // Abandoned by a skip; it must not start playing now.
+                    }
                     mediaPlayerPreparing = false;
                     // #region agent log
                     if (com.solar.launcher.debug.DebugGate.ON) {
@@ -44902,6 +44930,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         com.solar.launcher.debug.AgentDebugLog.log(
                                 "MainActivity.prepareNavidromeStream", "E", "onError", d);
                     } catch (Exception ignored) {}
+                    if (gen != mediaPrepareGen) {
+                        // 2026-09-15 — Stale: this prepare was abandoned by a skip and the
+                        // play-head has moved on. Swallow it without touching the flag and
+                        // without toasting a failure the user did not cause. The player is
+                        // left alone because a newer generation may now be using it, and
+                        // the next prepare reset()s it regardless.
+                        return true;
+                    }
                     if (mediaPlayerPreparing && what == -38) {
                         return true; // Preparing-state query; not a stream failure.
                     }
