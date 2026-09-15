@@ -88,7 +88,14 @@ public final class CompanionGlobalOverlayTrigger {
                     ? DAEMON_MAIN : SOLAR_DAEMON_FALLBACK;
             String cp = (companionApk != null && companionApk.length() > 0)
                     ? companionApk + ":" + solarApk : solarApk;
-            String cmd = "export CLASSPATH='" + cp.replace("'", "'\\''") + "'\n"
+            // 2026-09-14 — Do not spawn a second root input daemon. `started` only lives as
+            // long as this process; after a low-memory kill the companion came back, spawned
+            // again, and the rescue supervisor pruned the duplicate every pass — a VM start
+            // and a kill per minute, forever. One grep over /proc/*/cmdline in the same su
+            // shell settles it; a live daemon is reported READY exactly like a fresh one.
+            String cmd = "if grep -l '" + mainClass + "' /proc/[0-9]*/cmdline >/dev/null 2>&1; then"
+                    + " echo READY; exit 0; fi\n"
+                    + "export CLASSPATH='" + cp.replace("'", "'\\''") + "'\n"
                     + "exec app_process /system/bin " + mainClass + "\n";
             stdin.write(cmd.getBytes("UTF-8"));
             stdin.flush();
