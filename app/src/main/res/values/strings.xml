@@ -741,6 +741,7 @@
     <string name="plex_loading">Loading…</string>
     <string name="plex_wifi_required">Wi‑Fi required for Plex streaming</string>
     <string name="plex_stream_fail">Could not play this Plex track</string>
+    <string name="navidrome_stream_fail">Could not play this Navidrome track</string>
     <string name="path_plex_artists">Plex / Artists</string>
     <string name="path_plex_root">Plex</string>
     <string name="path_plex_all_albums">Plex / Albums</string>

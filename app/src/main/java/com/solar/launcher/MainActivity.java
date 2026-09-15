@@ -2540,6 +2540,14 @@ public class MainActivity extends Activity {
         return ownsPlayback && hasPreparedNext;
     }
 
+    /**
+     * 2026-09-14 — True between prepareAsync() and onPrepared()/onError() on the shared
+     * MediaPlayer. Android 4.2's MediaPlayer posts MEDIA_ERROR(-38) for getDuration() /
+     * getCurrentPosition() in the Preparing state instead of throwing; with no
+     * OnErrorListener the framework then calls onCompletion → nextTrack() → reset(),
+     * which cascaded through whole Navidrome queues (thesolarproject/solar#78).
+     */
+    private volatile boolean mediaPlayerPreparing;
     private int activeAudioPositionMs() {
         try {
             // NP Stems pad mix owns the clock while master is on. 2026-07-21
@@ -2553,6 +2561,7 @@ public class MainActivity extends Activity {
                 return podcastIjkPlayer.getCurrentPosition();
             }
             if (isMusicIjkActive()) return musicIjkPlayer.getCurrentPosition();
+            if (mediaPlayerPreparing) return 0; // 2026-09-14 — Preparing: query would post -38
             return mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
         } catch (Exception e) {
             return 0;
@@ -2571,6 +2580,7 @@ public class MainActivity extends Activity {
                 return podcastIjkPlayer.getDuration();
             }
             if (isMusicIjkActive()) return musicIjkPlayer.getDuration();
+            if (mediaPlayerPreparing) return 0; // 2026-09-14 — Preparing: query would post -38
             return mediaPlayer != null ? mediaPlayer.getDuration() : 0;
         } catch (Exception e) {
             return 0;
@@ -44286,6 +44296,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             attachMediaPlayerBufferListeners(mediaPlayer);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override public void onPrepared(MediaPlayer mp) {
+                    mediaPlayerPreparing = false;
                     // #region agent log
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
@@ -44302,6 +44313,28 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     if (!isPausedByHand) mp.start();
                     applyPlaybackSpeed();
                     updatePlayerUI();
+                }
+            });
+            // 2026-09-14 — Navidrome had no OnErrorListener (Plex/Jellyfin do): every error,
+            // including the spurious -38 from a duration query while Preparing, fell through
+            // to onCompletion → nextTrack() and cascaded the whole queue (#78). Consume errors
+            // here; while still Preparing, onPrepared will follow and playback starts normally.
+            mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override public boolean onError(MediaPlayer mp, int what, int extra) {
+                    try {
+                        org.json.JSONObject d = new org.json.JSONObject();
+                        d.put("what", what);
+                        d.put("extra", extra);
+                        d.put("preparing", mediaPlayerPreparing);
+                        com.solar.launcher.debug.AgentDebugLog.log(
+                                "MainActivity.prepareNavidromeStream", "E", "onError", d);
+                    } catch (Exception ignored) {}
+                    if (mediaPlayerPreparing && what == -38) {
+                        return true; // Preparing-state query; not a stream failure.
+                    }
+                    mediaPlayerPreparing = false;
+                    Toast.makeText(MainActivity.this, R.string.navidrome_stream_fail, Toast.LENGTH_SHORT).show();
+                    return true;
                 }
             });
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -44328,6 +44361,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             probeRemoteStreamHttp(navUrl, "navidrome", "E");
             // #endregion
             mediaPlayer.setDataSource(navUrl);
+            mediaPlayerPreparing = true;
             mediaPlayer.prepareAsync();
             applyNavidromeNowPlaying(navidromeSongFromQueueItem(item));
             isPausedByHand = false;
@@ -44675,6 +44709,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 return;
             }
             mediaPlayer.setDataSource(streamUrl);
+            mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
             mediaPlayer.prepareAsync();
             applyPlexNowPlaying(plexSongFromQueueItem(item));
             isPausedByHand = false;
@@ -44898,6 +44933,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 }
                             });
                             mediaPlayer.setDataSource(url);
+                            mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
                             mediaPlayer.prepareAsync();
                             syncAvrcpTrackInfo(true);
                         } catch (Exception e) {
@@ -55543,6 +55579,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
             });
             mediaPlayer.setDataSource(growingFile.getAbsolutePath());
+            mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
             mediaPlayer.prepareAsync();
         } catch (Exception e) {
             reachGrowingReprepareInFlight = false;
@@ -57991,6 +58028,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     }
                 }
             });
+            mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
             mediaPlayer.prepareAsync();
         } catch (Throwable e) {
             // #region agent log
@@ -58160,6 +58198,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     }
                 }
             });
+            mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
             mediaPlayer.prepareAsync();
         } catch (Throwable t) {
             // #region agent log
