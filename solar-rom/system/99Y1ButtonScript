@@ -35,10 +35,6 @@ if [ ! -e "$DEVICE" ]; then
     exit 1
 fi
 
-reverse_bytes() {
-    hex="$1"
-    echo "$hex" | sed 's/../& /g' | awk '{for(i=NF;i>0;i--)printf $i; print ""}'
-}
 
 left_down=0
 right_down=0
@@ -60,22 +56,29 @@ launcher_handoff() {
     echo "Solar-only ROM — launcher handoff disabled."
 }
 
+# 2026-09-14 — Idle CPU fix. The old loop ran `dumpsys power | grep` on EVERY iteration and
+# did not sleep when the screen was off, so with the screen off it spun forking
+# dumpsys+grep continuously (~100 forks/s, load ~7 on an idle Y1); with the screen on it
+# forked dumpsys+grep+dd+xxd plus sed+awk per parsed field (~14 forks per wheel tick).
+# Now: dd blocks on the input device (no spin), fields are parsed with parameter expansion
+# (no forks), and the screen state is only consulted when a hold combo actually completes.
+# Was: dumpsys gate before every read; reverse_bytes() via sed|awk per field.
+screen_on() {
+    dumpsys power 2>/dev/null | grep -q "mScreenOn=true"
+}
 while true; do
-    if dumpsys power | grep -q "mScreenOn=true"; then
-        event_bytes=$(dd if="$DEVICE" bs=16 count=1 2>/dev/null | xxd -p)
-        [ -z "$event_bytes" ] && break
-
-        sec_hex=$(reverse_bytes ${event_bytes:0:8})
-        sec=$((0x$sec_hex))
-
-        type_hex=$(reverse_bytes ${event_bytes:16:4})
-        value_hex=$(reverse_bytes ${event_bytes:24:8})
-        code_hex=$(reverse_bytes ${event_bytes:20:4})
-
-        type=$((0x$type_hex))
-        value=$((0x$value_hex))
-        code=$((0x$code_hex))
-
+    event_bytes=$(dd if="$DEVICE" bs=16 count=1 2>/dev/null | xxd -p)
+    [ -z "$event_bytes" ] && break
+    # struct input_event (32-bit): sec[4] usec[4] type[2] code[2] value[4], little-endian.
+    sec_hex="${event_bytes:6:2}${event_bytes:4:2}${event_bytes:2:2}${event_bytes:0:2}"
+    type_hex="${event_bytes:18:2}${event_bytes:16:2}"
+    code_hex="${event_bytes:22:2}${event_bytes:20:2}"
+    value_hex="${event_bytes:30:2}${event_bytes:28:2}${event_bytes:26:2}${event_bytes:24:2}"
+    sec=$((0x$sec_hex))
+    type=$((0x$type_hex))
+    value=$((0x$value_hex))
+    code=$((0x$code_hex))
+    {
         if [ "$type" -eq 1 ]; then
             case "$code" in
                 164)
@@ -117,7 +120,7 @@ while true; do
             if [ "$press_start_sec" -ne 0 ]; then
                 if [ "$left_down" -eq 0 ] || [ "$right_down" -eq 0 ]; then
                     hold_time=$((sec - press_start_sec))
-                    if [ "$hold_time" -ge "$MAX_HOLD" ] && pm list packages -e | grep -q "$package_rb"; then
+                    if [ "$hold_time" -ge "$MAX_HOLD" ] && screen_on && pm list packages -e | grep -q "$package_rb"; then
                         restart_rockbox
                     fi
                     press_start_sec=0
@@ -127,12 +130,12 @@ while true; do
             if [ "$press_start_sec_dual_boot" -ne 0 ]; then
                 if [ "$menu_down" -eq 0 ] || [ "$play_down" -eq 0 ]; then
                     hold_time=$((sec - press_start_sec_dual_boot))
-                    if [ "$hold_time" -ge "$MAX_HOLD_DUAL_BOOT" ]; then
+                    if [ "$hold_time" -ge "$MAX_HOLD_DUAL_BOOT" ] && screen_on; then
                         launcher_handoff
                     fi
                     press_start_sec_dual_boot=0
                 fi
             fi
         fi
-    fi
+    }
 done
