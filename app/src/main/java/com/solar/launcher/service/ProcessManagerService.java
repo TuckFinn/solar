@@ -26,8 +26,31 @@ public class ProcessManagerService extends Service {
         Log.i(TAG, "Service created");
     }
 
+    /**
+     * 2026-09-15 — This service can only work with KILL_BACKGROUND_PROCESSES, which a
+     * non-system app cannot hold on API 17; the manifest never requested it. Without it
+     * every 30 s cycle enumerated the running processes twice and made one binder call
+     * per process that always threw SecurityException, and system_server answered each
+     * one with a full stack trace on System.err. Check once and stop instead of looping
+     * forever on work that cannot succeed.
+     */
+    private boolean canKillBackgroundProcesses() {
+        try {
+            return getPackageManager().checkPermission(
+                    android.Manifest.permission.KILL_BACKGROUND_PROCESSES, getPackageName())
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (!canKillBackgroundProcesses()) {
+            Log.i(TAG, "KILL_BACKGROUND_PROCESSES not held — cleanup loop disabled");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         if (!running) {
             running = true;
             workerThread = new Thread(this::runCleanupLoop);
