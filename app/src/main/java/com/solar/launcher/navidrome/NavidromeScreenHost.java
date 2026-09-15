@@ -113,6 +113,11 @@ public final class NavidromeScreenHost {
                     loadPlaylists();
                 } else if (selectedArtist != null) {
                     openAlbums(selectedArtist);
+                } else if (selectedAlbum != null) {
+                    // 2026-09-15 — An album opened from the flat Albums list has no artist
+                    // parent, so Back fell through to the root and the whole list had to be
+                    // re-entered. Go back to the albums list, as the artist path already does.
+                    loadAlbums();
                 } else {
                     showRoot();
                 }
