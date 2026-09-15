@@ -30,7 +30,9 @@ start_rescue_daemon() {
 # 2026-09-14 — One grep over /proc/*/cmdline instead of tr|grep per process (~2 forks ×
 # every process, every loop). grep -l matches across the NUL-separated argv just fine.
 rescue_running() {
-    grep -l 'solar-rescue-daemon' /proc/[0-9]*/cmdline 2>/dev/null | grep -q .
+    # 2026-09-15 — bracketed so grep does not match its own argv; unbracketed it
+    # always reported the rescue daemon alive, so a dead one was never restarted.
+    grep -l '[s]olar-rescue-daemon' /proc/[0-9]*/cmdline 2>/dev/null | grep -q .
 }
 # 2026-09-14 — Do not poke services while the system is already struggling: each
 # `am startservice` is a fresh app_process VM (~15 MB, seconds of CPU on an MT6572) and
