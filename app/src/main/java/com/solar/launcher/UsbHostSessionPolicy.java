@@ -78,6 +78,7 @@ public final class UsbHostSessionPolicy {
         syncSysprops(app, hostAtBoot, false, elapsed);
         scheduleSettleUnlock(app, hostAtBoot, elapsed);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hostAtBoot", hostAtBoot);
@@ -86,6 +87,7 @@ public final class UsbHostSessionPolicy {
             DebugAf054eLog.log(app, "UsbHostSessionPolicy.onBootCompleted",
                     "boot USB session recorded", "USB-SETTLE", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -120,6 +122,7 @@ public final class UsbHostSessionPolicy {
             ed.commit();
             syncSessionSysprop(app, keepDismiss);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("isFlap", true);
@@ -128,6 +131,7 @@ public final class UsbHostSessionPolicy {
                 Debug02fc83Log.log(app, "UsbHostSessionPolicy.onUsbHostConnected",
                         "flap — restore session", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -136,6 +140,7 @@ public final class UsbHostSessionPolicy {
         // Reversal: remove wasActive early-return to restore always-reset connect.
         if (wasActive) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("wasActive", true);
@@ -144,6 +149,7 @@ public final class UsbHostSessionPolicy {
                 Debug02fc83Log.log(app, "UsbHostSessionPolicy.onUsbHostConnected",
                         "already active — skip re-arm", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -157,6 +163,7 @@ public final class UsbHostSessionPolicy {
                 .commit();
         syncSessionSysprop(app, false);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("sessionActive", true);
@@ -170,6 +177,7 @@ public final class UsbHostSessionPolicy {
             Debug02fc83Log.log(app, "UsbHostSessionPolicy.onUsbHostConnected",
                     "session armed once", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -196,6 +204,7 @@ public final class UsbHostSessionPolicy {
         syncSysprops(app, false, true, bootElapsed);
         writeSysprop(SYSPROP_BOOT_SETTLE_READY, "1");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("uptimeSinceBootRt", elapsed - bootElapsed);
@@ -203,6 +212,7 @@ public final class UsbHostSessionPolicy {
             DebugAf054eLog.log(app, "UsbHostSessionPolicy.markFreshHostUnlockBootSettle",
                     "fresh host unlock — prompt allowed now", "USB-SETTLE", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -237,6 +247,7 @@ public final class UsbHostSessionPolicy {
         cancelPendingSettle();
         cancelPendingHostEval();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", "session_reset");
@@ -244,6 +255,7 @@ public final class UsbHostSessionPolicy {
             DebugAf054eLog.log(app, "UsbHostSessionPolicy.onUsbHostDisconnected",
                     "host disconnect — session cleared", "USB-SESSION", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -288,12 +300,14 @@ public final class UsbHostSessionPolicy {
                 .commit();
         syncSessionSysprop(app, true);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("dismissed", true);
             DebugAf054eLog.log(app, "UsbHostSessionPolicy.markUserDismissed",
                     "USB session idle until disconnect", "USB-SESSION", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -493,6 +507,7 @@ public final class UsbHostSessionPolicy {
                         prefs.getBoolean(PREF_HOST_DISC_SINCE_BOOT, false),
                         bootElapsed);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("reason", "boot_settle");
@@ -500,6 +515,7 @@ public final class UsbHostSessionPolicy {
                     DebugAf054eLog.log(app, "UsbHostSessionPolicy.scheduleSettleUnlock",
                             "boot settle window elapsed — prompts allowed", "USB-SETTLE", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         };

@@ -48,6 +48,7 @@ public final class XposedModuleDiscovery {
         List<String> out = new ArrayList<String>(merged);
         Collections.sort(out);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("count", out.size());
@@ -55,6 +56,7 @@ public final class XposedModuleDiscovery {
             DebugXposedMenuLog.log("XposedModuleDiscovery.listInstalledHookPackages",
                     "discovery done", "H3-H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return out;
     }
@@ -172,6 +174,7 @@ public final class XposedModuleDiscovery {
             pkg = pkg.substring("package=".length());
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("apk", apkPath.length() > 80 ? apkPath.substring(apkPath.length() - 80) : apkPath);
@@ -180,6 +183,7 @@ public final class XposedModuleDiscovery {
             DebugXposedMenuLog.log("XposedModuleDiscovery.packageForApkPath",
                     "pm grep", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return pkg.length() > 0 ? pkg : null;
     }

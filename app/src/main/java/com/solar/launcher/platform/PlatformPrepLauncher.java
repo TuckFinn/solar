@@ -26,6 +26,7 @@ public final class PlatformPrepLauncher {
         try {
             PlatformPrepManifest manifest = PlatformPrepManifest.load(ctx);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("prepVersion", manifest.prepVersion);
@@ -39,6 +40,7 @@ public final class PlatformPrepLauncher {
                 com.solar.launcher.DebugA1f293Log.log(ctx, "PlatformPrepLauncher.ensureAsync",
                         "prep gate", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (!PlatformPrepState.needsSilentPrep(ctx, manifest)) {
                 silentPrepScheduled = false;
@@ -62,12 +64,14 @@ public final class PlatformPrepLauncher {
                 && !com.solar.launcher.DeviceFeatures.isA5()) {
             try {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     JSONObject d = new JSONObject();
                     d.put("launchWizard", true);
                     com.solar.launcher.DebugA1f293Log.log(ctx, "PlatformPrepLauncher.ensureAsync",
                             "launch first-boot wizard", "A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 Intent i = new Intent(ctx, PlatformPrepWizardActivity.class);
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

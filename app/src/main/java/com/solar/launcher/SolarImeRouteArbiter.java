@@ -56,24 +56,28 @@ public final class SolarImeRouteArbiter {
     public static boolean armIme() {
         boolean can = canArm();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("canArm", can);
             d.put("overlayActive", OverlayKeyGate.isOverlayKeysActive());
             DebugImeLog.log(null, "SolarImeRouteArbiter.armIme", "arm attempt", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!can) return false;
         currentRoute = ROUTE_IME;
         writeProperty(ROUTE_PROPERTY, ROUTE_IME);
         boolean propOk = writeProperty(ACTIVE_PROPERTY, "1");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("propOk", propOk);
             d.put("activeRead", isActive());
             DebugImeLog.log(null, "SolarImeRouteArbiter.armIme", "armed", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         ExternalInputHandoff.pauseForIme();
         return true;

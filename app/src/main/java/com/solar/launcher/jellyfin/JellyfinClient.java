@@ -113,6 +113,7 @@ public final class JellyfinClient {
             ensureAuth();
         } catch (Exception e) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("songIdLen", songId != null ? songId.length() : 0);
@@ -123,11 +124,13 @@ public final class JellyfinClient {
                 com.solar.launcher.Debug8cf8b0Log.log(
                         "JellyfinClient.getStreamUrl", "auth failed → empty url", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return "";
         }
         if (accessToken.isEmpty()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("songIdLen", songId.length());
@@ -135,11 +138,13 @@ public final class JellyfinClient {
                 com.solar.launcher.Debug8cf8b0Log.log(
                         "JellyfinClient.getStreamUrl", "empty token after auth", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return "";
         }
         String url = buildUniversalStreamUrl(serverUrl, userId, accessToken, songId);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("songIdLen", songId.length());
@@ -155,6 +160,7 @@ public final class JellyfinClient {
             com.solar.launcher.Debug8cf8b0Log.log(
                     "JellyfinClient.getStreamUrl", "built universal url", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return url;
     }

@@ -63,6 +63,7 @@ public final class A5FocusConfirm {
                 }
                 if (consumeSuppress(target)) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("suppressed", true);
@@ -70,6 +71,7 @@ public final class A5FocusConfirm {
                         com.solar.launcher.debug.Debug31d3d8Log.log(target.getContext(),
                                 "A5FocusConfirm.wrap", "skip click after touch UP", "F2", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return;
                 }
@@ -260,6 +262,7 @@ public final class A5FocusConfirm {
                         if (!focusedAtDown[0]) {
                             boolean ok = v.requestFocus();
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("requestOk", ok);
@@ -267,6 +270,7 @@ public final class A5FocusConfirm {
                                 com.solar.launcher.debug.Debug31d3d8Log.log(v.getContext(),
                                         "A5FocusConfirm.touch", "row DOWN focus", "F1", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             // Unfocused DOWN: cancel long-press so first-tap does not open context.
                             // Focused DOWN: leave long-press armed for hold → options.
@@ -299,6 +303,7 @@ public final class A5FocusConfirm {
                         }
                         markSuppress(v);
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("activate", true);
@@ -308,6 +313,7 @@ public final class A5FocusConfirm {
                             com.solar.launcher.debug.Debug31d3d8Log.log(v.getContext(),
                                     "A5FocusConfirm.touch", "short-tap activate UP", "F2", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         activate.onClick(v);
                         return true;

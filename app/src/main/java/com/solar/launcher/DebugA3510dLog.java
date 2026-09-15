@@ -23,6 +23,7 @@ public final class DebugA3510dLog {
     public static void log(String location, String message, String hypothesisId, JSONObject data) {
         if (!ENABLED) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject o = new JSONObject();
             o.put("sessionId", SESSION);
@@ -42,6 +43,7 @@ public final class DebugA3510dLog {
             }
             append(new File("/data/data/com.solar.launcher/files", FILE), line);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -50,6 +52,7 @@ public final class DebugA3510dLog {
             JSONObject data) {
         if (!ENABLED) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject o = new JSONObject();
             o.put("sessionId", SESSION);
@@ -62,6 +65,7 @@ public final class DebugA3510dLog {
             append(new File("/data/local/tmp", FILE), line);
             append(new File("/storage/sdcard1/.solar", FILE), line);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

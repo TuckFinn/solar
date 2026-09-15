@@ -32,6 +32,7 @@ public final class Debug391bb9Log {
      * Tech: increments counters; flushes every 10 samples to logcat + SD.
      */
     public static void note(String which, String hypothesisId, long costMs) {
+        if (!com.solar.launcher.debug.DebugGate.ON) return; // 2026-09-14
         try {
             if ("0f5deb".equals(which)) {
                 calls0f5++;

@@ -613,12 +613,14 @@ public final class DeezerScreen {
         actionResult = r;
         uiMode = UI_ACTION;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("embedded", host.getMusicEmbedded());
             d.put("title", r != null ? r.displayTitle() : "");
             com.solar.launcher.DebugSessionLog.log("DeezerScreen.buildActionUi", "rebuild action ui", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         host.prepareBrowserChrome();
         host.applyReachBrowseLayoutMode();
@@ -748,6 +750,7 @@ public final class DeezerScreen {
                         host.prefetchDeezerCover(destFile);
                         String meta = r.displayTitle();
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("bytesRead", bytesRead);
@@ -756,6 +759,7 @@ public final class DeezerScreen {
                             DebugAgentLog.log(host.context(), "DeezerScreen.onPartialReady",
                                     "partial ready", "H-PARTIAL", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         host.onDeezerDownloadProgress(downloadPercent, destFile, bytesRead, 0);
                         if (pendingAction == ACTION_PLAY) {
@@ -842,6 +846,7 @@ public final class DeezerScreen {
                                 downloadFailed = true;
                                 UiBusy.clear(UiBusy.REASON_DOWNLOAD);
                                 // #region agent log
+                                if (com.solar.launcher.debug.DebugGate.ON) {
                                 try {
                                     org.json.JSONObject d = new org.json.JSONObject();
                                     d.put("reason", downloadFailureReason);
@@ -849,6 +854,7 @@ public final class DeezerScreen {
                                     DebugAgentLog.log(host.context(), "DeezerScreen.onError",
                                             "auto retry failed", "H-RETRY", d);
                                 } catch (Exception ignored) {}
+                                }
                                 // #endregion
                                 buildDownloadFailureUi(r, humanizeDownloadError(downloadFailureReason));
                             }
@@ -864,12 +870,14 @@ public final class DeezerScreen {
         // Partial play already moved to Now Playing — don't repaint action sheet underneath.
         if (host.isNowPlayingScreen()) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("embedded", host.getMusicEmbedded());
             d.put("title", r != null ? r.displayTitle() : "");
             com.solar.launcher.DebugSessionLog.log("DeezerScreen.afterDownloadComplete", "download done", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (host.getMusicEmbedded()) {
             host.onGetMusicBackToResults();
@@ -992,6 +1000,7 @@ public final class DeezerScreen {
         };
         downloadRetryHandler.postDelayed(downloadAutoRetryRunnable, delayMs);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("delayMs", delayMs);
@@ -1001,6 +1010,7 @@ public final class DeezerScreen {
             DebugAgentLog.log(host.context(), "DeezerScreen.scheduleAutoRetry",
                     "auto retry scheduled", "H-RETRY", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

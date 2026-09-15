@@ -109,6 +109,7 @@ public final class LibraryScanner {
         int totalFiles = audioFiles.size();
         int initialResolved = freshItems.size();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("staleToTag", staleFiles.size());
@@ -116,10 +117,12 @@ public final class LibraryScanner {
             d.put("tagThreads", TAG_THREADS);
             Debug543e15Log.log("LibraryScanner.scan", "tag phase begin", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         List<TagResult> staleResults = readTagsParallel(staleFiles, prefs, cb, initialResolved, totalFiles);
         long tagReadMs = System.currentTimeMillis() - t1;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("staleTagged", staleResults.size());
@@ -127,6 +130,7 @@ public final class LibraryScanner {
             d.put("msPerStale", staleFiles.isEmpty() ? 0 : (tagReadMs / Math.max(1, staleFiles.size())));
             Debug543e15Log.log("LibraryScanner.scan", "tag phase end", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         t1 = System.currentTimeMillis();
@@ -190,6 +194,7 @@ public final class LibraryScanner {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("total", files.size());
@@ -203,6 +208,7 @@ public final class LibraryScanner {
             Debug543e15Log.log("LibraryScanner.partitionByFreshness",
                     "fresh vs stale", "A,B,E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

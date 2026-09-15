@@ -71,6 +71,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             @Override
             public void run() {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("idx", wheelKeyboard.getIndex());
@@ -78,12 +79,14 @@ public class SolarInputMethodService extends InputMethodService implements Solar
                     Debug670453Log.log(SolarInputMethodService.this,
                             "SolarInputMethodService.touchConfirm", "confirm runnable", "H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 applyCenterSelection();
             }
         });
         wireA5EdgeDismiss(a5InputRoot);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("isA5", DeviceFeatures.isA5());
@@ -92,6 +95,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             Debug670453Log.log(this, "SolarInputMethodService.onCreateInputView",
                     "a5 shell inflated", "H6", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return a5InputRoot;
     }
@@ -106,6 +110,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             @Override
             public void onA5EdgeBack() {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("via", "edgeBack");
@@ -116,6 +121,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
                     Debug670453Log.log(SolarInputMethodService.this,
                             "SolarInputMethodService.wireA5EdgeDismiss", "edge dismiss", "H1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 dismissImeSession();
             }
@@ -123,12 +129,14 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             @Override
             public void onA5EdgeHome() {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("via", "edgeHome");
                     Debug670453Log.log(SolarInputMethodService.this,
                             "SolarInputMethodService.wireA5EdgeDismiss", "edge dismiss", "H1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 dismissImeSession();
             }
@@ -223,6 +231,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("restarting", restarting);
@@ -240,23 +249,28 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             DebugImeLog.log(this, "SolarInputMethodService.onStartInput", "enter", "H2", d);
             Debug670453Log.log(this, "SolarInputMethodService.onStartInput", "enter", "H6", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!SolarImeRouteArbiter.canArm()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 Debug670453Log.log(this, "SolarInputMethodService.onStartInput",
                         "early dismiss !canArm", "H6", null);
             } catch (Exception ignored) {}
+            }
             // #endregion
             dismissImeSession();
             return;
         }
         if (!SolarImeDismiss.shouldShowSystemImeTray(attribute)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 Debug670453Log.log(this, "SolarInputMethodService.onStartInput",
                         "early dismiss !trayGate", "H6", null);
             } catch (Exception ignored) {}
+            }
             // #endregion
             dismissImeSession();
             return;
@@ -268,10 +282,12 @@ public class SolarInputMethodService extends InputMethodService implements Solar
         seedBufferFromInputConnection();
         if (!SolarImeKeyGate.arm(this)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 Debug670453Log.log(this, "SolarInputMethodService.onStartInput",
                         "early dismiss !keyGate", "H6", null);
             } catch (Exception ignored) {}
+            }
             // #endregion
             dismissImeSession();
             return;
@@ -284,6 +300,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
                 showWindow(true);
             } catch (Exception ignored) {}
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("path", "a5InputView");
@@ -291,6 +308,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
                 Debug670453Log.log(this, "SolarInputMethodService.onStartInput",
                         "armed a5 path", "H6", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } else {
             if (overlay == null) {
@@ -300,12 +318,14 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             suppressFrameworkImeWindow();
             GlobalOverlayTrigger.ensureStarted(getApplicationContext());
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("path", "wmOverlay");
                 Debug670453Log.log(this, "SolarInputMethodService.onStartInput",
                         "armed y1y2 path on non-a5", "H6", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
     }
@@ -357,6 +377,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             int mapped = A5KeyboardKeys.remapForIme(keyCode, lastScanCode);
             boolean handled = onKeyDown(mapped);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("raw", keyCode);
@@ -370,6 +391,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
                 Debug670453Log.log(this, "SolarInputMethodService.onKeyDown(KeyEvent)",
                         "key", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return handled;
         }
@@ -383,6 +405,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             int mapped = A5KeyboardKeys.remapForIme(keyCode, lastScanCode);
             boolean handled = onKeyUp(mapped);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("raw", keyCode);
@@ -392,6 +415,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
                 Debug670453Log.log(this, "SolarInputMethodService.onKeyUp(KeyEvent)",
                         "key", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return handled;
         }
@@ -443,12 +467,14 @@ public class SolarInputMethodService extends InputMethodService implements Solar
     /** BACK / dismiss — tear down tray first, then tell framework IME to hide. */
     private void dismissImeSession() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("a5", useA5InputView());
             Debug670453Log.log(this, "SolarInputMethodService.dismissImeSession",
                     "dismiss", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         tearDown();
         try {
@@ -577,6 +603,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
     private void applyCenterSelection() {
         String selected = wheelKeyboard.charAt(wheelKeyboard.getIndex());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("selected", selected);
@@ -584,6 +611,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             Debug670453Log.log(this, "SolarInputMethodService.applyCenterSelection",
                     "enter", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (SolarWheelKeyboardController.TOKEN_DEL.equals(selected)) {
             deleteOneChar();
@@ -674,6 +702,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
         InputConnection ic = getCurrentInputConnection();
         boolean ok = commitTextTiered(this, ic, text);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("text", text != null ? text.toString() : "");
@@ -682,6 +711,7 @@ public class SolarInputMethodService extends InputMethodService implements Solar
             Debug670453Log.log(this, "SolarInputMethodService.commitTextTiered",
                     "commit", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }

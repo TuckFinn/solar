@@ -78,6 +78,7 @@ public final class UsbStorageOverlayReceiver extends BroadcastReceiver {
         sLastRouteLock = lockOnly;
 
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug266f21Log.usbSnapshot();
             d.put("caller", caller);
@@ -93,6 +94,7 @@ public final class UsbStorageOverlayReceiver extends BroadcastReceiver {
             Debug050a40Log.log(context, "UsbStorageOverlayReceiver.routeToSolar",
                     "handoff entry", "H2,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         if (lockOnly) {
@@ -108,15 +110,18 @@ public final class UsbStorageOverlayReceiver extends BroadcastReceiver {
 
         if (UsbHostSessionPolicy.hasUserDismissedThisSession(context)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 Debug050a40Log.log(context, "UsbStorageOverlayReceiver.routeToSolar",
                         "skip dismissed session", "H3", new org.json.JSONObject());
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         if (!UsbStorageSessionFlags.shouldOfferUsbConnectPrompt(context)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("stockUi", UsbStorageSessionFlags.preferStockUsbUi(context));
@@ -124,6 +129,7 @@ public final class UsbStorageOverlayReceiver extends BroadcastReceiver {
                 Debug050a40Log.log(context, "UsbStorageOverlayReceiver.routeToSolar",
                         "skip — Solar prompt off (stock expected)", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }

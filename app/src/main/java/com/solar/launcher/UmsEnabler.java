@@ -39,6 +39,7 @@ public class UmsEnabler {
         boolean enable = "1".equals(args[0]);
         String volumePath = args.length >= 2 ? args[1].trim() : "";
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("enable", enable);
@@ -49,6 +50,7 @@ public class UmsEnabler {
             DebugA3510dLog.logStandalone("UmsEnabler.main", "enter", "H2,H3", d);
             Debug705932Log.logStandalone("UmsEnabler.main", "enter", "H2,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         try {
             if (isY1Product()) {
@@ -107,6 +109,7 @@ public class UmsEnabler {
         }
         finishEnableOrExit(volumePath, "y1");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("volumePath", volumePath != null ? volumePath : "");
@@ -115,6 +118,7 @@ public class UmsEnabler {
             d.put("lun", readLunBackingPath());
             Debug705932Log.logStandalone("UmsEnabler.enableMassStorageY1", "done", "H2,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -254,6 +258,7 @@ public class UmsEnabler {
     /** Log Y2 MountService enable milestones for session a3510d. */
     private static void logUmsStep(String step, String volumePath) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("step", step);
@@ -263,6 +268,7 @@ public class UmsEnabler {
             d.put("lun", readLunBackingPath());
             DebugA3510dLog.logStandalone("UmsEnabler.enableMassStorageDefault", step, "H2,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

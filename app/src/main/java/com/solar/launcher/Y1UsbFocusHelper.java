@@ -127,6 +127,7 @@ public final class Y1UsbFocusHelper {
         final boolean host = extraHost || extraMassStorage || extraPcKnow
                 || (connected && configured);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("extraHost", extraHost);
@@ -136,10 +137,12 @@ public final class Y1UsbFocusHelper {
             d.put("fg", ExternalInputHandoff.getForegroundPackageName(activity));
             Debug266f21Log.log("Y1UsbFocusHelper.handleUsbStateIntent", "host derivation", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         android.util.Log.d("UsbFocus", "onReceive: connected=" + connected + ", host=" + host
                 + ", hostConnected=" + hostConnected + ", usbConnected=" + usbConnected);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("connected", connected);
@@ -151,6 +154,7 @@ public final class Y1UsbFocusHelper {
             d.put("sessionIdle", isSessionIdle());
             DebugSessionLog.log("Y1UsbFocusHelper.onReceive", "USB_STATE", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         if (!connected && usbConnected) {
@@ -197,6 +201,7 @@ public final class Y1UsbFocusHelper {
                 // Stock: do not notify MainActivity — avoids UnauthorizedUmsGuard / route on PC plug.
                 if (stockUi) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         JSONObject d = new JSONObject();
                         d.put("stockUi", true);
@@ -208,6 +213,7 @@ public final class Y1UsbFocusHelper {
                         Debug050a40Log.log(activity, "Y1UsbFocusHelper.handleUsbStateIntent",
                                 "stock host — Solar idle (Android should own UI)", "H1,H3", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return;
                 }
@@ -220,6 +226,7 @@ public final class Y1UsbFocusHelper {
                 }
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("offMs", offMs);
@@ -232,6 +239,7 @@ public final class Y1UsbFocusHelper {
                 Debug543e15Log.log("Y1UsbFocusHelper.handleUsbStateIntent",
                         "host connect", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (listener != null) {
                 handler.postDelayed(new Runnable() {
@@ -385,6 +393,7 @@ public final class Y1UsbFocusHelper {
         public void run() {
             if (!umsWatchdog) return;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("concierge", UsbStorageConcierge.isXposedConciergeActive());
@@ -396,6 +405,7 @@ public final class Y1UsbFocusHelper {
                 Debug02fc83Log.log(activity, "Y1UsbFocusHelper.umsWatchdog",
                         "tick", "H5", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (OverlayKeyGate.isOverlayKeysActive() || isSessionIdle() || reclaimSuspended) {
                 stopUmsWatchdog();
@@ -478,12 +488,14 @@ public final class Y1UsbFocusHelper {
             stopUmsWatchdog();
             UsbHostSessionPolicy.markUserDismissed(activity.getApplicationContext());
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("umsWatchdog", umsWatchdog);
                 DebugSessionLog.log("Y1UsbFocusHelper.setInterceptPaused",
                         "declined — idle until disconnect", "H-USB-IDLE", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
     }

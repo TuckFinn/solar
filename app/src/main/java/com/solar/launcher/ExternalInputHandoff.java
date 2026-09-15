@@ -134,12 +134,14 @@ public final class ExternalInputHandoff {
         dpadMode = MODE_OFF;
         syncHandoffActiveProperty();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("savedMode", dpadModeBeforeOverlay);
             DebugInputLog.log("ExternalInputHandoff.pauseForGlobalOverlay",
                     "handoff paused for overlay", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -174,12 +176,14 @@ public final class ExternalInputHandoff {
         dpadModeBeforeOverlay = MODE_OFF;
         syncHandoffActiveProperty();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("restoredMode", dpadMode);
             DebugInputLog.log("ExternalInputHandoff.resumeFromGlobalOverlay",
                     "handoff resume after overlay", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -189,6 +193,7 @@ public final class ExternalInputHandoff {
      */
     public static void restoreAfterOverlayDismiss(Context context) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
             d.put("fg", context != null ? getForegroundPackageName(context) : null);
@@ -196,12 +201,14 @@ public final class ExternalInputHandoff {
             DebugOverlayStuckLog.log("ExternalInputHandoff.restoreAfterOverlayDismiss",
                     "entry", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         OverlayKeyGate.disarm();
         resumeFromGlobalOverlay();
         int mode = restoreHandoffModeForPackage(
                 context != null ? getForegroundPackageName(context) : null);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("mode", mode);
@@ -215,6 +222,7 @@ public final class ExternalInputHandoff {
             DebugOverlayStuckLog.log("ExternalInputHandoff.restoreAfterOverlayDismiss",
                     "handoff restored", "H-C", d2);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (mode != MODE_OFF && context != null) {
             armFastInjector(context);
@@ -296,6 +304,7 @@ public final class ExternalInputHandoff {
                 return handleMediaButton(context, event, activityAlive);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("keyCode", event.getKeyCode());
@@ -303,6 +312,7 @@ public final class ExternalInputHandoff {
                 DebugInputLog.log("ExternalInputHandoff.handleMediaButton",
                         "consumed overlay block", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -326,6 +336,7 @@ public final class ExternalInputHandoff {
             com.solar.launcher.radio.fm.FmAirplaneModeHelper.ensureSessionForForegroundPackage(
                     context, fgPkg);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", event.getKeyCode());
@@ -337,6 +348,7 @@ public final class ExternalInputHandoff {
                 d.put("activityAlive", activityAlive);
                 DebugE47f4cLog.log("ExternalInputHandoff.handleMediaButton", "fm path", "H2-H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         if (mode == MODE_OFF) {
@@ -353,6 +365,7 @@ public final class ExternalInputHandoff {
             mode = resolveModeForForegroundPackage(getForegroundPackageName(context));
             if (mode == MODE_OFF) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("fg", getForegroundPackageName(context));
@@ -360,6 +373,7 @@ public final class ExternalInputHandoff {
                     DebugE93bdbLog.log("ExternalInputHandoff.handleMediaButton",
                             "MODE_OFF bail", "H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return false;
             }
@@ -381,6 +395,7 @@ public final class ExternalInputHandoff {
                 : legacyHardwareToDpad(keyCode, mode);
         if (dpadCode <= 0) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);
@@ -389,6 +404,7 @@ public final class ExternalInputHandoff {
                 DebugE93bdbLog.log("ExternalInputHandoff.handleMediaButton",
                         "no dpad map", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -401,6 +417,7 @@ public final class ExternalInputHandoff {
             Log.i(TAG, "handoff media=" + keyCode + " dpad=" + dpadCode + " ok=" + injected);
             if (mode == MODE_FM || FM_RADIO_PACKAGE.equals(getForegroundPackageName(context))) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", keyCode);
@@ -410,9 +427,11 @@ public final class ExternalInputHandoff {
                     DebugE47f4cLog.log("ExternalInputHandoff.handleMediaButton",
                             injected ? "fm inject ok" : "fm inject fail", "H4-H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);
@@ -423,6 +442,7 @@ public final class ExternalInputHandoff {
                 DebugE93bdbLog.log("ExternalInputHandoff.handleMediaButton",
                         injected ? "injected click" : "inject failed", "H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         return true;
@@ -770,12 +790,14 @@ public final class ExternalInputHandoff {
         if (context == null || keyCode <= 0) return false;
         if (isBlockedByGlobalOverlay()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("keyCode", keyCode);
                 DebugInputLog.log("ExternalInputHandoff.injectClick",
                         "inject blocked overlay", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -789,6 +811,7 @@ public final class ExternalInputHandoff {
             injectKeyEvent(context, rockboxStyleKeyEvent(now + 20, now + 20, KeyEvent.ACTION_UP, keyCode));
             Log.d(TAG, "simulating dpad: " + keyCode);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);
@@ -796,6 +819,7 @@ public final class ExternalInputHandoff {
                 DebugInputLog.log("ExternalInputHandoff.injectClick",
                         "inject ok", "H-SCROLL", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }

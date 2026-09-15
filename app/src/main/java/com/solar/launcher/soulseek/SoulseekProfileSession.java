@@ -29,6 +29,7 @@ public final class SoulseekProfileSession {
                 final SoulseekWire.UserInfoResponse info =
                         SoulseekWire.parseUserInfoResponse(frame.body);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("peerUser", peerUser);
@@ -38,6 +39,7 @@ public final class SoulseekProfileSession {
                     ReachDebugLog.log(null, "SoulseekProfileSession.fetchProfile",
                             "profile result", "H4-H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 client.notifyProfile(callback, info);
             }
@@ -45,6 +47,7 @@ public final class SoulseekProfileSession {
             @Override
             public void onError(String reason) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("peerUser", peerUser);
@@ -52,6 +55,7 @@ public final class SoulseekProfileSession {
                     ReachDebugLog.log(null, "SoulseekProfileSession.fetchProfile",
                             "profile error", "H3-H4", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 client.notifyProfileError(callback, reason);
             }

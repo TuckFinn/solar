@@ -23,12 +23,14 @@ public final class PmInstallPolicy {
         RootShell.run("pm set-install-location 1");
         SolarLog.i(TAG, "pm set-install-location 1 (internal only)");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("location", RootShell.runCapture("pm get-install-location"));
             Debug531722Log.log("PmInstallPolicy.enforceInternalInstallLocation",
                     "pinned internal install", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -53,6 +55,7 @@ public final class PmInstallPolicy {
                 "pm install -r -f " + PlatformProbe.shellQuote(systemApkPath));
         boolean ok = pmOut != null && pmOut.contains("Success");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("ok", ok);
@@ -61,6 +64,7 @@ public final class PmInstallPolicy {
             d.put("pmOut", pmOut != null ? pmOut.trim() : "");
             Debug531722Log.log("PmInstallPolicy.installSystemApp", "system/app pm install", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }
@@ -77,6 +81,7 @@ public final class PmInstallPolicy {
                 "pm install -r -f " + PlatformProbe.shellQuote(apkPath));
         boolean ok = pmOut != null && pmOut.contains("Success");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("ok", ok);
@@ -84,6 +89,7 @@ public final class PmInstallPolicy {
             d.put("pmOut", pmOut != null ? pmOut.trim() : "");
             Debug531722Log.log("PmInstallPolicy.installInternal", "pm install -r -f", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }

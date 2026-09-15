@@ -35,6 +35,7 @@ public final class RockboxRestartGrace {
         boolean solarHome = isSolarHome(app);
         boolean intentional = isIntentionalSolarEntry(activity);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug434250Log.rockboxModeSnapshot(app);
             d.put("solarHome", solarHome);
@@ -42,6 +43,7 @@ public final class RockboxRestartGrace {
             d.put("phase", "onCreate");
             Debug434250Log.log("RockboxRestartGrace.onMainActivityCreate", "entry", "H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (shouldDisableRockboxOnSolarStart(solarHome, intentional)) {
             LauncherSwitch.ensureRockboxDisabled(app);
@@ -62,6 +64,7 @@ public final class RockboxRestartGrace {
         boolean solarHome = isSolarHome(app);
         boolean intentional = isIntentionalSolarEntry(activity);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug434250Log.rockboxModeSnapshot(app);
             d.put("solarHome", solarHome);
@@ -69,6 +72,7 @@ public final class RockboxRestartGrace {
             d.put("phase", "onResume");
             Debug434250Log.log("RockboxRestartGrace.onMainActivityResume", "entry", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).dismissRockboxSwitchOverlayIfNeeded();
@@ -129,12 +133,14 @@ public final class RockboxRestartGrace {
         int relaunchIdx = 0;
         Log.i(TAG, "grace armed ms=" + GRACE_MS + " target=" + target);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug434250Log.rockboxModeSnapshot(app);
             d.put("graceMs", GRACE_MS);
             d.put("homeTarget", target);
             Debug434250Log.log("RockboxRestartGrace.runGrace", "armed", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         while (System.currentTimeMillis() - start < GRACE_MS) {
             if (isAlternateHomeForeground(app, target)) {
@@ -149,6 +155,7 @@ public final class RockboxRestartGrace {
                 LauncherPreference.launchHomeForTarget(app, target);
                 Log.i(TAG, "relaunch nudge at " + elapsed + "ms target=" + target);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("elapsedMs", elapsed);
@@ -156,6 +163,7 @@ public final class RockboxRestartGrace {
                     d.put("rockboxFg", LauncherSwitch.isRockboxForeground(app));
                     DebugD68c5cLog.log("RockboxRestartGrace.runGrace", "relaunch nudge", "E", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 relaunchIdx++;
             }

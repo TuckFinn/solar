@@ -29,12 +29,14 @@ public final class SolarImeKeyGate {
     public static boolean arm(Handler keyHandler) {
         boolean armed = SolarImeRouteArbiter.armIme();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("armed", armed);
             d.put("handlerSet", armed);
             DebugImeLog.log(null, "SolarImeKeyGate.arm", "gate arm", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!armed) return false;
         handler = keyHandler;
@@ -105,6 +107,7 @@ public final class SolarImeKeyGate {
         }
         Handler h = handler;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("keyCode", keyCode);
@@ -113,6 +116,7 @@ public final class SolarImeKeyGate {
             d.put("imeActive", SolarImeRouteArbiter.isActive());
             DebugImeLog.log(null, "SolarImeKeyGate.deliver", "deliver", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (h == null) {
             // 2026-07-06 — Handler stale/missing — pulse root tier-3 IME forward.
@@ -136,6 +140,7 @@ public final class SolarImeKeyGate {
         if (action != KeyEvent.ACTION_DOWN && action != KeyEvent.ACTION_UP) return;
         if (!isActive() || pausedForHigherOverlay) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);
@@ -144,6 +149,7 @@ public final class SolarImeKeyGate {
                 d.put("paused", pausedForHigherOverlay);
                 DebugImeLog.log(ctx, "SolarImeKeyGate.forwardKeyToIme", "dropped not active", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }

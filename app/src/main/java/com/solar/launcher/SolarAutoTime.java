@@ -534,6 +534,7 @@ public final class SolarAutoTime {
         // All Solar targets are rooted — allow A5 setuid su.
         boolean ok = RootShell.run(cmd, true);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dlog = new org.json.JSONObject();
             dlog.put("utcEpochMs", utcEpochMs);
@@ -544,6 +545,7 @@ public final class SolarAutoTime {
             com.solar.launcher.Debug543e15Log.log(
                     "SolarAutoTime.applyUtcEpochRoot", "set wall clock", "H-CERT-A", dlog);
         } catch (Throwable ignored) {}
+        }
         // #endregion
         return ok;
     }

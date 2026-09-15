@@ -71,6 +71,7 @@ public class PlatformPrepWizardActivity extends Activity {
         final boolean rebootOnly = getIntent().getBooleanExtra(EXTRA_REBOOT_ONLY, false);
         firstBoot = getIntent().getBooleanExtra(EXTRA_FIRST_BOOT, false);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("manual", manual);
@@ -80,6 +81,7 @@ public class PlatformPrepWizardActivity extends Activity {
             com.solar.launcher.DebugA1f293Log.log(this, "PlatformPrepWizardActivity.onCreate",
                     "wizard shown", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (rebootOnly) {
             setContentView(R.layout.activity_platform_prep);

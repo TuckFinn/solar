@@ -27,6 +27,7 @@ public final class LibraryCategoryIndex {
         if (rows == null) rows = Collections.emptyList();
         if (gen == libraryGen && !rows.isEmpty()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("gen", gen);
@@ -35,6 +36,7 @@ public final class LibraryCategoryIndex {
                 Debug3b26caLog.log("LibraryCategoryIndex.rebuild",
                         "early return same gen", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -55,6 +57,7 @@ public final class LibraryCategoryIndex {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
@@ -64,6 +67,7 @@ public final class LibraryCategoryIndex {
             Debug3b26caLog.log("LibraryCategoryIndex.rebuild",
                     "index rebuilt", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         List<String> gOut = new ArrayList<String>(genreSet);
         Collections.sort(gOut, String.CASE_INSENSITIVE_ORDER);

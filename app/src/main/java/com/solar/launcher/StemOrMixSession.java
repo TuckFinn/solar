@@ -35,11 +35,13 @@ public final class StemOrMixSession {
             ExternalInputHandoff.resumeFromStemMix();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("active", on);
             Debug8b0481Log.log("StemOrMixSession.setActive", "exclusive gate", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

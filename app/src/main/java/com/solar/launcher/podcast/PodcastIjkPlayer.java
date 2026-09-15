@@ -305,6 +305,7 @@ public final class PodcastIjkPlayer {
         try {
             player.setSpeed(speed);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("speed", speed);
@@ -313,6 +314,7 @@ public final class PodcastIjkPlayer {
                 com.solar.launcher.DebugSessionLog.log("PodcastIjkPlayer.applySpeedInternal",
                         "setSpeed called", "H-A", d);
             } catch (Exception ignoredLog) {}
+            }
             // #endregion
         } catch (Exception ignored) {}
     }

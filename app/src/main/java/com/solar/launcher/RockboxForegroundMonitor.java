@@ -47,6 +47,7 @@ public final class RockboxForegroundMonitor implements Runnable {
         // 2026-07-06 — Overlay owns keys — skip AMS fg probes (session 86bbe0 hang fix).
         if (OverlayKeyGate.isOverlayKeysActive()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("skipped", true);
@@ -54,6 +55,7 @@ public final class RockboxForegroundMonitor implements Runnable {
                 d.put("nextDelayMs", POLL_MS_SOLAR_FOREGROUND);
                 Debug86bbe0Log.log("RockboxForegroundMonitor.run", "overlay idle", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             handler.postDelayed(this, POLL_MS_SOLAR_FOREGROUND);
             return;
@@ -61,6 +63,7 @@ public final class RockboxForegroundMonitor implements Runnable {
         // Skip fg probes only when USB Mass Storage is actively running (kernel mode).
         if (UsbMassStorageController.isKernelMassStorageMode()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("skipped", true);
@@ -68,6 +71,7 @@ public final class RockboxForegroundMonitor implements Runnable {
                 d.put("nextDelayMs", POLL_MS_SOLAR_FOREGROUND);
                 Debug86bbe0Log.log("RockboxForegroundMonitor.run", "usb idle", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             handler.postDelayed(this, POLL_MS_SOLAR_FOREGROUND);
             return;
@@ -77,6 +81,7 @@ public final class RockboxForegroundMonitor implements Runnable {
         // 2026-07-06 — Solar home + USB modal: skip JJ/Rockbox handoff polls entirely.
         if (solar != null && solar.hasWindowFocus()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("skipped", true);
@@ -84,6 +89,7 @@ public final class RockboxForegroundMonitor implements Runnable {
                 d.put("nextDelayMs", POLL_MS_SOLAR_FOREGROUND);
                 Debug86bbe0Log.log("RockboxForegroundMonitor.run", "solar fg idle", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             lastForeground = "com.solar.launcher";
             handler.postDelayed(this, POLL_MS_SOLAR_FOREGROUND);
@@ -132,6 +138,7 @@ public final class RockboxForegroundMonitor implements Runnable {
         lastForeground = fg;
         long delay = isAlternateHomeTarget(appContext) ? POLL_MS : POLL_MS_DEFAULT;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("fg", fg);
@@ -140,6 +147,7 @@ public final class RockboxForegroundMonitor implements Runnable {
             d.put("nextDelayMs", delay);
             Debug86bbe0Log.log("RockboxForegroundMonitor.run", "poll done", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         handler.postDelayed(this, delay);
     }

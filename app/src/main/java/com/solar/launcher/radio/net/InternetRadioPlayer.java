@@ -76,6 +76,7 @@ public final class InternetRadioPlayer implements MediaPlayer.OnErrorListener,
     } catch (IOException e) {
       ringBuffer = null;
       // #region agent log
+      if (com.solar.launcher.debug.DebugGate.ON) {
       try {
         DebugAgentLog.log(
             appCtx,
@@ -84,6 +85,7 @@ public final class InternetRadioPlayer implements MediaPlayer.OnErrorListener,
             "E",
             new org.json.JSONObject().put("err", e.getClass().getSimpleName()));
       } catch (Exception ignored) {}
+      }
       // #endregion
     }
     player = new MediaPlayer();
@@ -148,6 +150,7 @@ public final class InternetRadioPlayer implements MediaPlayer.OnErrorListener,
   @Override
   public void onPrepared(MediaPlayer mp) {
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       DebugAgentLog.log(
           appCtx,
@@ -156,6 +159,7 @@ public final class InternetRadioPlayer implements MediaPlayer.OnErrorListener,
           "E",
           new org.json.JSONObject().put("url", currentUrl));
     } catch (Exception ignored) {}
+    }
     // #endregion
     try {
       mp.start();

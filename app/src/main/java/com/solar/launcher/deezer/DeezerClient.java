@@ -129,16 +129,19 @@ public final class DeezerClient {
             failPhase = "initSession";
             if (!initSession()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     JSONObject d = new JSONObject();
                     d.put("phase", failPhase);
                     d.put("arlLen", arl != null ? arl.length() : 0);
                     DeezerDebugLog.log(logCtx, "DeezerClient.testSession", "failed", "B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return false;
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("phase", "initSession");
@@ -146,12 +149,14 @@ public final class DeezerClient {
                 d.put("hasLicense", licenseToken != null && !licenseToken.isEmpty());
                 DeezerDebugLog.log(logCtx, "DeezerClient.testSession", "init ok", "B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             failPhase = "resolveTrack";
             DeezerTrackResolver resolver = new DeezerTrackResolver(this);
             DeezerTrackData track = resolver.resolveTrack(917265L);
             boolean ok = track != null && track.trackToken != null && !track.trackToken.isEmpty();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("phase", "resolveTrack");
@@ -159,11 +164,13 @@ public final class DeezerClient {
                 d.put("hasToken", track != null && track.trackToken != null && !track.trackToken.isEmpty());
                 DeezerDebugLog.log(logCtx, "DeezerClient.testSession", ok ? "track ok" : "track fail", "C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return ok;
         } catch (Exception e) {
             sessionValid = false;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("phase", failPhase);
@@ -173,6 +180,7 @@ public final class DeezerClient {
                 d.put("msg", msg != null ? msg : "");
                 DeezerDebugLog.log(logCtx, "DeezerClient.testSession", "exception", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }

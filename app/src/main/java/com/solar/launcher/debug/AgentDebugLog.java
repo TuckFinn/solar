@@ -15,6 +15,7 @@ public final class AgentDebugLog {
 
     /** 2026-07-06: One NDJSON line to logcat for post-run adb grep. */
     public static void log(String location, String hypothesisId, String message, JSONObject data) {
+        if (!com.solar.launcher.debug.DebugGate.ON) return; // 2026-09-14
         try {
             JSONObject o = new JSONObject();
             o.put("sessionId", SESSION);

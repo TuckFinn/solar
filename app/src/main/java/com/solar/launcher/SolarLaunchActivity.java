@@ -44,6 +44,7 @@ public class SolarLaunchActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(buildSplash());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -55,6 +56,7 @@ public class SolarLaunchActivity extends Activity {
             DebugB4208eLog.log("SolarLaunchActivity.onCreate", "splash shown", "G,H", d);
             Log.e(TAG, "splash " + dm.widthPixels + "x" + dm.heightPixels);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-14 — Resolve MainActivity off main; start when Class.forName returns.
         // 2026-07-16 — Hard timeout so a stuck preload never leaves a blank forever.
@@ -164,6 +166,7 @@ public class SolarLaunchActivity extends Activity {
         if (handedOff || isFinishing()) return;
         handedOff = true;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("preloadMs", preloadMs);
@@ -171,6 +174,7 @@ public class SolarLaunchActivity extends Activity {
             d.put("showPrep", FirstSessionReadyGate.shouldShowPrepWizard(this));
             DebugB4208eLog.log("SolarLaunchActivity.handOff", "starting next activity", "G", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (fail != null) {
             // 2026-07-16 — Still open MainActivity; a black splash forever is worse than a retry.

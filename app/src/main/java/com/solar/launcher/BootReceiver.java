@@ -45,12 +45,14 @@ public class BootReceiver extends BroadcastReceiver {
         SolarImeBootstrap.ensureDefaultIme(context);
         RockboxDisable.ensureOnce(context);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("imeActive", SolarImeRouteArbiter.isActive());
             d.put("imeUi", SolarImeRouteArbiter.isTrayUiVisible());
             DebugImeLog.log(context, "BootReceiver.onReceive", "boot IME disarm", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         LargeFontAccessibilitySuppressor.ensureNormalFontScale(context);
         GraphicsPerformancePolicy.ensureAsync(context);
@@ -100,6 +102,7 @@ public class BootReceiver extends BroadcastReceiver {
             }
         });
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = DebugAf054eLog.bootSnapshot();
             d.put("autoConnect", UsbStorageSessionFlags.isAutoConnectEnabled(context));
@@ -109,6 +112,7 @@ public class BootReceiver extends BroadcastReceiver {
             d.put("screenOn", pm != null && pm.isScreenOn());
             DebugAf054eLog.log(context, "BootReceiver.onReceive", "boot snapshot", "H1,H2,H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!LauncherPreference.isSolarHome(context)) return;
         try {

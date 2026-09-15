@@ -51,6 +51,7 @@ public final class FmRadioLauncher {
         ExternalInputHandoff.setDpadMode(ExternalInputHandoff.MODE_FM);
         ExternalInputHandoff.armFastInjector(activity);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("dpadMode", ExternalInputHandoff.getDpadMode());
@@ -58,17 +59,20 @@ public final class FmRadioLauncher {
             d.put("hasWindowFocus", activity.hasWindowFocus());
             DebugE47f4cLog.log("FmRadioLauncher.launch", "pre-startActivity", "H2-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             activity.startActivity(launch);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("dpadMode", ExternalInputHandoff.getDpadMode());
                 d.put("fg", ExternalInputHandoff.getForegroundPackageName(activity));
                 DebugE47f4cLog.log("FmRadioLauncher.launch", "post-startActivity ok", "H3-H5", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         } catch (Exception e) {

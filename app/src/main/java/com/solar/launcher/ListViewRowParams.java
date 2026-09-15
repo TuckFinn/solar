@@ -29,6 +29,7 @@ final class ListViewRowParams {
         row.setLayoutParams(new AbsListView.LayoutParams(
                 AbsListView.LayoutParams.MATCH_PARENT, h));
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("view", row.getClass().getSimpleName());
@@ -36,6 +37,7 @@ final class ListViewRowParams {
             d.put("height", h);
             DebugLibraryMenuLog.log("ListViewRowParams.ensure", "coerced row params", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 }

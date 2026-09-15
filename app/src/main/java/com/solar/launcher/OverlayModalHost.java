@@ -494,6 +494,7 @@ public final class OverlayModalHost {
                 }, rowHeightPx, panelWidthPx, true, false,
                 buildQuickBar(), createModalQuickBarListener());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("itemCount", itemLabels.length);
@@ -504,6 +505,7 @@ public final class OverlayModalHost {
             d.put("menuShowing", menu.isShowing());
             DebugAgentLog.log(context, "OverlayModalHost.showAppMenuMode", "menu shown", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         menu.focusSubmenuList();
     }
@@ -519,6 +521,7 @@ public final class OverlayModalHost {
         boolean solarHomeSession = appMenuSessionId != null
                 && appMenuSessionId.startsWith("solar_home_");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("index", index);
@@ -530,6 +533,7 @@ public final class OverlayModalHost {
             DebugAgentLog.log(context, "OverlayModalHost.handleAppMenuSelection",
                     "row picked", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         sendAppMenuResult(index);
         if (opensSubmenu || solarHomeSession) {
@@ -775,6 +779,7 @@ public final class OverlayModalHost {
                     @Override
                     public void onSelected(int index) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("index", index);
@@ -782,6 +787,7 @@ public final class OverlayModalHost {
                             Debug266f21Log.log(context, "OverlayModalHost.usbPrompt.onSelected",
                                     "overlay row selected", "H5", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         if (index == 1) {
                             handleUsbStorageOverlayEnable();
@@ -946,18 +952,21 @@ public final class OverlayModalHost {
     private void handleUsbStorageOverlayEnable() {
         if (!UsbMassStorageExperiment.isEnabled(context)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("a5", DeviceFeatures.isA5());
                 Debug1fc727Log.log(context, "OverlayModalHost.handleUsbStorageOverlayEnable",
                         "experiment off → dismiss", "H2,H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             handleUsbStorageOverlayDismiss();
             return;
         }
         usbStoragePromptVisible = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("action", "enable");
@@ -967,6 +976,7 @@ public final class OverlayModalHost {
             Debug1fc727Log.log(context, "OverlayModalHost.handleUsbStorageOverlayEnable",
                     "user confirmed USB enable", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         final Context app = context.getApplicationContext();
         ThemeManager.prepareThemeForUsbStorage(app);
@@ -979,6 +989,7 @@ public final class OverlayModalHost {
                 final boolean ok = UsbMassStorageController.enable(app, "user.overlay.confirm");
                 final boolean exported = UsbMassStorageController.isMassStorageExported();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("ok", ok);
@@ -987,6 +998,7 @@ public final class OverlayModalHost {
                     Debug1fc727Log.log(app, "OverlayModalHost.handleUsbStorageOverlayEnable",
                             "enable thread result", "H1,H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (ok || exported || UsbMassStorageController.isKernelMassStorageMode()) {
                     // Re-assert Solar lock after USB re-enum.
@@ -1007,12 +1019,14 @@ public final class OverlayModalHost {
         OverlayTierScheduler.clearPendingUsbPrompt();
         UsbStorageSessionFlags.markOverlayDismissPending(context);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("action", "dismiss");
             DebugEdc27bLog.log("OverlayModalHost.handleUsbStorageOverlayDismiss",
                     "overlay dismiss only", "USB-F3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         dismissListener.onDismissOverlay();
     }
@@ -1031,6 +1045,7 @@ public final class OverlayModalHost {
         }
         boolean up = Y1InputKeys.isVolumeUpKey(keyCode);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("up", up);
@@ -1040,6 +1055,7 @@ public final class OverlayModalHost {
             d.put("mediaSliders", mediaSlidersActive);
             Debug6d1aeeLog.log("OverlayModalHost.handleGlobalOverlayVolumeKey", "entry", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         MediaVolumeControl.adjustMedia(context, up);
         // 2026-07-15 — Any open context shell → replace with compact volume (not in-place chip sync).
@@ -1055,12 +1071,14 @@ public final class OverlayModalHost {
 
     public boolean handleOverlayKeyDown(int keyCode) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("keyCode", keyCode);
             d.put("menuShowing", menu != null && menu.isShowing());
             DebugEdc27bLog.log("OverlayModalHost.handleOverlayKeyDown", "entry", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (wifiPasswordKeyboard != null && wifiPasswordKeyboard.isShowing()) {
             return wifiPasswordKeyboard.handleKeyDown(keyCode);
@@ -1143,6 +1161,7 @@ public final class OverlayModalHost {
                     && (suppressBackDismissUntilLift
                     || SystemClock.uptimeMillis() - powerTierOpenedAt < backDismissGraceMs)) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("graceMs", backDismissGraceMs);
@@ -1150,6 +1169,7 @@ public final class OverlayModalHost {
                     DebugInputLog.log("OverlayModalHost.handleOverlayKeyDown",
                             "back open-gesture grace", "H-BACK-OPEN", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return true;
             }
@@ -1183,6 +1203,7 @@ public final class OverlayModalHost {
                 && (Y1InputKeys.isCenterKey(keyCode) || Y1InputKeys.isPlayPauseKey(keyCode))) {
             if (SystemClock.uptimeMillis() - appMenuOpenedAt < APP_MENU_CENTER_GRACE_MS) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", keyCode);
@@ -1190,6 +1211,7 @@ public final class OverlayModalHost {
                     DebugAgentLog.log(context, "OverlayModalHost.handleOverlayKeyUp",
                             "app menu center grace", "H-MENU", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return true;
             }
@@ -1218,6 +1240,7 @@ public final class OverlayModalHost {
             if (!OverlayCenterActivation.shouldActivateOnEvent(true, false, now, subTierChangedAt,
                     OverlayCenterActivation.SUB_TIER_CENTER_GRACE_MS)) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", keyCode);
@@ -1226,6 +1249,7 @@ public final class OverlayModalHost {
                     DebugAgentLog.log(context, "OverlayModalHost.handleOverlayKeyUp",
                             "sub-tier center grace", "H-POWER", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return true;
             }
@@ -1281,6 +1305,7 @@ public final class OverlayModalHost {
         long held = SystemClock.uptimeMillis() - overlayBackDownAt;
         cancelOverlayBackHold();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("heldMs", held);
@@ -1290,6 +1315,7 @@ public final class OverlayModalHost {
             DebugE93bdbLog.log("OverlayModalHost.finishOverlayBackHoldAndMaybeDismiss",
                     "back up", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (suppressBackDismissUntilLift) {
             suppressBackDismissUntilLift = false;
@@ -1297,6 +1323,7 @@ public final class OverlayModalHost {
         }
         if (held < BACK_HOLD_DISMISS_MS) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("heldMs", held);
@@ -1305,6 +1332,7 @@ public final class OverlayModalHost {
                 DebugE0de2eLog.log(context, "OverlayModalHost.finishOverlayBackHoldAndMaybeDismiss",
                         "short Back ignored (need hold)", "H5", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -1317,12 +1345,14 @@ public final class OverlayModalHost {
                 return true;
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("elapsed", SystemClock.uptimeMillis() - powerTierOpenedAt);
                 DebugEdc27bLog.log("OverlayModalHost.finishOverlayBackHoldAndMaybeDismiss",
                         "back dismiss power tier", "BACK-FLASH", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             dismissListener.onDismissOverlay();
             return true;
@@ -1334,12 +1364,14 @@ public final class OverlayModalHost {
         }
         sendOverlayModalCancelResult();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("tier", powerTierVisible ? "power" : "modal");
             DebugEdc27bLog.log("OverlayModalHost.finishOverlayBackHoldAndMaybeDismiss",
                     "back dismiss overlay", "BACK-F1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         dismissListener.onDismissOverlay();
         return true;
@@ -1375,6 +1407,7 @@ public final class OverlayModalHost {
         if (isDedicatedPlayPauseKey(keyCode)) {
             OverlayPlaybackClient.togglePlayPause(context);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);
@@ -1382,6 +1415,7 @@ public final class OverlayModalHost {
                 DebugInputLog.log("OverlayModalHost.handleOverlayBackgroundTransportKeyDown",
                         "play/pause transport", "H-PP", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -1425,6 +1459,7 @@ public final class OverlayModalHost {
         int size = overlayQueueSize();
         if (size <= 0) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("delta", delta);
@@ -1432,6 +1467,7 @@ public final class OverlayModalHost {
             d.put("focus", queueFocusIndex);
             DebugInputLog.log("OverlayModalHost.moveOverlayQueueFocus", "wheel queue scroll", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (queueMoveFrom >= 0) {
             if (menu.isQueueMoveRibbonAnimating()) return;
@@ -1454,6 +1490,7 @@ public final class OverlayModalHost {
 
     private void handleOverlayQueueActivate(boolean longPress) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("longPress", longPress);
@@ -1461,6 +1498,7 @@ public final class OverlayModalHost {
             d.put("focus", queueFocusIndex);
             DebugInputLog.log("OverlayModalHost.handleOverlayQueueActivate", "center activate", "H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (queueMoveFrom >= 0) {
             int idx = queueFocusIndex;
@@ -1801,6 +1839,7 @@ public final class OverlayModalHost {
             powerRowActions.add(new Runnable() {
                 @Override public void run() {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("from", "overlay_power");
@@ -1808,6 +1847,7 @@ public final class OverlayModalHost {
                                 "OverlayModalHost.refreshPowerTier",
                                 "enable USB from power", "USB-PWR", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     UsbStorageOverlayReceiver.launchSolarUsbHandoff(context, true, false);
                     dismissListener.onDismissOverlay();
@@ -2157,6 +2197,7 @@ public final class OverlayModalHost {
         powerTierVisible = false;
         launcherPickerVisible = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("source", source);
@@ -2164,6 +2205,7 @@ public final class OverlayModalHost {
             DebugE93bdbLog.log("OverlayModalHost.dismissOverlayForLauncherSelection",
                     "dismiss for launcher pick", "H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (dismissListener != null) {
             dismissListener.onDismissOverlay();
@@ -2266,6 +2308,7 @@ public final class OverlayModalHost {
         // Reversal: always clearModalSessions after broadcast.
         final boolean solarHomeSession = appMenuSessionId.startsWith("solar_home_");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("index", index);
@@ -2273,6 +2316,7 @@ public final class OverlayModalHost {
             d.put("solarHomeSession", solarHomeSession);
             DebugAgentLog.log(context, "OverlayModalHost.sendAppMenuResult", "broadcast result", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         Intent result = new Intent(OverlayTriggers.ACTION_APP_MENU_RESULT);
         result.putExtra(OverlayTriggers.EXTRA_MENU_SESSION_ID, appMenuSessionId);

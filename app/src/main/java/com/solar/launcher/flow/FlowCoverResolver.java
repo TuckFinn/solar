@@ -134,6 +134,7 @@ public final class FlowCoverResolver {
                 Bitmap b = decodeFile(sidecar, thumbPx);
                 if (b != null) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("source", "sidecar");
@@ -141,6 +142,7 @@ public final class FlowCoverResolver {
                         Debug3b26caLog.log("FlowCoverResolver.resolveFromTracks",
                                 "art found", "H7", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     maybeCacheAlbumArt(artDir, albumKey, b);
                     maybeCacheFlowThumb(flowThumbDir, albumKey, b, thumbPx);
@@ -150,6 +152,7 @@ public final class FlowCoverResolver {
             Bitmap embedded = readEmbeddedArt(track, thumbPx);
             if (embedded != null) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("source", "embedded");
@@ -157,6 +160,7 @@ public final class FlowCoverResolver {
                     Debug3b26caLog.log("FlowCoverResolver.resolveFromTracks",
                             "art found", "H7", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 // Already sampled to ~thumbPx; scaleForFlow finalizes LCD size.
                 Bitmap out = AlbumCoverPipeline.scaleForFlow(embedded, thumbPx, thumbPx);
@@ -172,6 +176,7 @@ public final class FlowCoverResolver {
                     Bitmap net = downloadBitmap(url, thumbPx);
                     if (net != null) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("source", "deezer");
@@ -179,6 +184,7 @@ public final class FlowCoverResolver {
                             Debug3b26caLog.log("FlowCoverResolver.resolveFromTracks",
                                     "art found", "H7", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         maybeCacheAlbumArt(artDir, albumKey, net);
                         maybeCacheFlowThumb(flowThumbDir, albumKey, net, thumbPx);
@@ -188,6 +194,7 @@ public final class FlowCoverResolver {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("source", "none");
@@ -196,6 +203,7 @@ public final class FlowCoverResolver {
             Debug3b26caLog.log("FlowCoverResolver.resolveFromTracks",
                     "no art", "H7", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return cachePlaceholder(thumbPx, albumKey, artDir, flowThumbDir);
     }

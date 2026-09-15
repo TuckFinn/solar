@@ -49,6 +49,7 @@ public final class SolarOverlayService extends Service {
         public void run() {
             if (overlayRoot == null) return;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
                 d.put("hasModalHost", modalHost != null);
@@ -56,6 +57,7 @@ public final class SolarOverlayService extends Service {
                 DebugOverlayStuckLog.log("SolarOverlayService.overlayWatchdog",
                         "overlay still painted", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             OverlayKeyGate.refreshLiveOverlayGate();
             // 2026-07-08 — Stuck active with dead :overlay: heal key gate so wheel works again.
@@ -76,6 +78,7 @@ public final class SolarOverlayService extends Service {
             boolean menuPainted = themedContextMenu != null && themedContextMenu.isShowing();
             if (!menuPainted) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
                     d.put("menuPainted", false);
@@ -83,17 +86,20 @@ public final class SolarOverlayService extends Service {
                     Debug065122Log.log("SolarOverlayService.paintWatchdog",
                             "orphan dim shell — tearing down", "H-A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 tearDownOverlay();
                 return;
             }
             if (!OverlayKeyGate.isOverlayUiVisible() && OverlayKeyGate.isActive()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
                     Debug065122Log.log("SolarOverlayService.paintWatchdog",
                             "active without ui — self-healing teardown", "H-A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 tearDownOverlay();
             }
@@ -130,12 +136,14 @@ public final class SolarOverlayService extends Service {
             return START_NOT_STICKY;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("action", action);
             d.put("y2", DeviceFeatures.isY2());
             DebugMenuLog.log("SolarOverlayService.onStartCommand", "overlay start", "H-LOCK", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (OverlayTriggers.ACTION_OVERLAY_KEY.equals(action)) {
             deliverOverlayKeyIntent(intent);
@@ -143,11 +151,13 @@ public final class SolarOverlayService extends Service {
         }
         if (OverlayTriggers.ACTION_OVERLAY_KEEPALIVE.equals(action)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("action", action);
                 DebugMenuLog.log("SolarOverlayService.onStartCommand", "keepalive", "H-LOCK", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             warmOverlayThemeAsync();
             return START_STICKY;
@@ -222,6 +232,7 @@ public final class SolarOverlayService extends Service {
                 }
                 if (overlayRoot != null && modalHost == null) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("action", action);
@@ -229,6 +240,7 @@ public final class SolarOverlayService extends Service {
                         Debug2d4745Log.log("SolarOverlayService.onStartCommand",
                                 "retry paint dim shell", "H4", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     final Context themedRetry = new ContextThemeWrapper(
                             getApplicationContext(), R.style.Theme_Solar);
@@ -310,6 +322,7 @@ public final class SolarOverlayService extends Service {
         lp.gravity = Gravity.TOP | Gravity.LEFT;
         windowManager.addView(overlayRoot, lp);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("wmFlags", volFlags);
@@ -321,6 +334,7 @@ public final class SolarOverlayService extends Service {
             Debug956bbfLog.log(app, "SolarOverlayService.showPassiveVolumeOverlay",
                     "passive volume WM flags", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-08 — Shell attached (volume HUD); stuck BACK can dismiss if gate stays off.
         OverlayKeyGate.setShellVisible(true);
@@ -370,6 +384,7 @@ public final class SolarOverlayService extends Service {
                         if (themedContextMenu != null && themedContextMenu.isShowing()) {
                             themedContextMenu.refreshThemeDecorAfterWarm();
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("themeReady", ThemeManager.isOverlayThemeReady());
@@ -377,6 +392,7 @@ public final class SolarOverlayService extends Service {
                                 Debug2d4745Log.log("SolarOverlayService.warmOverlayThemeAsync",
                                         "theme decor refreshed", "H1", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                         }
                     }
@@ -431,6 +447,7 @@ public final class SolarOverlayService extends Service {
             });
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("wmRootBg", 0x00000000);
@@ -440,6 +457,7 @@ public final class SolarOverlayService extends Service {
             d.put("focusableWm", interactive);
             DebugMenuLog.log("SolarOverlayService.showOverlay", "wm overlay added", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         // Theme + menu on next frame — arm key gate before theme I/O so keys are never swallowed into void.
@@ -462,6 +480,7 @@ public final class SolarOverlayService extends Service {
         final Context app = getApplicationContext();
         ThemeManager.ensureOverlayPaintableMinimum(app);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("action", action);
@@ -471,6 +490,7 @@ public final class SolarOverlayService extends Service {
             d.put("runId", "post-fix");
             Debug2d4745Log.log("SolarOverlayService.loadOverlayAndFinish", "instant paint path", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         finishShowOverlay(intent, action, passiveVolume, themed);
         warmOverlayThemeAsync(app);
@@ -480,16 +500,19 @@ public final class SolarOverlayService extends Service {
     private void finishShowOverlay(Intent intent, String action, boolean passiveVolume, Context themed) {
         if (overlayRoot == null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("action", action);
                 Debug2d4745Log.log("SolarOverlayService.finishShowOverlay",
                         "abort overlayRoot null", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("action", action);
@@ -497,6 +520,7 @@ public final class SolarOverlayService extends Service {
             d.put("ramCache", ThemeManager.isOverlayRamCacheLoaded());
             Debug2d4745Log.log("SolarOverlayService.finishShowOverlay", "enter paint", "H1-H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         themedContextMenu = new ThemedContextMenu(themed);
         modalHost = new OverlayModalHost(themed, themedContextMenu, overlayRoot,
@@ -510,12 +534,14 @@ public final class SolarOverlayService extends Service {
         if (OverlayTriggers.ACTION_SHOW_OVERLAY_POWER.equals(action)) {
             modalHost.showPowerMode();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("action", action);
                 DebugE93bdbLog.log("SolarOverlayService.finishShowOverlay",
                         "power overlay shown", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } else if (OverlayTriggers.ACTION_SHOW_OVERLAY_APP_MENU.equals(action)) {
             String[] titles = intent.getStringArrayExtra(OverlayTriggers.EXTRA_MENU_TITLES);
@@ -523,6 +549,7 @@ public final class SolarOverlayService extends Service {
             String sessionId = intent.getStringExtra(OverlayTriggers.EXTRA_MENU_SESSION_ID);
             String callerPackage = intent.getStringExtra(OverlayTriggers.EXTRA_MENU_CALLER_PACKAGE);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("itemCount", titles != null ? titles.length : 0);
@@ -532,6 +559,7 @@ public final class SolarOverlayService extends Service {
                 DebugAgentLog.log(getApplicationContext(), "SolarOverlayService.finishShowOverlay",
                         "app menu paint", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             try {
                 modalHost.showAppMenuMode(title, titles,
@@ -539,6 +567,7 @@ public final class SolarOverlayService extends Service {
                         sessionId, callerPackage);
             } catch (Throwable t) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("err", t.getClass().getSimpleName());
@@ -546,6 +575,7 @@ public final class SolarOverlayService extends Service {
                     DebugAgentLog.log(getApplicationContext(), "SolarOverlayService.finishShowOverlay",
                             "app menu crash", "H1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 tearDownOverlay();
             }
@@ -599,6 +629,7 @@ public final class SolarOverlayService extends Service {
         overlayOpenInFlight = false;
         mainHandler.removeCallbacks(clearOpenInFlightRunnable);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug434250Log.rescueSnapshot();
             d.put("action", action);
@@ -606,6 +637,7 @@ public final class SolarOverlayService extends Service {
             Debug434250Log.log("SolarOverlayService.finishShowOverlay",
                     "paint complete", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // #region agent log
         final int rootChildCount = overlayRoot != null ? overlayRoot.getChildCount() : -1;
@@ -633,6 +665,7 @@ public final class SolarOverlayService extends Service {
     private void deliverOverlayKeyIntent(Intent intent) {
         if (!OverlayKeyGate.isOverlayKeysActive()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = DebugOverlayStuckLog.overlayPropSnapshot();
                 d.put("keyCode", intent.getIntExtra(OverlayTriggers.EXTRA_KEY_CODE, 0));
@@ -643,6 +676,7 @@ public final class SolarOverlayService extends Service {
                 DebugAf054eLog.log(this, "SolarOverlayService.deliverOverlayKeyIntent",
                         "skip inactive gate", "S1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -651,6 +685,7 @@ public final class SolarOverlayService extends Service {
         final int keyAction = intent.getIntExtra(
                 OverlayTriggers.EXTRA_KEY_ACTION, KeyEvent.ACTION_DOWN);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("keyCode", keyCode);
@@ -660,6 +695,7 @@ public final class SolarOverlayService extends Service {
             DebugAf054eLog.log(this, "SolarOverlayService.deliverOverlayKeyIntent",
                     "deliver key", "S1,S2,S3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         Runnable deliver = new Runnable() {
             @Override
@@ -715,12 +751,14 @@ public final class SolarOverlayService extends Service {
             }
         });
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("propAfter", "armed");
             DebugAgentLog.log(getApplicationContext(), "SolarOverlayService.armProvisionalOverlayKeyGate",
                     "provisional key gate", "H-FREEZE", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -748,12 +786,14 @@ public final class SolarOverlayService extends Service {
         try {
             ctx.sendBroadcast(restore);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("action", OverlayTriggers.ACTION_OVERLAY_DISMISSED);
                 DebugAgentLog.log(ctx, "SolarOverlayService.notifyMainProcessHandoffRestore",
                         "broadcast handoff restore", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } catch (Exception ignored) {}
     }
@@ -791,12 +831,14 @@ public final class SolarOverlayService extends Service {
 
     private void tearDownOverlay(boolean animated) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hadModalHost", modalHost != null);
             d.put("animated", animated);
             DebugE93bdbLog.log("SolarOverlayService.tearDownOverlay", "dismiss", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         Context ctx = getApplicationContext();
         overlayOpenInFlight = false;
@@ -894,6 +936,7 @@ public final class SolarOverlayService extends Service {
                 return super.dispatchKeyEvent(event);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", event.getKeyCode());
@@ -901,6 +944,7 @@ public final class SolarOverlayService extends Service {
                 d.put("hasFocus", hasFocus());
                 DebugOverlayKeyLog.log("SolarOverlayService.dispatchKeyEvent", "wm root key", "H3-H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (modalHost == null) return super.dispatchKeyEvent(event);
             // 2026-07-08 — Drop center/play auto-repeat DOWNs (held OK used to chain Power → Restart).

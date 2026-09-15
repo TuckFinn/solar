@@ -27,6 +27,7 @@ public final class Debug050a40Log {
             JSONObject data) {
         if (!ENABLED) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject o = new JSONObject();
             o.put("sessionId", SESSION);
@@ -46,6 +47,7 @@ public final class Debug050a40Log {
                 } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

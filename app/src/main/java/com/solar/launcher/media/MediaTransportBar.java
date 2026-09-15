@@ -354,6 +354,7 @@ public final class MediaTransportBar {
             hint.animate().alpha(1f).setDuration(OVERLAY_FADE_MS).start();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("len", text.length());
@@ -364,6 +365,7 @@ public final class MediaTransportBar {
             com.solar.launcher.Debug0f5debLog.log(ctx, "MediaTransportBar.showLiveHoldHint",
                     "live hold tip on", "NP-LIVE", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -432,6 +434,7 @@ public final class MediaTransportBar {
                         })
                 .start();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("mode", hintMode != null ? hintMode.name() : "");
@@ -439,6 +442,7 @@ public final class MediaTransportBar {
             com.solar.launcher.Debug0f5debLog.log(ctx, "MediaTransportBar.fadeLiveHoldHintOutNow",
                     "live hold tip fade out", "NP-LIVE", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -881,6 +885,7 @@ public final class MediaTransportBar {
         hint.setSelected(true);
         hint.setAlpha(0f);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             final View scrub = scrubRow;
             hint.post(new Runnable() {
@@ -900,6 +905,7 @@ public final class MediaTransportBar {
                 }
             });
         } catch (Exception ignored) {}
+        }
         // #endregion
         hint.animate().alpha(1f).setDuration(OVERLAY_FADE_MS).start();
     }

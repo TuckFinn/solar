@@ -53,12 +53,14 @@ public final class MediaButtonRegistrar {
             } catch (Exception e) {
                 registered = false;
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     JSONObject d = new JSONObject();
                     d.put("err", e.getMessage());
                     DebugE93bdbLog.log("MediaButtonRegistrar.ensureRegistered",
                             "register failed", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 android.util.Log.w("MediaButtonRegistrar", "register failed: " + e.getMessage());
             }

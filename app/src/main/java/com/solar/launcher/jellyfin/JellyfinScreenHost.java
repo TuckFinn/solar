@@ -457,12 +457,14 @@ public final class JellyfinScreenHost {
 
     private void bindFastList(List<JellyfinBrowseRow> rows, List<String> indexNames) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("uiMode", uiMode);
             d.put("rowCount", rows.size());
             AgentDebugLog.log("JellyfinScreenHost.bindFastList", "B", "list bind", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         actions.showFastListBrowse();
         actions.setScrollIndexNames(indexNames);

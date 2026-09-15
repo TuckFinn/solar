@@ -69,6 +69,7 @@ public final class JellyfinCoverArt {
                         return;
                     }
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("coverArtId", coverArtId);
@@ -78,6 +79,7 @@ public final class JellyfinCoverArt {
                         com.solar.launcher.debug.AgentDebugLog.log(
                                 "JellyfinCoverArt.load", "E", "cover decoded", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     postBitmap(listener, bmp);
                 } catch (Exception e) {

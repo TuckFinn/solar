@@ -121,6 +121,7 @@ public final class LandscapeOrientationGuard {
                 activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("mode", mode);
@@ -133,6 +134,7 @@ public final class LandscapeOrientationGuard {
                 DebugB4208eLog.log("LandscapeOrientationGuard.enforceA5Orientation",
                         "A5 orient applied", "B,C", d);
             } catch (Exception ignoredLog) {}
+            }
             // #endregion
         } catch (Exception ignored) {}
     }
@@ -163,6 +165,7 @@ public final class LandscapeOrientationGuard {
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("isA5", false);
@@ -171,6 +174,7 @@ public final class LandscapeOrientationGuard {
             DebugB4208eLog.log("LandscapeOrientationGuard.enforceLandscape",
                     "non-A5 landscape lock", "A", d);
         } catch (Exception ignoredLog) {}
+        }
         // #endregion
         try {
             activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);

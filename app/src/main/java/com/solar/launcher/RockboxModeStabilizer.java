@@ -48,10 +48,12 @@ public final class RockboxModeStabilizer implements Runnable {
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug434250Log.rockboxModeSnapshot(appContext);
             Debug434250Log.log("RockboxModeStabilizer", "relaunch rockbox home", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         RockboxRestartGrace.arm(appContext);
         LauncherPreference.launchHomeForTarget(appContext, LauncherDefault.TARGET_ROCKBOX);

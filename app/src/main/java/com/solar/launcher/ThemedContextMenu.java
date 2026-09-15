@@ -302,12 +302,14 @@ public final class ThemedContextMenu {
         int scrimArgb = 0x00000000;
         scrim.setBackgroundColor(scrimArgb);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("systemOverlayMode", systemOverlayMode);
             d.put("scrimArgb", scrimArgb);
             DebugMenuLog.log("ThemedContextMenu.styleOverlayScrim", "scrim styled", "H2-H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -438,6 +440,7 @@ public final class ThemedContextMenu {
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("branch", "inAppAnim");
@@ -448,6 +451,7 @@ public final class ThemedContextMenu {
             com.solar.launcher.Debug0f5debLog.log(context,
                     "ThemedContextMenu.addOverlayWithPresentAnim", "present gate", "MOD-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (ModalTransition.enabled(context)) {
             ScreenTransition.prepareModalPresent(overlay, panel);
@@ -928,6 +932,7 @@ public final class ThemedContextMenu {
             // Was: isA5 alone → two-row even sideways. Now: A5/narrow/Y1-portrait ∧ physical tall.
             boolean twoRow = A5PortraitChrome.useTwoRowQuickBar(context);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
                 org.json.JSONObject d = new org.json.JSONObject();
@@ -940,6 +945,7 @@ public final class ThemedContextMenu {
                 Debug391149Log.log(context, "ThemedContextMenu.buildTitleRow",
                         "quick bar row mode", "H-QB", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             java.util.ArrayList<Integer> visibleIdx = new java.util.ArrayList<Integer>();
             for (int i = 0; i < quickItems.length; i++) {
@@ -1237,6 +1243,7 @@ public final class ThemedContextMenu {
             int scrollY = queueBrowseScrollY(index, count, viewport);
             itemsScroll.scrollTo(0, scrollY);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("runId", "post-fix");
@@ -1253,6 +1260,7 @@ public final class ThemedContextMenu {
                 QueueDebugLog.log("ThemedContextMenu.scrollQueueRowToViewportSlotNow",
                         "scrolled", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             SolarAdbTest.queueScroll(focusIndex, count,
                     itemsHost.getPaddingTop(), itemsScroll.getScrollY(), queueScrollMaxY(),
@@ -1352,6 +1360,7 @@ public final class ThemedContextMenu {
     private void bindQueueMoveRibbon(int wheelDelta) {
         if (!queueMode || itemsHost == null || !isQueueMoveActive()) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("wheelDelta", wheelDelta);
@@ -1361,6 +1370,7 @@ public final class ThemedContextMenu {
             DebugAgentLog.log(context, "ThemedContextMenu.bindQueueMoveRibbon",
                     "bindQueueMoveRibbon entry", "H1-H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!queueMoveRibbonActive) {
             enterQueueMoveRibbon();
@@ -1430,6 +1440,7 @@ public final class ThemedContextMenu {
         int slotH = queueRowSlotHeight();
         float startTy = (browseSlot - QueueMoveWindow.RIBBON_CENTER) * (float) slotH;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("moveIdx", moveIdx);
@@ -1441,6 +1452,7 @@ public final class ThemedContextMenu {
             DebugAgentLog.log(context, "ThemedContextMenu.animateRibbonEnter",
                     "ribbon enter animation", "H3-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (Math.abs(startTy) < 0.5f) {
             animateRibbonEnterFade();
@@ -1826,6 +1838,7 @@ public final class ThemedContextMenu {
         outsideTapDismissAllowed = true;
         attachOutsideTapDismiss();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("systemOverlayMode", systemOverlayMode);
@@ -1836,6 +1849,7 @@ public final class ThemedContextMenu {
             d.put("api", android.os.Build.VERSION.SDK_INT);
             DebugMenuLog.log("ThemedContextMenu.show", "menu opening", "H2-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         addOverlayWithPresentAnim(root, new Runnable() {
             @Override
@@ -1851,6 +1865,7 @@ public final class ThemedContextMenu {
         syncMediaQuickIconResFromItems();
         refreshQuickChipIcons();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("systemOverlayMode", systemOverlayMode);
@@ -1864,8 +1879,10 @@ public final class ThemedContextMenu {
             d.put("menuShowing", isShowing());
             Debug2d4745Log.log("ThemedContextMenu.show", "after addOverlay", "H2-H3-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("quickItemCount", quickItems.length);
@@ -1875,6 +1892,7 @@ public final class ThemedContextMenu {
             d.put("themeReady", OverlayThemeProvider.get().isOverlayThemeReady());
             DebugAgentLog.log(context, "ThemedContextMenu.show", "menu painted", "H2-H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // #region agent log
         if (overlay != null) {
@@ -2429,6 +2447,7 @@ public final class ThemedContextMenu {
         int childCount = itemsHost != null ? itemsHost.getChildCount() : 0;
         SolarAdbTest.queueOpen(queueRows.length, optionsListVisible, scrollH, childCount);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("rowCount", rowCount);
@@ -2438,6 +2457,7 @@ public final class ThemedContextMenu {
             d.put("virtual", useQueueBrowseVirtual());
             QueueDebugLog.log("ThemedContextMenu.replaceQueueContent", "content replaced", "H4-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (rowCount > 0 && itemsHost != null && childCount == 0) {
             postSafe(itemsHost, new Runnable() {
@@ -2450,6 +2470,7 @@ public final class ThemedContextMenu {
                     refreshAll();
                     scrollFocusIntoView();
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("rowCount", queueRows.length);
@@ -2457,6 +2478,7 @@ public final class ThemedContextMenu {
                         d.put("scrollH", itemsScroll != null ? itemsScroll.getHeight() : 0);
                         QueueDebugLog.log("ThemedContextMenu.replaceQueueContent", "post-layout repair", "H5", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 }
             });
@@ -2627,6 +2649,7 @@ public final class ThemedContextMenu {
     public void setQueueMoveFrom(int moveFrom) {
         int prevMove = queueMoveFrom;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("prevMove", prevMove);
@@ -2636,6 +2659,7 @@ public final class ThemedContextMenu {
             DebugAgentLog.log(context, "ThemedContextMenu.setQueueMoveFrom",
                     "setQueueMoveFrom", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         queueMoveFrom = moveFrom;
         // 2026-07-15 — Queue ribbon move arms touch-reorder session (A5 edge suppress + debug).
@@ -2984,6 +3008,7 @@ public final class ThemedContextMenu {
 
     private void rebuildQueueList() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("itemsHostNull", itemsHost == null);
@@ -2995,11 +3020,13 @@ public final class ThemedContextMenu {
             d.put("childBefore", itemsHost != null ? itemsHost.getChildCount() : -1);
             QueueDebugLog.log("ThemedContextMenu.rebuildQueueList", "entry", "H2-H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (itemsHost == null || !queueMode || isQueueMoveActive()) return;
         if (useQueueBrowseVirtual()) rebuildQueueBrowseWindow();
         else rebuildQueueRows();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("virtual", useQueueBrowseVirtual());
@@ -3024,6 +3051,7 @@ public final class ThemedContextMenu {
             }
             QueueDebugLog.log("ThemedContextMenu.rebuildQueueList", "done", "H2-H4-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -3070,6 +3098,7 @@ public final class ThemedContextMenu {
         if (newStart != queueBrowseWindowStart) {
             if (newStart >= maxStart || focusIndex >= count - 3) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("focusIndex", focusIndex);
@@ -3079,6 +3108,7 @@ public final class ThemedContextMenu {
                     DebugAgentLog.log(context, "ThemedContextMenu.ensureQueueBrowseWindowForFocus",
                             "rebuild near end", "H6", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 rebuildQueueBrowseWindow();
             } else {
@@ -4165,6 +4195,7 @@ public final class ThemedContextMenu {
                 refreshAll();
                 scrollQuickFocusIntoView();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("quickIdx", quickFocusIndex);
@@ -4172,6 +4203,7 @@ public final class ThemedContextMenu {
                     DebugAgentLog.log(context, "ThemedContextMenu.handleKeyHorizontal",
                             "back→quick bar", "H-NAV", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return true;
             }
@@ -4374,6 +4406,7 @@ public final class ThemedContextMenu {
         }
         if (focusZone == FocusZone.QUICK_BAR) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("quickIdx", quickFocusIndex);
@@ -4384,6 +4417,7 @@ public final class ThemedContextMenu {
                 DebugAgentLog.log(context, "ThemedContextMenu.activateFocused",
                         "quick bar activate", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (quickListener != null) quickListener.onQuickSelected(quickFocusIndex);
             // ponytail: tier rows may rebuild while focus stays on the chip until layout runs — enter list now.
@@ -4588,6 +4622,7 @@ public final class ThemedContextMenu {
 
     private void logInfiniteWrap(String path, int index) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("path", path);
@@ -4595,6 +4630,7 @@ public final class ThemedContextMenu {
             DebugE93bdbLog.log("ThemedContextMenu.logInfiniteWrap",
                     "infinite scroll wrap", "H-WRAP", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -4948,6 +4984,7 @@ public final class ThemedContextMenu {
         }
         refreshQuickBar();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("volIdx", volumeQuickIndex);
@@ -4955,6 +4992,7 @@ public final class ThemedContextMenu {
             d.put("chipCount", quickBarHost.getChildCount());
             QueueDebugLog.log("ThemedContextMenu.refreshQuickChipIcons", "icons synced", "H-QBAR", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

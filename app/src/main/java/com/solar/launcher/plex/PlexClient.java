@@ -121,6 +121,7 @@ public final class PlexClient {
             String path = mediaPartKey.startsWith("/") ? mediaPartKey : ("/" + mediaPartKey);
             String direct = server + path + (path.contains("?") ? "&" : "?") + "X-Plex-Token=" + enc(t);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("branch", "direct");
@@ -130,6 +131,7 @@ public final class PlexClient {
                 com.solar.launcher.Debug8cf8b0Log.log(
                         "PlexClient.buildStreamUrl", "direct part branch", "C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return direct;
         }
@@ -140,6 +142,7 @@ public final class PlexClient {
                 + "&audioCodec=mp3&maxAudioBitrate=192"
                 + "&directPlay=0&directStream=0&session=solar";
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("branch", "transcode");
@@ -151,6 +154,7 @@ public final class PlexClient {
             com.solar.launcher.Debug8cf8b0Log.log(
                     "PlexClient.buildStreamUrl", "transcode branch", "C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return transcode;
     }

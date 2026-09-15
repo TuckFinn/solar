@@ -64,6 +64,7 @@ public final class ListDrillTransition {
         // Listener paints instantly (MainActivity syncStatusBarLoadingThrobber — no fade-in).
         if (!enabled(host.getContext())) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("path", "instant");
@@ -74,6 +75,7 @@ public final class ListDrillTransition {
                 com.solar.launcher.DebugCb4747Log.log("ListDrillTransition.run",
                         "instant drill clear-same-stack", "A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             try {
                 build.run();
@@ -84,6 +86,7 @@ public final class ListDrillTransition {
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("path", "animated");
@@ -92,6 +95,7 @@ public final class ListDrillTransition {
             com.solar.launcher.DebugCb4747Log.log("ListDrillTransition.run",
                     "animated drill", "D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         final int w = host.getWidth() > 0 ? host.getWidth() : host.getResources()
                 .getDimensionPixelSize(com.solar.launcher.R.dimen.y1_screen_width);

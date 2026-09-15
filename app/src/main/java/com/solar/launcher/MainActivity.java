@@ -1195,6 +1195,7 @@ public class MainActivity extends Activity {
             centerMovePickHandled = true;
             performCenterMovePickUp();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("playlist", isVirtualPlaylistView());
@@ -1204,6 +1205,7 @@ public class MainActivity extends Activity {
                 DebugAgentLog.log(MainActivity.this, "MainActivity.centerMovePickRunnable",
                         "move pick fired", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             clickFeedback();
         }
@@ -1326,6 +1328,7 @@ public class MainActivity extends Activity {
             if (!backKeyHeld) return;
             backLongPressHandled = true;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 long elapsed = backKeyDownTime > 0
                         ? System.currentTimeMillis() - backKeyDownTime : -1L;
@@ -1338,6 +1341,7 @@ public class MainActivity extends Activity {
                 Debug032ca7Log.log(MainActivity.this, "MainActivity.backLongPressRunnable",
                         "back hold fired", "H1-H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-20 — Ensure spinner is on if 90ms arm has not run yet (slow main thread).
             // Was: arm only here — spinner missed the whole hold wait. Reversal: arm only here.
@@ -1383,6 +1387,7 @@ public class MainActivity extends Activity {
             if (centerKeyDownTime == 0) return;
             centerLongPressHandled = true;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 long elapsed = centerKeyDownTime > 0
                         ? System.currentTimeMillis() - centerKeyDownTime : -1L;
@@ -1397,6 +1402,7 @@ public class MainActivity extends Activity {
                 Debug3cf33fLog.log(MainActivity.this, "MainActivity.centerLongPressRunnable",
                         "center long fired", "H-C1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-21 — Center hold must NOT open/dismiss jam Options (Prev/Next/Play/Back only).
             // Was: Center hold dismissed/opened ThemedContextMenu on Stem/Mix too.
@@ -1431,6 +1437,7 @@ public class MainActivity extends Activity {
             if (!centerHoldShouldSleep(heldMs)) return;
             centerSleepHoldHandled = true;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("heldMs", heldMs);
@@ -1438,6 +1445,7 @@ public class MainActivity extends Activity {
                 DebugAgentLog.log(MainActivity.this, "MainActivity.centerSleepHoldRunnable",
                         "center hold triggered screen sleep before release", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             performScreenSleep(false);
         }
@@ -2061,12 +2069,14 @@ public class MainActivity extends Activity {
             updateSoulseekSharePolicy();
             tryWifiSleepPowerOff();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = soulseekSleepDecisionSnapshot();
                 d.put("sleepArmed", soulseekScreenSleepArmed);
                 DebugSessionLog.log("MainActivity.wifiSleepOffRunnable",
                         "screen sleep timer fired", "H-TIMER", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
     };
@@ -2090,6 +2100,7 @@ public class MainActivity extends Activity {
                     && isWifiTierMounted() && !contextTierConfirmOpen && isWifiContextExpanded()
                     && !wifiConnectInProgress) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("branch", "wifiExpandedScan");
@@ -2097,6 +2108,7 @@ public class MainActivity extends Activity {
                     com.solar.launcher.Debug0f5debLog.log(MainActivity.this,
                             "MainActivity.networkRescanTick", "wifi scan tick", "WIFI-A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 try {
                     WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -2290,6 +2302,7 @@ public class MainActivity extends Activity {
             podcastIjkPlayer.setSpeed(speedToApply);
             refreshPodcastTimeUi();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("speed", speedToApply);
@@ -2298,6 +2311,7 @@ public class MainActivity extends Activity {
                 com.solar.launcher.DebugSessionLog.log("MainActivity.applyPlaybackSpeed",
                         "ijk speed applied", "H-SPEED", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -2384,6 +2398,7 @@ public class MainActivity extends Activity {
             SolarAudioFocus.request(getApplicationContext());
         } catch (Exception ignored) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("txLayer", com.solar.launcher.audio.SolarTransport.get().isLayerMode());
@@ -2392,6 +2407,7 @@ public class MainActivity extends Activity {
             Debug3103d7Log.log("MainActivity.stopCompetingAudioEngines",
                     "stop engines incl layers", "H2,H6", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (mediaSuite != null) {
             mediaSuite.stopVideoAndYoutubeStream();
@@ -2590,6 +2606,7 @@ public class MainActivity extends Activity {
     private void pauseActiveAudio() {
         try {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("txOwns", com.solar.launcher.audio.SolarTransport.get().ownsPlayback());
@@ -2602,6 +2619,7 @@ public class MainActivity extends Activity {
                         && podcastIjkPlayer != null && podcastIjkPlayer.isPlaying());
                 Debug290fecLog.log("MainActivity.pauseActiveAudio", "pause snapshot", "H1,H3", d);
             } catch (Exception ignoredLog) {}
+            }
             // #endregion
             if (npStemSession != null && npStemSession.isMixerOwningAudio()) {
                 npStemSession.pause();
@@ -3026,6 +3044,7 @@ public class MainActivity extends Activity {
                         int edgeMs = reachGrowingDecodeEdgeMs();
                         if (edgeMs > 0 && current >= edgeMs - REACH_GROWING_EXTEND_MS) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("current", current);
@@ -3036,6 +3055,7 @@ public class MainActivity extends Activity {
                                 DebugAgentLog.log(MainActivity.this, "MainActivity.updateProgressTask",
                                         "extend at decode edge", "H-STREAM-A", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             maybeExtendReachGrowingPlayback(false);
                         } else if (reachDownloadInProgress() && !isPausedByHand) {
@@ -3110,6 +3130,7 @@ public class MainActivity extends Activity {
                 scheduleWifiSleepOff();
                 scheduleSoulseekSharePolicyRefresh();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("charging", soulseekCharging);
@@ -3119,6 +3140,7 @@ public class MainActivity extends Activity {
                     DebugSessionLog.log("MainActivity.systemStatusReceiver",
                             "SCREEN_OFF", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
                 isScreenSleeping = false;
@@ -3130,10 +3152,12 @@ public class MainActivity extends Activity {
                 lastScreenOnTime = System.currentTimeMillis();
                 scheduleSoulseekSharePolicyRefresh();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     DebugSessionLog.log("MainActivity.systemStatusReceiver",
                             "SCREEN_ON", "H2", null);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             } else if (Intent.ACTION_BATTERY_CHANGED.equals(action)) {
                 updateBatteryUi(intent);
@@ -3232,6 +3256,7 @@ public class MainActivity extends Activity {
                 NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
                 if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("connected", networkInfo != null && networkInfo.isConnected());
@@ -3239,6 +3264,7 @@ public class MainActivity extends Activity {
                         d.put("detailedState", networkInfo != null ? String.valueOf(networkInfo.getDetailedState()) : "null");
                         DebugSessionLog.log("MainActivity.broadcastReceiver", "NETWORK_STATE_CHANGED", "H2", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     if (networkInfo != null && networkInfo.isConnected()) {
                         if (currentScreenState == STATE_WIFI && !wifiConnectInProgress)
@@ -3451,6 +3477,7 @@ public class MainActivity extends Activity {
     /** ponytail: register receivers, library scan, and full theme bootstrap after home is visible. */
     private void scheduleDeferredColdStartWork() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("sinceBootMs", android.os.SystemClock.uptimeMillis() - bootUptimeMs);
@@ -3460,6 +3487,7 @@ public class MainActivity extends Activity {
             Debug9cd8d5Log.boot(this, "MainActivity.scheduleDeferredColdStartWork",
                     "deferred work scheduled", "D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         Runnable work = new Runnable() {
             @Override
@@ -3569,9 +3597,11 @@ public class MainActivity extends Activity {
         holdFilter.addAction(OverlayTriggers.ACTION_CONTEXT_HOLD_CANCEL);
         registerReceiver(contextHoldThrobberReceiver, holdFilter);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             DebugSessionLog.log("registerDeferredSystemReceivers", "receivers registered", "H3", null);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -3707,6 +3737,7 @@ public class MainActivity extends Activity {
         // 2026-07-14 — Lock orientation before heavy inflate for Y1/Y2 + re-assert A5.
         LandscapeOrientationGuard.enforceForDevice(this);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("isA5", DeviceFeatures.isA5());
@@ -3723,10 +3754,12 @@ public class MainActivity extends Activity {
                     + " req=" + getRequestedOrientation()
                     + " " + dm.widthPixels + "x" + dm.heightPixels);
         } catch (Exception ignored) {}
+        }
         // #endregion
         final long onCreateStartMs = android.os.SystemClock.uptimeMillis();
         bootUptimeMs = onCreateStartMs;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("phase", "boot_start");
@@ -3738,6 +3771,7 @@ public class MainActivity extends Activity {
             Debug9cd8d5Log.boot(this, "MainActivity.onCreate", "boot start", "C,E", d);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "boot enter", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Debug session logs off by default — enable via adb --ez solar_adb_debug_898913 true
         DebugSessionLog.ENABLED = false;
@@ -3781,11 +3815,13 @@ public class MainActivity extends Activity {
 
         if (SolarRecoveryCoordinator.isEmergencyMode(this)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("branch", "emergency");
                 Debug543e15Log.log("MainActivity.onCreate", "early exit emergency", "BLANK_A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             startActivity(new Intent(this, EmergencyRecoveryActivity.class));
             finish();
@@ -3795,6 +3831,7 @@ public class MainActivity extends Activity {
         // ponytail: wire RockboxRestartGrace before ensureRockboxDisabled to protect Rockbox HOME self-restarts.
         boolean rockboxGraceExit = RockboxRestartGrace.onMainActivityCreate(this);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("rockboxGraceExit", rockboxGraceExit);
@@ -3808,6 +3845,7 @@ public class MainActivity extends Activity {
             d.put("lowMemory", mi.lowMemory);
             Debug543e15Log.log("MainActivity.onCreate", "post-grace gate", "BLANK_A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (rockboxGraceExit) {
             finish();
@@ -3897,6 +3935,7 @@ public class MainActivity extends Activity {
         }
         LandscapeOrientationGuard.enforceLandscape(this);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("isA5", DeviceFeatures.isA5());
@@ -3924,9 +3963,11 @@ public class MainActivity extends Activity {
             d.put("density", dm.density);
             DebugB4208eLog.log("MainActivity.onCreate", "after enforceLandscape", "A,B,C,D,E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         initY1LayoutMetrics();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screenWidthPx", screenWidthPx);
@@ -3939,6 +3980,7 @@ public class MainActivity extends Activity {
             d.put("realDispH", dm.heightPixels);
             DebugB4208eLog.log("MainActivity.onCreate", "after initY1LayoutMetrics", "E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-11 / 2026-07-14 — Portrait chrome: force full-width (no dual-pane masks).
         if (A5NavigationMode.forcePortraitThemeRules(this)) {
@@ -4008,6 +4050,7 @@ public class MainActivity extends Activity {
             });
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_setContentView");
@@ -4018,6 +4061,7 @@ public class MainActivity extends Activity {
             DebugAf054eLog.log(this, "MainActivity.onCreate", "early startup", "H2,H3", dbg);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after setContentView", "A", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         // 🚀 [여기서부터 새로 추가!] 메인 화면 위에 덮어씌울 '로딩 스피너 팝업창'을 생성합니다.
@@ -4129,6 +4173,7 @@ public class MainActivity extends Activity {
             public void onUsbStateChanged(boolean connected) {
                 android.util.Log.d("UsbFocus", "MainActivity.onUsbStateChanged(" + connected + ") called. lastHandledState=" + lastHandledState);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("connected", connected);
@@ -4141,6 +4186,7 @@ public class MainActivity extends Activity {
                     d.put("usbMassStorageLocked", usbMassStorageLocked);
                     DebugSessionLog.log("MainActivity.onUsbStateChanged", "entry", "H4", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (connected == lastHandledState) return;
                 lastHandledState = connected;
@@ -4151,18 +4197,21 @@ public class MainActivity extends Activity {
                     // Tech: preferStockUsbUi ⇒ skip UnauthorizedUmsGuard + routeUsbHostInterceptUi.
                     if (UsbStorageSessionFlags.preferStockUsbUi(MainActivity.this)) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("stockUi", true);
                             DebugSessionLog.log("MainActivity.onUsbStateChanged",
                                     "stock USB — no Solar host work", "H-USB", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return;
                     }
                     // 2026-07-06 — Stock Y1 may flip kernel to mass_storage on plug-in; tear down without consent.
                     UsbUnauthorizedUmsGuard.teardownIfUnauthorizedAsync(MainActivity.this);
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         String fg = ExternalInputHandoff.getForegroundPackageName(MainActivity.this);
                         org.json.JSONObject d = Debug266f21Log.usbSnapshot();
@@ -4173,12 +4222,14 @@ public class MainActivity extends Activity {
                         Debug266f21Log.log(MainActivity.this, "MainActivity.onUsbStateChanged",
                                 "host connect route", "H2,H7", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     if (usbFocusHelper != null && usbFocusHelper.isUserDeclinedHostSession()) {
                         usbDialogDismissedThisConnection = true;
                         usbDialogShownThisConnection = true;
                         usbEnablePromptSession = false;
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("declinedSession", true);
@@ -4186,6 +4237,7 @@ public class MainActivity extends Activity {
                             DebugSessionLog.log("MainActivity.onUsbStateChanged",
                                     "host connect — stay idle (declined)", "H-USB-IDLE", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return;
                     }
@@ -4209,12 +4261,14 @@ public class MainActivity extends Activity {
                 // Tech: dialog comes from USB_STATE host path only ({@link #routeUsbHostInterceptUi}).
                 // Reversal: restore maybeShowUsbConnectionPrompt(null) here.
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("skippedPrompt", true);
                     Debug0f5debLog.log(MainActivity.this, "MainActivity.onChargerOnlyConnected",
                             "charger-only — no USB storage prompt", "H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
 
@@ -4236,6 +4290,7 @@ public class MainActivity extends Activity {
                     return;
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("hasWindowFocus", hasWindowFocus());
@@ -4245,6 +4300,7 @@ public class MainActivity extends Activity {
                     d.put("menuShowing", themedContextMenu != null && themedContextMenu.isShowing());
                     DebugSessionLog.log("MainActivity.onUsbFocusIntercept", "intercept", "H3-H8", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 routeUsbHostInterceptUi(false);
             }
@@ -4301,6 +4357,7 @@ public class MainActivity extends Activity {
 
         bootstrapThemeFast();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_fastTheme");
@@ -4308,6 +4365,7 @@ public class MainActivity extends Activity {
             DebugSessionLog.log("MainActivity.onCreate", "fast theme ready", "H1", dbg);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after fast theme", "A", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         try {
@@ -4334,6 +4392,7 @@ public class MainActivity extends Activity {
             }
         } catch (Exception e) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_theme_identity");
@@ -4342,6 +4401,7 @@ public class MainActivity extends Activity {
             dbg.put("theme", te != null ? te.folderName : "");
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after theme identity (no sync cache)", "A", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         // (이하 블랙리스트 및 다른 설정 불러오기 코드 유지)
@@ -4385,12 +4445,14 @@ public class MainActivity extends Activity {
             favoritePaths = MusicLibraryStore.getInstance(MainActivity.this).loadFavoritePaths();
         } catch (Exception e) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_prefs_favorites");
             dbg.put("elapsedMs", android.os.SystemClock.uptimeMillis() - onCreateStartMs);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after prefs/favorites", "A", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         NavidromePrefs.load(NavidromeClient.getInstance(), prefs);
         com.solar.launcher.plex.PlexPrefs.load(com.solar.launcher.plex.PlexClient.getInstance(), prefs);
@@ -4419,6 +4481,7 @@ public class MainActivity extends Activity {
         // ponytail: library scan deferred until home menu is visible (scheduleDeferredColdStartWork).
         layoutMainMenu = findViewById(R.id.layout_main_menu);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_findViewById");
@@ -4426,6 +4489,7 @@ public class MainActivity extends Activity {
             DebugSessionLog.log("MainActivity.onCreate", "views bound", "H5", dbg);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after findViewById main", "A", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         menuListHost = findViewById(R.id.menu_list_host);
         menuScroll = findViewById(R.id.menu_scroll);
@@ -4501,12 +4565,14 @@ public class MainActivity extends Activity {
         lyricsHost = new NowPlayingLyricsHost(this, playerLyricsList, playerLyricsVizList, playerLyricsPlain);
         npOverlay.applyMode();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_npOverlay");
             dbg.put("elapsedMs", android.os.SystemClock.uptimeMillis() - onCreateStartMs);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after np overlay wire", "A", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         tvVizTitle = findViewById(R.id.tv_viz_title);
         tvVizArtist = findViewById(R.id.tv_viz_artist);
@@ -4549,12 +4615,14 @@ public class MainActivity extends Activity {
         try { migrateBackgroundPrefs(); } catch (Exception e) {}
         try { HomeMenuConfig.migrateHomePrefsIfNeeded(prefs); } catch (Exception e) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_home_prefs");
             dbg.put("elapsedMs", android.os.SystemClock.uptimeMillis() - onCreateStartMs);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after home prefs migrate", "A", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         clockHandler.post(new Runnable() {
             @Override
@@ -4828,30 +4896,36 @@ public class MainActivity extends Activity {
         applyA5ScaledSystemChrome();
         applyFullWidthMenusLayout();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "before_themed_actions");
             dbg.put("elapsedMs", android.os.SystemClock.uptimeMillis() - onCreateStartMs);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "before themed action buttons", "A,E", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         initY1ThemedActionButtons();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "before_buildHomeMenu");
             dbg.put("elapsedMs", android.os.SystemClock.uptimeMillis() - onCreateStartMs);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "before buildHomeMenu", "A,E", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         buildHomeMenu();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("phase", "after_buildHomeMenu");
             dbg.put("elapsedMs", android.os.SystemClock.uptimeMillis() - onCreateStartMs);
             Debug383b4eLog.log(this, "MainActivity.onCreate", "after buildHomeMenu", "A,E", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         applyThemeToMainMenu();
         requestFirstHomeMenuFocus();
@@ -5061,6 +5135,7 @@ public class MainActivity extends Activity {
         }
 
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject dbg = new org.json.JSONObject();
             dbg.put("screenState", currentScreenState);
@@ -5077,6 +5152,7 @@ public class MainActivity extends Activity {
             dbg.put("overlayOwners", blockingOverlayOwners);
             Debug9cd8d5Log.boot(this, "MainActivity.onCreate", "onCreate done", "E", dbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         // 🚀 2. 테마를 바꾸고 화면이 새로고침(recreate)되었을 때, 메인 화면이 아닌 '테마 선택 리스트'로 돌아오게 만듭니다!
@@ -5612,6 +5688,7 @@ public class MainActivity extends Activity {
             syncStatusBarLoadingThrobber();
         } catch (Exception ignored) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("firstReadyStill", firstReadyOverlayActive);
@@ -5622,6 +5699,7 @@ public class MainActivity extends Activity {
             Debug2b0d3bLog.log(this, "MainActivity.releaseStartupNavGate",
                     "startup gate released", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -5636,15 +5714,18 @@ public class MainActivity extends Activity {
         // 2026-07-20 — Status spinner + key gate for the same wait (not only full-screen face).
         armStartupNavGate();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
             d.put("libScan", libraryScanRunning);
             Debug543e15Log.log("MainActivity.showFirstReadyOverlay", "first-ready shown", "BLANK_B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         acquireBlockingOverlay(OVERLAY_FIRST_READY, getString(R.string.getting_things_ready));
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("owners", blockingOverlayOwners);
@@ -5656,6 +5737,7 @@ public class MainActivity extends Activity {
             Debug9cd8d5Log.boot(this, "MainActivity.showFirstReadyOverlay",
                     "blocking overlay shown", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         scheduleFirstReadyCheck(400L);
     }
@@ -5690,6 +5772,7 @@ public class MainActivity extends Activity {
         // 2026-07-19 — Must finish (or skip) first library pass; scanning alone is not enough.
         boolean libraryReady = firstLibraryPassComplete && !libraryScanRunning;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("shownMs", shownMs);
@@ -5712,6 +5795,7 @@ public class MainActivity extends Activity {
                         "overlay poll", "A", d);
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (homeUp && prepIdle && libraryReady) {
             firstReadyOverlayActive = false;
@@ -5720,6 +5804,7 @@ public class MainActivity extends Activity {
             // 2026-07-20 — Home navigable: drop startup throbber + key swallow.
             releaseStartupNavGate();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d2 = new org.json.JSONObject();
                 d2.put("shownMs", shownMs);
@@ -5732,6 +5817,7 @@ public class MainActivity extends Activity {
                 Debug2b0d3bLog.log(this, "MainActivity.maybeDismissFirstReadyOverlay",
                         "first-ready dismissed — nav unlocked", "A,E", d2);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // Explicit flush — do not rely only on releaseBlockingOverlay owner count.
             flushDeferredUsbConnectPromptIfNeeded();
@@ -5751,6 +5837,7 @@ public class MainActivity extends Activity {
         }
         scheduleFirstReadyCheck(400L);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject wait = new org.json.JSONObject();
             wait.put("shownMs", shownMs);
@@ -5767,6 +5854,7 @@ public class MainActivity extends Activity {
                         "first-ready still waiting", "A,E", wait);
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -6542,6 +6630,7 @@ public class MainActivity extends Activity {
                 listWheelReverseEpochEventTime = android.os.SystemClock.uptimeMillis();
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("from", listWheelLiveDir);
@@ -6550,6 +6639,7 @@ public class MainActivity extends Activity {
                 Debug0f5debLog.probe("MainActivity.noteListWheelDirection", "list reverse",
                         "H-rev", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         listWheelLiveDir = direction;
@@ -6561,6 +6651,7 @@ public class MainActivity extends Activity {
      */
     private void dropListWheelBacklogOnly() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("pending", listWheelCoalescer.pendingDepth());
@@ -6570,6 +6661,7 @@ public class MainActivity extends Activity {
             DebugFa8512Log.log(this, "MainActivity.dropListWheelBacklogOnly",
                     "drop backlog keep flywheel", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         listWheelCoalescer.dropPending();
     }
@@ -6579,6 +6671,7 @@ public class MainActivity extends Activity {
      */
     private void hardStopListWheel() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("pending", listWheelCoalescer.pendingDepth());
@@ -6587,6 +6680,7 @@ public class MainActivity extends Activity {
             Debug0f5debLog.log(this, "MainActivity.hardStopListWheel",
                     "hard stop wheel", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         listWheelCoalescer.dropPending();
         scrollIdleGate.reset();
@@ -6726,6 +6820,7 @@ public class MainActivity extends Activity {
                 cancelWifiSleepOff();
                 maybeRestoreWifiAfterSleepPolicy();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("isCharging", true);
@@ -6734,6 +6829,7 @@ public class MainActivity extends Activity {
                     Debug0f5debLog.log(this, "MainActivity.updateBatteryUi",
                             "charging started — no USB storage prompt", "H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             } else {
                 // 2026-07-18/20 — Discharging: USB mass storage cannot be active; unlock Solar blocks.
@@ -6741,6 +6837,7 @@ public class MainActivity extends Activity {
                 // Tech: BATTERY_CHANGED !charging → clear Solar session + UMS teardown if Solar armed.
                 // Reversal: only unlock via Y1UsbFocusHelper confirm-unplug (ignore charge-loss).
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     int pluggedDbg = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
                     org.json.JSONObject d = new org.json.JSONObject();
@@ -6757,6 +6854,7 @@ public class MainActivity extends Activity {
                     Debug0f5debLog.log(this, "MainActivity.updateBatteryUi",
                             "charge lost — USB lock snapshot", "H1,H2,H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 onChargingLostClearUsbStorageBlocks();
                 if (isScreenSleeping) {
@@ -8537,6 +8635,7 @@ public class MainActivity extends Activity {
                 menuWheelCoalescer.armImmediateFlush();
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("from", listWheelLiveDir);
@@ -8544,6 +8643,7 @@ public class MainActivity extends Activity {
                 Debug0f5debLog.probe("MainActivity.applyWheelAccelFocus", "menu reverse",
                         "H-rev", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         if (event != null && listWheelReverseEpochEventTime > 0L
@@ -9306,6 +9406,7 @@ public class MainActivity extends Activity {
                     public void run() {
                         if (isFinishing() || gen != themeGalleryPreviewGen || ivSettingsPreviewIcon == null) return;
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("folder", previewFolder);
@@ -9314,6 +9415,7 @@ public class MainActivity extends Activity {
                             DebugAgentLog.log(MainActivity.this, "MainActivity.updateThemeGalleryPreview",
                                     "preview bound", "H-OOM", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         recycleImageViewBitmap(ivSettingsPreviewIcon);
                         if (cover != null) {
@@ -9378,6 +9480,7 @@ public class MainActivity extends Activity {
                                               final ThemeDownloader.ThemeVariant variant) {
         if (themeGalleryInterstitial == null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("entry", entry != null ? entry.folder : "null");
@@ -9385,6 +9488,7 @@ public class MainActivity extends Activity {
                 DebugA6d897Log.log(this, "MainActivity.showThemeGalleryInterstitial",
                         "null view — direct download", "E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (variant != null) downloadAndApplyThemeVariant(entry, variant);
             else downloadAndApplyTheme(entry);
@@ -9407,6 +9511,7 @@ public class MainActivity extends Activity {
         }
         themeGalleryInterstitial.setVisibility(View.VISIBLE);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("entry", entry != null ? entry.folder : "null");
@@ -9425,6 +9530,7 @@ public class MainActivity extends Activity {
             DebugA6d897Log.log(this, "MainActivity.showThemeGalleryInterstitial",
                     "interstitial shown", "C,E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         final int maxH = themeGalleryCoverMaxPx();
         new Thread(new Runnable() {
@@ -9450,6 +9556,7 @@ public class MainActivity extends Activity {
                 @Override
                 public void onClick(View v) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("entry", entry != null ? entry.folder : "null");
@@ -9459,6 +9566,7 @@ public class MainActivity extends Activity {
                                 "MainActivity.btnThemeInterstitialDownload",
                                 "download click fired", "C", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     clickFeedback();
                     hideThemeGalleryInterstitial();
@@ -9468,6 +9576,7 @@ public class MainActivity extends Activity {
             });
             btnThemeInterstitialDownload.requestFocus();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("dlFocusedAfter", btnThemeInterstitialDownload.isFocused());
@@ -9477,6 +9586,7 @@ public class MainActivity extends Activity {
                 DebugA6d897Log.log(this, "MainActivity.showThemeGalleryInterstitial",
                         "after requestFocus download", "D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
     }
@@ -9484,6 +9594,7 @@ public class MainActivity extends Activity {
     private void startThemeGalleryActivation(final ThemeDownloader.CatalogEntry entry,
                                              final ThemeDownloader.ThemeVariant variant) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("fullWidth", isFullWidthMenus);
@@ -9494,6 +9605,7 @@ public class MainActivity extends Activity {
             DebugA6d897Log.log(this, "MainActivity.startThemeGalleryActivation",
                     "activation route", "E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-15 — Portrait: OK downloads now (lower strip already showed cover).
         // Was: any full-width → interstitial confirm. Landscape full-width still confirms.
@@ -9595,6 +9707,7 @@ public class MainActivity extends Activity {
 
     private void downloadAndApplyTheme(final ThemeDownloader.CatalogEntry entry) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("entry", entry != null ? entry.folder : "null");
@@ -9602,6 +9715,7 @@ public class MainActivity extends Activity {
             DebugA6d897Log.log(this, "MainActivity.downloadAndApplyTheme",
                     "download started", "C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (layoutLoadingOverlay != null) layoutLoadingOverlay.setVisibility(View.VISIBLE);
         final int gen = themeDownloadGen;
@@ -10021,11 +10135,13 @@ public class MainActivity extends Activity {
                     prefs.edit().putBoolean(WifiSleepPolicy.PREF_DISABLED_BY_POLICY, true).commit();
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = soulseekSleepDecisionSnapshot();
                     d.put("wifiWasEnabled", true);
                     DebugSessionLog.log("MainActivity.tryWifiSleepPowerOff", "wifi sleep off", "H-WIFI", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         });
@@ -10540,6 +10656,7 @@ public class MainActivity extends Activity {
             boolean portrait = A5NavigationMode.isPortrait(this);
             android.util.DisplayMetrics dmNow = getResources().getDisplayMetrics();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("portrait", portrait);
@@ -10563,6 +10680,7 @@ public class MainActivity extends Activity {
                 Debug1fc727Log.log(this, "MainActivity.initY1LayoutMetrics",
                         "A5 metrics branch", "L1,L2,L3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (portrait) {
                 screenWidthPx = A5NavigationMode.portraitWidthPx();
@@ -10600,6 +10718,7 @@ public class MainActivity extends Activity {
             menuListHeightPx = A5NavigationMode.scaleLayoutPx(this,
                     (int) getResources().getDimension(R.dimen.y1_menu_height));
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("screenW", screenWidthPx);
@@ -10611,6 +10730,7 @@ public class MainActivity extends Activity {
                 Debug1fc727Log.log(this, "MainActivity.initY1LayoutMetrics",
                         "A5 landscape metrics applied", "L2,L3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -10656,6 +10776,7 @@ public class MainActivity extends Activity {
         boolean y1Family = Y1PortraitExperiment.isAvailable();
         if (!a5 && !y1Family) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("runId", "freeze-pre");
@@ -10673,6 +10794,7 @@ public class MainActivity extends Activity {
                 return;
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
         LandscapeOrientationGuard.enforceForDevice(this);
         initY1LayoutMetrics();
@@ -11020,6 +11142,7 @@ public class MainActivity extends Activity {
                     applyReachBrowseAdapterSelection(listPos);
                     FocusScrollHelper.focusListPosition(listReachBrowse, listPos);
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("mode", "first_peer");
@@ -11029,6 +11152,7 @@ public class MainActivity extends Activity {
                         DebugSessionLog.log("MainActivity.focusSoulseekMessagesInbox",
                                 "focused", "H-M7", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 }
             });
@@ -11040,6 +11164,7 @@ public class MainActivity extends Activity {
             public void run() {
                 focusReachBrowseHeaderIndex(headerIdx);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("mode", "new_message_header");
@@ -11048,6 +11173,7 @@ public class MainActivity extends Activity {
                     DebugSessionLog.log("MainActivity.focusSoulseekMessagesInbox",
                             "focused", "H-M7", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         });
@@ -11084,6 +11210,7 @@ public class MainActivity extends Activity {
         clearReachBrowseAdapterSelection(listReachBrowse != null ? listReachBrowse.getAdapter() : null);
         if (h.requestFocus()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("headerIdx", idx);
@@ -11091,6 +11218,7 @@ public class MainActivity extends Activity {
                 DebugSessionLog.log("MainActivity.focusReachBrowseHeaderIndex",
                         "chrome focus", "H-HEADER", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -11242,6 +11370,7 @@ public class MainActivity extends Activity {
     private void resetReachBrowseHeaders() {
         if (listReachBrowse == null) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("adapterAttached", listReachBrowse.getAdapter() != null);
@@ -11249,6 +11378,7 @@ public class MainActivity extends Activity {
             d.put("listHeaderViews", listReachBrowse.getHeaderViewsCount());
             DebugSessionLog.log("MainActivity.resetReachBrowseHeaders", "before reset", "H-M1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         listReachBrowse.setAdapter(null);
         listReachBrowse.setOnItemSelectedListener(null);
@@ -11362,11 +11492,13 @@ public class MainActivity extends Activity {
         if (isReachBrowseFocusValid()) return false;
         focusFirstReachBrowseDataRow();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", settingsSubScreenKey);
             DebugSessionLog.log("MainActivity.ensureReachBrowseListFocus", "reseed", "H-FOCUS1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return true;
     }
@@ -11484,6 +11616,7 @@ public class MainActivity extends Activity {
         if (headerIdx >= 0) {
             int nextHeader = headerIdx + (delta < 0 ? -1 : 1);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("headerIdx", headerIdx);
@@ -11492,6 +11625,7 @@ public class MainActivity extends Activity {
                 DebugSessionLog.log("MainActivity.moveReachBrowseListFocus",
                         "header step", "H-HEADER", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (nextHeader >= 0 && nextHeader < reachBrowseHeaderViews.size()) {
                 return focusReachBrowseHeaderIndex(nextHeader);
@@ -11589,6 +11723,7 @@ public class MainActivity extends Activity {
                 return focusReachBrowseHeaderIndex(reachBrowseHeaderViews.size() - 1);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("delta", delta);
@@ -11597,11 +11732,13 @@ public class MainActivity extends Activity {
                 d.put("screen", settingsSubScreenKey);
                 DebugSessionLog.log("MainActivity.moveReachBrowseListFocus", "at limit", "H-FOCUS3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
         focusReachBrowseListPosition(next);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("delta", delta);
@@ -11611,6 +11748,7 @@ public class MainActivity extends Activity {
             DebugAgentLog.log(this, "MainActivity.moveReachBrowseListFocus",
                     "adapter row focus", "H-CHAT", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return true;
     }
@@ -11773,6 +11911,7 @@ public class MainActivity extends Activity {
         }
         lastHomeMenuRowStyleFocus = focus;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("ms", android.os.SystemClock.uptimeMillis() - t0);
@@ -11782,6 +11921,7 @@ public class MainActivity extends Activity {
             DebugAfe4efLog.log(this, "MainActivity.refreshHomeMenuRowStyles",
                     "row styles", "H2", d, "post-fix");
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -11963,6 +12103,7 @@ public class MainActivity extends Activity {
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("buildGen", homeMenuBuildGen + 1);
@@ -11970,6 +12111,7 @@ public class MainActivity extends Activity {
             d.put("thread", Thread.currentThread().getName());
             DebugAgentLog.log(this, "MainActivity.buildHomeMenu", "build start", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (ActiveThemeEngine.isJjMode()) {
             buildJjHomeMenu();
@@ -12035,6 +12177,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < homeMenuEntries.size(); i++) {
             if (buildGen != homeMenuBuildGen) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("staleGen", buildGen);
@@ -12044,6 +12187,7 @@ public class MainActivity extends Activity {
                     DebugAgentLog.log(this, "MainActivity.buildHomeMenu",
                             "stale build aborted", "H-HOME-B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return;
             }
@@ -12696,6 +12840,7 @@ public class MainActivity extends Activity {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             long dbg6aT0 = android.os.SystemClock.uptimeMillis();
             org.json.JSONObject d = new org.json.JSONObject();
@@ -12722,6 +12867,7 @@ public class MainActivity extends Activity {
             long dbg6aMs = android.os.SystemClock.uptimeMillis() - dbg6aT0;
             DebugA177c4Log.onHomePreview(android.os.SystemClock.uptimeMillis() - t0, dbg6aMs);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (a5Strip) syncA5BottomStripFromHome(id, index);
     }
@@ -12746,6 +12892,7 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("show", show);
@@ -12756,6 +12903,7 @@ public class MainActivity extends Activity {
             d.put("npVisible", nowPlayingHomeMenuVisible);
             DebugAgentLog.log(this, "MainActivity.shouldShowNowPlayingHome", "gate", "H1-H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return show;
     }
@@ -13482,12 +13630,14 @@ public class MainActivity extends Activity {
         final boolean requested = getIntent() != null
                 && getIntent().getBooleanExtra("solar_adb_open_soulseek_messages", false);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("requested", requested);
             DebugSessionLog.log("MainActivity.scheduleAdbOpenSoulseekMessagesIfRequested",
                     "check extra", "H-M6", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!requested) return;
         getIntent().removeExtra("solar_adb_open_soulseek_messages");
@@ -13512,11 +13662,13 @@ public class MainActivity extends Activity {
         if (intent == null) return;
         final String themeAutoVariant = intent.getStringExtra("theme_auto_variant");
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject themeAdbDbg = new org.json.JSONObject();
             themeAdbDbg.put("extra", themeAutoVariant != null ? themeAutoVariant : "");
             DebugSessionLog.log("MainActivity.scheduleThemeAutoVariant", "extra", "H-ADB", themeAdbDbg);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (themeAutoVariant == null || !themeAutoVariant.contains("::")) return;
         intent.removeExtra("theme_auto_variant");
@@ -14240,6 +14392,7 @@ public class MainActivity extends Activity {
         if (ScreenTransition.isAnimating() || ListDrillTransition.isAnimating()
                 || FlowPlayerHandoff.isHandoffAnimating()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("from", currentScreenState);
@@ -14252,6 +14405,7 @@ public class MainActivity extends Activity {
                         isBack ? "back during anim — abort then sync" : "forward blocked by anim",
                         "H1,H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (isBack) {
                 // 2026-07-19 — Full abort so deferred INVISIBLE roots do not stick; sync apply below.
@@ -14301,6 +14455,7 @@ public class MainActivity extends Activity {
         if (from != state) {
             armNavFeedbackThrobber(com.solar.launcher.ui.UiBusy.REASON_TRANSITION, 6_000L);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("from", from);
@@ -14316,6 +14471,7 @@ public class MainActivity extends Activity {
                 DebugCb4747Log.log("MainActivity.changeScreen",
                         "transition busy armed", "A,B,D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         // 2026-07-19 — Interrupted Back always sync-applies (skip post-frame coordinator).
@@ -14331,6 +14487,7 @@ public class MainActivity extends Activity {
                 finalizeScreenVisibility(state);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("path", syncBack ? "sync-back-abort" : "sync-clear");
@@ -14341,6 +14498,7 @@ public class MainActivity extends Activity {
                 DebugCb4747Log.log("MainActivity.changeScreen",
                         "sync clear transition same-stack", "A,B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-19 — Defer clear one frame so sync hops still paint the throbber.
             com.solar.launcher.ui.UiBusy.clearNextFrame(
@@ -14476,6 +14634,7 @@ public class MainActivity extends Activity {
             in.setAlpha(1f);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("state", state);
@@ -14485,6 +14644,7 @@ public class MainActivity extends Activity {
             d.put("inVis", in != null ? in.getVisibility() : -1);
             Debug54d8beLog.log("MainActivity.finalizeScreenVisibility", "finalize done", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (state == STATE_PLAYER) {
             hideBrowsePreviewChromeForNowPlaying("finalizeScreenVisibility");
@@ -14571,12 +14731,14 @@ public class MainActivity extends Activity {
             if (currentScreenState == STATE_FLOW) {
                 playerReturnScreen = STATE_FLOW;
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("fromFlow", true);
                     d.put("pendingReturn", flowScreenHost != null && flowScreenHost.hasPendingPlayerReturn());
                     DebugSessionLog.log("MainActivity.changeScreen", "playerReturn=FLOW", "H-E", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             } else {
                 // 2026-07-19 — Never stamp Stem/Mix as NP return (Back would reopen the jam).
@@ -14682,6 +14844,7 @@ public class MainActivity extends Activity {
         // Leaving library clears stem pick (unless entering Stem Player). 2026-07-19
         if (stemPickMode && state != STATE_BROWSER && state != STATE_STEM_PLAYER) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("newState", state);
@@ -14690,6 +14853,7 @@ public class MainActivity extends Activity {
                 d.put("isWifiKeyboard", state == STATE_WIFI_KEYBOARD);
                 DebugEcc8c8Log.log("MainActivity.applyScreenChange", "clear stemPickMode", "H-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             stemPickMode = false;
             clearStemPickSelectionAndPending();
@@ -14701,6 +14865,7 @@ public class MainActivity extends Activity {
         // Leaving library clears Mix assign (unless entering Mix). 2026-07-19
         if (mixAssignMode && state != STATE_BROWSER && state != STATE_MIX) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("newState", state);
@@ -14708,6 +14873,7 @@ public class MainActivity extends Activity {
                 d.put("isWifiKeyboard", state == STATE_WIFI_KEYBOARD);
                 DebugEcc8c8Log.log("MainActivity.applyScreenChange", "clear mixAssignMode", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             mixAssignMode = false;
             mixReassignDeck = -1;
@@ -14720,6 +14886,7 @@ public class MainActivity extends Activity {
             queueAppendBrowseMode = false;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("state", state);
@@ -14731,10 +14898,12 @@ public class MainActivity extends Activity {
             d.put("getMusicEmbedded", getMusicEmbeddedInDeezer);
             com.solar.launcher.DebugSessionLog.log("MainActivity.applyScreenChange", "layout visibility", "H-A-H-B-H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (state == STATE_PLAYER) {
             if (layoutPlayerMode != null) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("alphaBefore", layoutPlayerMode.getAlpha());
@@ -14746,6 +14915,7 @@ public class MainActivity extends Activity {
                     d.put("podcastActive", playback.isPodcastActive());
                     DebugSessionLog.log("MainActivity.applyScreenChange", "player enter", "H-B-H-C", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 // Forward Flow handoff crossfades player in — don't flash static art before flyer lands.
                 float playerAlpha = (skipFlowLayoutFade && leavingScreen == STATE_FLOW) ? 0f : 1f;
@@ -14775,6 +14945,7 @@ public class MainActivity extends Activity {
             if (state == STATE_FLOW) {
                 layoutFlowMode.setVisibility(View.VISIBLE);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("leavingScreen", leavingScreen);
@@ -14783,6 +14954,7 @@ public class MainActivity extends Activity {
                     DebugSessionLog.log("MainActivity.applyScreenChange", "flow enter", "H2", d);
                     Debug1cf0c7Log.log(this, "MainActivity.applyScreenChange", "flow enter", "H-E", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (skipFlowLayoutFade || leavingScreen == STATE_FLOW) {
                     // ponytail: reverse reveal may still be easing layout alpha — don't stomp mid-fade.
@@ -14798,6 +14970,7 @@ public class MainActivity extends Activity {
                 }
             } else if (leavingScreen == STATE_FLOW) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("targetState", state);
@@ -14805,6 +14978,7 @@ public class MainActivity extends Activity {
                     com.solar.launcher.flow.FlowBackDebugLog.log(
                             "MainActivity.applyScreenChange", "leaving flow", "H-V2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (skipFlowLayoutFade) {
                     if (state == STATE_PLAYER) {
@@ -14954,6 +15128,7 @@ public class MainActivity extends Activity {
                 }
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("durationMs", System.currentTimeMillis() - flowScreenStartMs);
@@ -14965,17 +15140,20 @@ public class MainActivity extends Activity {
                 d.put("restoreCarousel", leavingScreen == STATE_PLAYER && !npToFlowHandoffLanding);
                 DebugSessionLog.log("MainActivity.changeScreen", "STATE_FLOW branch", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-18 — Flow root visible; clear open throbber (catalog may still load under UiBusy auto-end).
             flowHoldThrobberArmed = false;
             com.solar.launcher.ui.UiBusy.clear(com.solar.launcher.ui.UiBusy.REASON_FLOW_OPEN);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("leavingScreen", leavingScreen);
                 Debug0f5debLog.log(this, "MainActivity.changeScreen",
                         "flow open busy cleared", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } else if (state == STATE_SOULSEEK) {
             if (isGetMusicUnifiedUi()
@@ -15173,6 +15351,7 @@ public class MainActivity extends Activity {
                 incomingRoot.setVisibility(View.INVISIBLE);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("state", state);
@@ -15185,6 +15364,7 @@ public class MainActivity extends Activity {
                 Debug54d8beLog.log("MainActivity.applyScreenChange",
                         "deferOutgoing — out VISIBLE in INVISIBLE", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-18 — Outgoing browser stays for the slide, but strip dual-pane so NP never
             // shows the previous menu's right cover column through the transparent browser root.
@@ -15193,6 +15373,7 @@ public class MainActivity extends Activity {
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("state", state);
@@ -15201,6 +15382,7 @@ public class MainActivity extends Activity {
             d.put("deferBg", screenTransitionDeferBg);
             com.solar.launcher.ui.TransitionPerfLog.log("MainActivity.applyScreenChange", "done", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         updateVideoStatusBarPolicy();
         updateNetworkRescanLoop();
@@ -15356,6 +15538,7 @@ public class MainActivity extends Activity {
             }
             if (currentScreenState == STATE_SETTINGS && isThemeListActive()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     boolean interstitialVis = themeGalleryInterstitial != null
                             && themeGalleryInterstitial.getVisibility() == View.VISIBLE;
@@ -15376,10 +15559,12 @@ public class MainActivity extends Activity {
                     DebugA6d897Log.log(this, "MainActivity.handleCenterShortClick",
                             "theme center while list active", "A", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 clickFeedback();
                 ThemeBrowser.Row row = themeBrowserFocusedRow();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("rowNull", row == null);
@@ -15389,6 +15574,7 @@ public class MainActivity extends Activity {
                     DebugAgentLog.log(this, "MainActivity.handleCenterShortClick",
                             "theme row activate", "H-SEL", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (row != null) onThemeBrowserRowClick(row);
                 return;
@@ -15690,6 +15876,7 @@ public class MainActivity extends Activity {
             if (A5InputKeys.isSidePowerEvent(event)) {
                 KeyEvent asBack = A5InputKeys.sidePowerAsBackEvent(event);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("runId", "power-as-ok");
@@ -15704,6 +15891,7 @@ public class MainActivity extends Activity {
                     Debug391149Log.log(this, "MainActivity.dispatchKeyEvent",
                             "A5 power → Back scan0", "H-H", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (asBack != null) {
                     return dispatchKeyEvent(asBack);
@@ -15723,6 +15911,7 @@ public class MainActivity extends Activity {
                 if (!(EmulatorInputMap.isEmulator() && event.getKeyCode() == KeyEvent.KEYCODE_BACK)) {
                     KeyEvent remapped = A5InputKeys.remapEvent(this, event, npFaceSkip);
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("runId", "power-as-ok");
@@ -15749,6 +15938,7 @@ public class MainActivity extends Activity {
                                 hypF ? "H-F" : "H-A", d);
                         DebugB4208eLog.log("MainActivity.dispatchKeyEvent", "A5 hardware remap", "P-A,P-B,P-C", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     if (remapped != null) {
                         // #region agent log
@@ -15777,6 +15967,7 @@ public class MainActivity extends Activity {
                     // Face nav miss must fall through so menus keep wheel (do not swallow DPAD).
                     if (A5InputKeys.isA5HardwareKey(event.getKeyCode())) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("rawCode", event.getKeyCode());
@@ -15786,6 +15977,7 @@ public class MainActivity extends Activity {
                             com.solar.launcher.debug.Debug31d3d8Log.log(MainActivity.this,
                                     "MainActivity.dispatchKeyEvent", "A5 key swallowed", "D", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return true;
                     }
@@ -15977,6 +16169,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
                 OverlayKeyGate.forwardKeyToOverlay(this, code, action);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", code);
@@ -15985,11 +16178,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     d.put("elapsedMs", android.os.SystemClock.uptimeMillis() - perfT0);
                     Debug62b1bbLog.log("MainActivity.dispatchKeyEvent", "overlay forward", "H-PERF-2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return true;
             }
             // Swallow unrelated keys so Home list does not scroll under the modal.
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", code);
@@ -16000,6 +16195,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("shellVisible", com.solar.input.policy.StaleOverlayGate.isShellVisible());
                 Debug62b1bbLog.log("MainActivity.dispatchKeyEvent", "overlay swallow", "H-PERF-1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -16113,6 +16309,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Reversal: restore post-PP context gate; allow handleThemedContextMenuKeyDown to return false for skip.
         if (themedContextMenuOwnsKeys()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("runId", "ctx-owns-keys");
@@ -16133,6 +16330,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             "context owns Back", "H2", d);
                 }
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (isWakingKeyEvent(event)) {
                 // #region agent log
@@ -16189,6 +16387,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (isWakingKeyEvent(event)) return true;
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", event.getKeyCode());
@@ -16196,11 +16395,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     DebugF9ef0bLog.log(this, "MainActivity.dispatchKeyEvent",
                             "pp intercept down", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return handlePlayPauseKeyDown(event);
             }
             if (event.getAction() == KeyEvent.ACTION_UP) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", event.getKeyCode());
@@ -16209,6 +16410,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     DebugF9ef0bLog.log(this, "MainActivity.dispatchKeyEvent",
                             "pp intercept up", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return handlePlayPauseKeyUp();
             }
@@ -17556,6 +17758,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             tvKeyboardHint.setVisibility(View.VISIBLE);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 CharSequence t = tvKeyboardHint.getText();
                 org.json.JSONObject d = new org.json.JSONObject();
@@ -17583,6 +17786,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug9cd8d5Log.boot(this, "MainActivity.openKeyboard",
                         "keyboard hint glyphs", "KB", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         updateStatusBarTitle();
@@ -17954,6 +18158,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 long now = System.currentTimeMillis();
                 if ((percent != deezerProgressDebugLastPct && percent % 5 == 0)
@@ -17970,6 +18175,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             "deezer progress", "H-HEAT", d);
                 }
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         @Override public void onDeezerSaveAndStemsComplete(File completeFile, DeezerResult track) {
@@ -18003,6 +18209,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 persistPlaybackQueue();
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fileLen", completeFile.length());
@@ -18010,6 +18217,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(MainActivity.this, "MainActivity.onDeezerStreamDownloadComplete",
                         "deezer complete", "H-DZ-GROW", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         @Override public void onDeezerStreamDownloadFailed() {
@@ -18182,6 +18390,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void openGetMusicSearchKeyboard(String initialQuery) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("getMusicFromEntryPoint", getMusicFromEntryPoint);
@@ -18190,6 +18399,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("online", ConnectivityHelper.isOnline(this));
             Debug843b96Log.log(this, "MainActivity.openGetMusicSearchKeyboard", "enter", "GM-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!requireInternet(R.string.toast_internet_required)) return;
         getMusicFromEntryPoint = true;
@@ -18198,12 +18408,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         keyboardReturnState = STATE_SOULSEEK;
         keyboardPrefill = initialQuery != null ? initialQuery : "";
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("keyboardPurpose", keyboardPurpose);
             d.put("getMusicMode", getMusicMode);
             Debug843b96Log.log(this, "MainActivity.openGetMusicSearchKeyboard", "changeScreen", "GM-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         changeScreen(STATE_WIFI_KEYBOARD);
     }
@@ -18234,15 +18446,18 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 currentScreenState, STATE_STEM_PLAYER, STATE_MIX, STATE_MENU);
         persistPlaybackQueue();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("fromScreen", currentScreenState);
             d.put("browserVisBefore", layoutBrowserMode != null ? layoutBrowserMode.getVisibility() : -1);
             com.solar.launcher.DebugSessionLog.log("MainActivity.startDeezerPlayFromPartial", "before player", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         changeScreen(STATE_PLAYER);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
@@ -18250,6 +18465,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("playerVisAfter", layoutPlayerMode != null ? layoutPlayerMode.getVisibility() : -1);
             com.solar.launcher.DebugSessionLog.log("MainActivity.startDeezerPlayFromPartial", "after player", "H-A-H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         progressHandler.post(updateProgressTask);
         startReachFromGrowingFile(partial, 0);
@@ -18615,6 +18831,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void handleKeyboardMediaDel(boolean vibrate) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("runId", "pre-fix");
@@ -18626,6 +18843,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug1f0248Log.log(this, "MainActivity.handleKeyboardMediaDel",
                     "keyboard delete fired", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (vibrate) clickFeedback();
         if (keyboardPurpose == KEYBOARD_SOULSEEK_USER) {
@@ -18721,6 +18939,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void handleKeyboardPlayPauseLongPress() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("indexBefore", keyboardIndex);
@@ -18728,6 +18947,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.handleKeyboardPlayPauseLongPress",
                     "charset switch long press", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         clickFeedback();
         if (keyboardPpLongDoCase) {
@@ -18775,6 +18995,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         WifiOfflinePowerReceiver.onUserWifiIntent(this);
         WifiConnector.cancelPending();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
@@ -18783,6 +19004,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.beginWifiConnect",
                     "wifi connect no UiBusy yet", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -18790,12 +19012,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         wifiConnectInProgress = false;
         updateWifiOfflinePowerPolicy();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("uiBusy", com.solar.launcher.ui.UiBusy.isBusy());
             Debug0f5debLog.log(this, "MainActivity.endWifiConnect",
                     "wifi connect end", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -18901,6 +19125,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         boolean isOn = false;
         String statusText = "OFF";
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("requestFocus", requestFocus);
@@ -18909,6 +19134,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.startBluetoothScan",
                     "bt scan rebuild no UiBusy yet", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         if (ba != null) {
@@ -19187,6 +19413,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         progressHandler.post(btConnectUiTickRunnable);
         refreshBtConnectUi();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("addr", btConnectingAddress);
@@ -19194,6 +19421,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.beginBtConnect",
                     "bt connect no UiBusy yet", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -19205,11 +19433,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         progressHandler.removeCallbacks(btConnectUiTickRunnable);
         refreshBtConnectUi();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("uiBusy", com.solar.launcher.ui.UiBusy.isBusy());
             Debug0f5debLog.log(this, "MainActivity.endBtConnect", "bt connect end", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -19229,23 +19459,27 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (device.getBondState() == BluetoothDevice.BOND_BONDED) {
                 if (isBluetoothAudioConnected(device)) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("addr", device.getAddress());
                         d.put("action", "disconnect_a2dp");
                         DebugAgentLog.log(this, "MainActivity.pairBluetoothDevice", "toggle", "H-BT3", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     disconnectBluetoothAudio(device);
                     refreshBtConnectUi();
                 } else {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("addr", device.getAddress());
                         d.put("action", "connect_a2dp");
                         DebugAgentLog.log(this, "MainActivity.pairBluetoothDevice", "toggle", "H-BT3", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     userInitiatedA2dpConnect = true;
                     beginBtConnect(device);
@@ -19402,12 +19636,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Method disconnect = bluetoothA2dp.getClass().getMethod("disconnect", BluetoothDevice.class);
             Object ok = disconnect.invoke(bluetoothA2dp, device);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("addr", device.getAddress());
                 d.put("ok", ok);
                 DebugAgentLog.log(this, "MainActivity.disconnectBluetoothAudio", "a2dp disconnect", "H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (ok instanceof Boolean && !(Boolean) ok) {
                 Toast.makeText(this, getString(R.string.toast_audio_connect_failed), Toast.LENGTH_SHORT).show();
@@ -19422,6 +19658,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         try {
             boolean ok = BluetoothAudioRepair.connectA2dp(this, bluetoothA2dp, device, true);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("addr", device.getAddress());
@@ -19429,6 +19666,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("a2dpOn", audioManager != null && audioManager.isBluetoothA2dpOn());
                 DebugAgentLog.log(this, "MainActivity.connectA2dpNow", "connect", "H-BT4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (!ok) {
                 Toast.makeText(this, getString(R.string.toast_audio_connect_failed), Toast.LENGTH_SHORT).show();
@@ -19456,6 +19694,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         routeAudioToBluetoothA2dp();
         if (!playback.hasAnyQueue() || playback.musicPlaylist().isEmpty()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("hasQueue", playback.hasAnyQueue());
@@ -19463,6 +19702,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.resumeBluetoothAudioPlayback",
                         "no_music_to_play", "H-PLAY-BT", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -19473,6 +19713,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             playing = mediaPlayer != null && mediaPlayer.isPlaying();
         } catch (Exception ignored) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("mpNull", mpNull);
@@ -19481,6 +19722,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.resumeBluetoothAudioPlayback",
                     "resume", "H-PLAY-BT", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (mpNull) {
             prepareMusicTrack(playback.musicIndex());
@@ -19592,6 +19834,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         boolean isOn = isWifiPowerOn();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("isOn", isOn);
@@ -19600,6 +19843,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.startWifiScan",
                     "wifi scan no UiBusy yet", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         updateWifiUI(null);
 
@@ -20219,6 +20463,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("runId", "power-strip-1");
@@ -20239,6 +20484,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("fullWidth", isFullWidthMenus);
             DebugB4208eLog.log("MainActivity.applyA5PortraitChrome", "chrome applied", "S-A,S-B,S-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -20277,6 +20523,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         A5PortraitChrome.bindHomeStrip(ivA5StripIcon, tvA5StripTitle, tvA5StripHint,
                 ivMenuPreview, title, hint);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("runId", "power-strip-1");
@@ -20289,6 +20536,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("stripIconVis", ivA5StripIcon != null ? ivA5StripIcon.getVisibility() : -1);
             DebugB4208eLog.log("MainActivity.syncA5BottomStripFromHome", "strip bound", "S-A,S-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -20623,6 +20871,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             layoutBrowserMode.setVisibility(View.GONE);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", reason != null ? reason : "");
@@ -20635,6 +20884,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.hideBrowsePreviewChromeForNowPlaying",
                     "hide browse chrome", "H-NP-PANE", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -22213,6 +22463,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 return true;
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("heldMs", heldMs);
@@ -22221,6 +22472,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("submenuOpen", themedContextMenu != null && themedContextMenu.isSubmenuTierOpen());
                 DebugAgentLog.log(this, "MainActivity.handleCenterKeyUp", "context center", "H1-H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (y2CenterOpensContextMenu() && centerLongPressHandled) {
                 centerLongPressHandled = false;
@@ -22263,6 +22515,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         centerMovePickHandled = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("heldMs", heldMs);
@@ -22274,6 +22527,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("canPick", canScheduleCenterMovePick());
             DebugAgentLog.log(this, "MainActivity.handleCenterKeyUp", "global center", "H1-H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (y2CenterOpensContextMenu()) {
             if (centerLongPressHandled) {
@@ -22296,6 +22550,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (centerHoldShouldSleep(heldMs)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("heldMs", heldMs);
@@ -22305,6 +22560,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.handleCenterKeyUp",
                         "center hold triggered screen sleep", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             performScreenSleep(false);
             return true;
@@ -22452,6 +22708,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             final boolean animated, final Runnable onComplete) {
         if (otaSystemReplaceInProgress) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("animated", animated);
@@ -22460,6 +22717,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugCb4747Log.log("MainActivity.dismissThemedContextMenu",
                     "context dismiss start", "E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-19 — Short TRANSITION busy while modal dismisses (open/close parity).
         armNavFeedbackThrobber(com.solar.launcher.ui.UiBusy.REASON_TRANSITION, 1_500L);
@@ -23025,6 +23283,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (row != null && row.getVisibility() == View.VISIBLE && row.isFocusable() && row.isEnabled()) {
                 row.requestFocus();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("runId", "pre-fix");
@@ -23044,6 +23303,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     Debug701426Log.log(this, "MainActivity.ensureBrowserListFocus",
                             "reseeded browse focus to first focusable", "D", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return;
             }
@@ -23183,6 +23443,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 : (singleTrack ? getString(R.string.home_menu_now_playing)
                 : getString(R.string.context_quick_queue));
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("hasQueue", hasQueue);
@@ -23191,6 +23452,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("endLabel", endLabel);
             QueueDebugLog.log("MainActivity.buildContextQuickBar", "quick bar built", "H6", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-18 — Quick-bar volume chip uses 0–100 display; ear at Hearing Safety cap.
         int volMax = MediaVolumeControl.getDisplayMaxVolume(this);
@@ -23279,6 +23541,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void handleContextQuickBar(int index) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("index", index);
@@ -23291,6 +23554,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("hasListener", themedContextMenu != null);
             DebugAgentLog.log(this, "MainActivity.handleContextQuickBar", "quick selected", "H1-H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-16 — USB eject lock: no menu navigation at all (queue shows blocked tip only).
         // Layman: cannot open Home/Wi‑Fi/etc while storage is shared with the PC.
@@ -23387,6 +23651,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         themedContextMenu.focusSubmenuList();
         themedContextMenu.requestOverlayFocus();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("tier", tier);
@@ -23399,6 +23664,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("runId", "post-fix-stack");
             DebugAgentLog.log(this, "MainActivity.openContextNetworkTab", "tab entered", "H6", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -23605,6 +23871,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         themedContextMenu.setQuickReturnIndex(CONTEXT_QUICK_POWER_INDEX);
         setContextPowerTier();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("tierTop", contextMenuTopTier());
@@ -23612,6 +23879,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("submenuOpen", themedContextMenu.isSubmenuTierOpen());
             DebugAgentLog.log(this, "MainActivity.openContextPowerTier", "open power", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         refreshContextPowerTier(true);
         themedContextMenu.focusSubmenuList();
@@ -23621,6 +23889,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void refreshContextPowerTier(boolean resetFocus) {
         if (!"power".equals(contextMenuTopTier())) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("tierTop", contextMenuTopTier());
@@ -23628,6 +23897,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.refreshContextPowerTier",
                         "bail not power tier", "H-POWER-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -23646,6 +23916,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 @Override public void run() {
                     suppressListClickUntil = System.currentTimeMillis() + CONTEXT_MENU_CLICK_SUPPRESS_MS;
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("from", "main_power");
@@ -23654,6 +23925,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 "MainActivity.refreshContextPowerTier",
                                 "enable USB from power", "USB-PWR", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     dismissThemedContextMenu(false);
                     enableUsbMassStorageFromRoot();
@@ -23682,6 +23954,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         });
 
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("rowCount", labels.size());
@@ -23691,6 +23964,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("switchScript", LauncherSwitch.isSwitchScriptAvailable());
             DebugAgentLog.log(this, "MainActivity.refreshContextPowerTier", "power tier", "H-POWER", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         showContextMenuTierInPlace(getString(R.string.context_quick_power), labels, states, headers, actions,
@@ -23699,6 +23973,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void showContextMediaSliders(int quickIndex) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("quickIndex", quickIndex);
@@ -23708,6 +23983,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("tierTop", contextMenuTopTier());
             DebugAgentLog.log(this, "MainActivity.showContextMediaSliders", "open sliders", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (themedContextMenu == null || audioManager == null) return;
         deactivateContextNetworkTier();
@@ -23970,12 +24246,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (themedContextMenu == null || !themedContextMenu.isShowing()) return;
         if (themedContextMenu.isQueueMoveRibbonAnimating()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("layer", "ribbonAnim→noop");
                 DebugE0de2eLog.log(this, "MainActivity.navigateContextMenuBack",
                         "Back no-op ribbon anim", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -24001,6 +24279,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
         if (themedContextMenu.isBackChipFocused() && hasContextActiveTier()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("layer", "backChip→dismiss");
@@ -24009,6 +24288,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugE0de2eLog.log(this, "MainActivity.navigateContextMenuBack",
                         "backChip→dismiss", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             dismissContextMenuAnimated();
             return;
@@ -24022,6 +24302,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     || isReachContextTier(contextMenuTopTier())) {
                 exitContextSubmenuToQuickBar();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("layer", "submenu→quickBar");
@@ -24030,6 +24311,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     DebugE0de2eLog.log(this, "MainActivity.navigateContextMenuBack",
                             "submenu→quickBar (not full dismiss)", "H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return;
             }
@@ -24039,6 +24321,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
         // Quick bar / root / title: dismiss — do not rebuild identical root options.
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("layer", "top→dismiss");
@@ -24049,6 +24332,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugE0de2eLog.log(this, "MainActivity.navigateContextMenuBack",
                     "top→dismiss", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         dismissContextMenuAnimated();
     }
@@ -24118,12 +24402,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         themedContextMenu.requestOverlayFocus();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("tierTop", contextMenuTopTier());
             d.put("submenuOpen", themedContextMenu.isSubmenuTierOpen());
             DebugAgentLog.log(this, "MainActivity.exitContextSubmenuToQuickBar", "left network tier", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -24508,6 +24794,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // ponytail: Wi-Fi scan refresh must not replace power tier rows.
         if (!"wifi".equals(contextMenuTopTier())) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("tierTop", contextMenuTopTier());
@@ -24515,11 +24802,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.refreshContextWifiTierImmediate",
                         "bail wrong tier", "H-POWER-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         if (!force && !isContextTierActive("wifi") && !shouldRefreshWifiContextUi()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("tierTop", contextMenuTopTier());
@@ -24529,6 +24818,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.refreshContextWifiTierImmediate",
                         "wifi tier inactive — bail", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -24610,6 +24900,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         appendWifiContextScanningFooter(labels, states, iconKeys, headers, actions);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("elapsedMs", System.currentTimeMillis() - wifiTierRebuildStartMs);
@@ -24618,8 +24909,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("resetFocus", resetFocus);
             DebugSessionLog.log("MainActivity.refreshContextWifiTierImmediate", "tier rebuilt", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("rowCount", labels.size());
@@ -24637,6 +24930,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("submenuOpen", themedContextMenu != null && themedContextMenu.isSubmenuTierOpen());
             DebugAgentLog.log(this, "MainActivity.refreshContextWifiTierImmediate", "show wifi tier", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         showContextMenuTierInPlace(getString(R.string.context_tier_wifi), labels, states, iconKeys, headers, actions,
                 resetFocus);
@@ -24848,6 +25142,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // ponytail: pending BT flags + force=true must not stomp power/root tier list rows.
         if (!"bt".equals(contextMenuTopTier())) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("tierTop", contextMenuTopTier());
@@ -24856,17 +25151,20 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.refreshContextBluetoothTier",
                         "bail wrong tier", "H-POWER-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         if (!force && !isContextTierActive("bt") && !shouldRefreshBtContextUi()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("tierTop", contextMenuTopTier());
                 d.put("submenuOpen", themedContextMenu != null && themedContextMenu.isSubmenuTierOpen());
                 DebugAgentLog.log(this, "MainActivity.refreshContextBluetoothTier", "bail inactive", "H-WIFI-BT", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -24957,6 +25255,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void toggleBluetoothFromContextMenu() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("btOn", isBluetoothPowerOn());
@@ -24965,6 +25264,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("tierTop", contextMenuTopTier());
             DebugAgentLog.log(this, "MainActivity.toggleBluetoothFromContextMenu", "toggle", "H-BT1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         applyBluetoothPowerState(!isBluetoothPowerOnForUi());
         refreshContextBluetoothTier(false, true);
@@ -25030,6 +25330,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 startBluetoothScan();
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("enable", enable);
@@ -25037,6 +25338,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("state", ba.getState());
                 DebugAgentLog.log(this, "MainActivity.applyBluetoothPowerState", "applied", "H-BT2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } catch (Exception ignored) {}
     }
@@ -25305,12 +25607,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("memSize", playback.unifiedQueue().size());
             d.put("scanning", isCustomScanning);
             QueueDebugLog.log("MainActivity.openPlaybackQueueInContextMenu", "open requested", "H1-H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         ensurePlaybackQueueSyncedFromStoreSync();
         if (!playback.hasAnyQueue()) {
@@ -25474,12 +25778,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         } catch (Exception e) {
             specs = buildQueueRowSpecsFast(q);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("queueSize", q.size());
                 d.put("error", e.getClass().getSimpleName());
                 QueueDebugLog.log("MainActivity.rebuildContextQueueTier", "spec build failed, fast fallback", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         // 2026-08-01 — Queue focus is stored as a track index; translate to the adapter
@@ -25507,6 +25813,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             themedContextMenu.focusQuickBarLeavingQueueList(CONTEXT_QUICK_QUEUE_INDEX);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("queueSize", q.size());
@@ -25519,6 +25826,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             QueueDebugLog.log("MainActivity.rebuildContextQueueTier", "rebuilt", "H2-H4-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         SolarAdbTest.queueOpen(q.size(), true, themedContextMenu.queueListScrollHeight(),
                 themedContextMenu.queueListChildCount());
@@ -26076,6 +26384,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         final int current = contextQueueMoveFrom >= 0 ? contextQueueMoveFrom
                 : (themedContextMenu != null ? themedContextMenu.queueMoveFrom() : home);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("focusList", focusList);
@@ -26084,6 +26393,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("hadSnapshot", contextQueueMoveSnapshot != null || contextPlaylistMoveSnapshot != null);
             DebugAgentLog.log(this, "MainActivity.cancelContextQueueMove", "cancel move", "H8", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (themedContextMenu != null && themedContextMenu.queueMoveFrom() >= 0 && current != home) {
             themedContextMenu.animateQueueMoveCancelReturn(current, home, new Runnable() {
@@ -26899,6 +27209,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hasFocus", hasFocus);
@@ -26912,6 +27223,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("scanRunning", libraryScanRunning);
             Debug383b4eLog.log(this, "MainActivity.onWindowFocusChanged", "focus", "A,D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (hasFocus) {
             endExternalInputHandoff();
@@ -26925,6 +27237,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             ExternalInputHandoff.armForForegroundPackage(this);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hasFocus", hasFocus);
@@ -26932,6 +27245,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("fg", ExternalInputHandoff.getForegroundPackageName(this));
             DebugE47f4cLog.log("MainActivity.onWindowFocusChanged", "after handoff arm/disarm", "H1-H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // #region agent log
         if (!hasFocus && usbFocusHelper != null && usbFocusHelper.isHostConnected()) {
@@ -26953,6 +27267,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 && !UsbHostSessionPolicy.hasUserDismissedThisSession(this)
                 && !isUsbLockContextMenuActive()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("massStorageIntercept", usbFocusHelper.isMassStorageInterceptActive());
@@ -26960,6 +27275,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("umsActive", isUsbMassStorageActive());
                 DebugSessionLog.log("MainActivity.onWindowFocusChanged", "ums reclaim", "H1-H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             routeUsbHostInterceptUi(false);
         }
@@ -27039,6 +27355,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         ExternalInputHandoff.setDpadMode(mode);
         ExternalInputHandoff.armFastInjector(this);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("mode", ExternalInputHandoff.getDpadMode());
@@ -27046,6 +27363,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugSessionLog.log("MainActivity.beginExternalInputHandoff",
                     "external input handoff enabled", "H-DPAD", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -27054,10 +27372,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (ExternalInputHandoff.getDpadMode() == ExternalInputHandoff.MODE_OFF) return;
         ExternalInputHandoff.forceDisarmForSolarFocus();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             DebugSessionLog.log("MainActivity.endExternalInputHandoff",
                     "external input handoff disabled", "H-DPAD", null);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -27077,6 +27397,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (event.getAction() == KeyEvent.ACTION_UP) {
             ExternalInputHandoff.injectClick(context != null ? context : this, dpadCode);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("mediaCode", keyCode);
@@ -27085,6 +27406,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugSessionLog.log("MainActivity.handleExternalInputHandoffMediaButton",
                         "injected dpad", "H-DPAD", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         return true;
@@ -27213,6 +27535,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 || UsbHostSessionPolicy.hasPromptEvaluatedThisSession(this)) {
             if (fromConnectEvent && !isUsbMassStorageActive()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d2 = new org.json.JSONObject();
                     d2.put("fromConnectEvent", fromConnectEvent);
@@ -27221,6 +27544,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     Debug02fc83Log.log(MainActivity.this, "MainActivity.routeUsbHostInterceptUi",
                             "idle skip", "H6", d2);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return;
             }
@@ -27229,6 +27553,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d2 = new org.json.JSONObject();
             d2.put("fromConnectEvent", fromConnectEvent);
@@ -27249,6 +27574,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug705932Log.log("MainActivity.routeUsbHostInterceptUi", "entry", "H1,H4", d);
             }
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (UsbHostSessionPolicy.hasUserDismissedThisSession(this)) {
             if (usbFocusHelper != null) {
@@ -27344,6 +27670,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     branch = "noop";
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("branch", branch);
@@ -27355,6 +27682,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     d.put("hasWindowFocus", hasWindowFocus());
                     DebugSessionLog.log("MainActivity.routeUsbHostInterceptUi", "asyncDone", "H3-H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         });
@@ -27422,6 +27750,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             usbFocusHelper.bringToFrontLightPublic();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", reason != null ? reason : "");
@@ -27432,6 +27761,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.clearUsbStorageUsageBlocks",
                     "USB usage blocks cleared", "H1,H3,H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -27449,6 +27779,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         boolean blocked = solarOwned || cachedUmsExported
                 || UsbMassStorageController.isKernelMassStorageMode();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("blocked", blocked);
@@ -27459,6 +27790,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.onChargingLostClearUsbStorageBlocks",
                     blocked ? "will clear USB blocks" : "no USB blocks — skip", "H1,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!blocked) return;
         UsbStorageOverlayReceiver.dismissGlobalOverlayIfActive(this);
@@ -27530,12 +27862,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         final long now = System.currentTimeMillis();
         if (now - lastUmsProbeMs < UMS_PROBE_MIN_MS) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("skipped", true);
                 d.put("sinceLastMs", now - lastUmsProbeMs);
                 DebugSessionLog.log("MainActivity.refreshUmsExported", "throttled", "H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (after != null) {
                 runOnUiThread(after);
@@ -27557,12 +27891,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             ThemeManager.setBlockSdcardThemeAssets(false);
                         }
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("exported", exported);
                             d.put("locked", usbMassStorageLocked);
                             DebugSessionLog.log("MainActivity.refreshUmsExported", "cached", "H-UMS", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         if (after != null) after.run();
                     }
@@ -27592,24 +27928,28 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (usbFocusHelper == null || !usbFocusHelper.isHostConnected()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reason", "noHost");
                 d.put("fromConnectEvent", fromConnectEvent);
                 DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "skip", "H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
 
         if (isUsbMassStorageActive()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reason", "umsActive");
                 d.put("screen", currentScreenState);
                 DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "enterLock", "H3-H5", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             enterUsbMassStorageLock();
             return;
@@ -27620,11 +27960,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 return;
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reason", "autoConnect");
                 DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "autoEnable", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             enableUsbMassStorageAutoConnect();
             return;
@@ -27640,55 +27982,66 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (fromConnectEvent) {
             if (usbDialogShownThisConnection) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("reason", "dialogAlreadyShown");
                     DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "skip", "H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return;
             }
         } else if (!fromConnectEvent && usbDialogShownThisConnection && !isUsbMassStorageActive()) {
             // One offer per connect — focus intercept must not re-open the enable dialog.
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reason", "alreadyShownThisConnection");
                 DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "skip", "H-USB-SPAM", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         } else if (themedContextMenu != null && themedContextMenu.isShowing()
                 && contextMenuTierStack.contains("usb_storage")) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reason", "dialogVisible");
                 DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "skip", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         } else if (usbMassStorageLocked && currentScreenState == STATE_USB_STORAGE) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reason", "onUsbStorageScreen");
                 DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "skip", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         } else if (!fromConnectEvent && usbDialogDismissedThisConnection) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reason", "userDismissed");
                 DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "skip", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
 
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", "showDialog");
@@ -27697,6 +28050,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("screen", currentScreenState);
             DebugSessionLog.log("MainActivity.ensureUsbHostInterceptUi", "showDialog", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         android.util.Log.d("UsbFocus", "ensureUsbHostInterceptUi: showUsbMassStorageDialog");
         showUsbMassStorageDialog();
@@ -27759,6 +28113,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     private void enterUsbMassStorageLock() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug266f21Log.usbSnapshot();
             d.put("fg", ExternalInputHandoff.getForegroundPackageName(this));
@@ -27768,6 +28123,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("lunExported", UsbMassStorageController.isMassStorageExported());
             Debug266f21Log.log(this, "MainActivity.enterUsbMassStorageLock", "lock enter", "H4,H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Drop any companion USB shell that might still be up from older builds.
         UsbStorageOverlayReceiver.dismissCompanionShell(this);
@@ -27838,6 +28194,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 child.requestFocus();
                 scrollBrowserRowIntoView(child, containerBrowserItems);
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("focused", child.hasFocus());
@@ -27845,6 +28202,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     d.put("hasWindowFocus", hasWindowFocus());
                     DebugSessionLog.log("MainActivity.refocusUsbStorageButton", "focus", "H-USB-FOCUS", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return;
             }
@@ -27939,6 +28297,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void openArtistBrowse(String artist) {
         virtualQueryArtist = artist.trim();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("artist", virtualQueryArtist);
@@ -27952,6 +28311,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug032ca7Log.log(this, "MainActivity.openArtistBrowse",
                     "artist selected", "H-ART", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (ArtistBrowsePolicy.shouldSkipAlbumPicker(virtualQueryArtist, libraryBrowsePrefs,
                 policyTracksFromLibrary())) {
@@ -28450,6 +28810,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     private void notifyLibraryNowPlayingGlyphs() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("audible", isActiveAudioPlaying());
@@ -28466,6 +28827,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug3103d7Log.log("MainActivity.notifyLibraryNowPlayingGlyphs",
                     "badge refresh", "H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         try {
             if (listVirtualSongs != null && listVirtualSongs.getAdapter() != null) {
@@ -28779,6 +29141,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 && !"power".equals(contextMenuTopTier())
                 && themedContextMenu.refreshListStatesIfSameStructure(arr, states, headerFlags)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("tierTop", contextMenuTopTier());
@@ -28788,6 +29151,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.showContextMenuTierInPlace",
                         "structure refresh only", "H4-H7", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             themedContextMenu.setSubmenuTierOpen(true);
             themedContextMenu.ensureSubmenuListVisible();
@@ -28816,6 +29180,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         themedContextMenu.ensureSubmenuListVisible();
         themedContextMenu.requestOverlayFocus();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("title", title);
@@ -28824,23 +29189,27 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("tierTop", contextMenuTopTier());
             DebugAgentLog.log(this, "MainActivity.showContextMenuTierInPlace", "tier shown", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
     private void handleContextMenuBackKeyUp() {
         if (themedContextMenu == null || !themedContextMenu.isShowing()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("menuNull", themedContextMenu == null);
                 DebugE0de2eLog.log(this, "MainActivity.handleContextMenuBackKeyUp",
                         "early return not showing", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         if (contextMenuBlockingHint || themedContextMenu.isHintOnlyMode()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("blockingHint", contextMenuBlockingHint);
@@ -28848,6 +29217,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugE0de2eLog.log(this, "MainActivity.handleContextMenuBackKeyUp",
                         "early return hint/block", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -28866,6 +29236,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("tierTop", contextMenuTopTier());
@@ -28877,6 +29248,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugE0de2eLog.log(this, "MainActivity.handleContextMenuBackKeyUp",
                     "navigateContextMenuBack", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         navigateContextMenuBack(true);
     }
@@ -29014,6 +29386,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (playback.unifiedQueue().size() != before) {
             refreshRestoredQueuePreview();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("before", before);
@@ -29021,6 +29394,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("fromDisk", q.size());
                 QueueDebugLog.log("MainActivity.retryRestorePlaybackQueueAfterMount", "mount retry restore", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             refreshContextQueueTierIfOpen();
         }
@@ -29113,6 +29487,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 armFlowHoldThrobber();
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("contextMenu", themedContextMenu != null && themedContextMenu.isShowing());
@@ -29122,6 +29497,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugAgentLog.log(this, "MainActivity.handlePlayPauseKeyDown",
                         "pp key down armed", "H6-H7", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -29204,6 +29580,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             willToggle = true;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("willToggle", willToggle);
@@ -29214,18 +29591,21 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.handlePlayPauseKeyUp",
                     "pp key up", "H6", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (willToggle) {
             // 2026-07-10 — Brief suppress only right after Navidrome row select (center OK),
             // so the same physical press cannot double-fire play. Never use PP as list confirm.
             if (System.currentTimeMillis() < suppressPlayPauseAfterNavidromeSelectUntil) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("suppressedMs", suppressPlayPauseAfterNavidromeSelectUntil - System.currentTimeMillis());
                     com.solar.launcher.debug.AgentDebugLog.log(
                             "MainActivity.handlePlayPauseKeyUp", "F", "pp suppress after navidrome select", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             } else if (stemPickMode && currentScreenState == STATE_BROWSER) {
                 // Play confirms marked Stem tracks. 2026-07-19
@@ -29239,12 +29619,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 playOrPauseMusic();
                 clickFeedback();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("screen", currentScreenState);
                     d.put("route", "transport");
                     Debug62b1bbLog.log("MainActivity.handlePlayPauseKeyUp", "pp transport", "H-PP-1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         }
@@ -29399,6 +29781,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // 2026-07-18 — NP: keep-holding Back tip as soon as Options hold starts.
         showNpLiveHoldHintForOptions();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("armed", contextHoldThrobberArmed);
@@ -29413,6 +29796,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugCb4747Log.log("MainActivity.armContextHoldThrobber",
                     "hold throbber on", "E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -29452,6 +29836,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         com.solar.launcher.ui.UiBusy.beginAutoEnd(
                 com.solar.launcher.ui.UiBusy.REASON_FLOW_OPEN, 12_000L);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
@@ -29461,6 +29846,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.armFlowHoldThrobber",
                     "flow hold busy on", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -29551,6 +29937,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             usbFocusHelper.setReclaimSuspended(true);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hasWindowFocus", hasWindowFocus());
@@ -29562,6 +29949,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug02fc83Log.log(MainActivity.this, "MainActivity.showUsbMassStorageDialog",
                     "paint prompt", "H1,H7", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         final String turnOn = getString(R.string.usb_mass_storage_turn_on);
@@ -29728,12 +30116,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         // 2026-07-06 — No recovery agent after dismiss; user enables UMS manually in Settings.
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", reason);
             DebugSessionLog.log("MainActivity.onUsbStorageEnableDialogDismissed",
                     "suppressed until disconnect", "H-USB-DISMISS", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -29779,6 +30169,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     private void enableUsbMassStorageFromRoot() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug266f21Log.usbSnapshot();
             d.put("fg", ExternalInputHandoff.getForegroundPackageName(this));
@@ -29791,12 +30182,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug1fc727Log.log(this, "MainActivity.enableUsbMassStorageFromRoot",
                     "explicit enable requested", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!UsbMassStorageExperiment.isEnabled(this)) return;
         if (usbFocusHelper != null) {
             usbFocusHelper.clearHostInterceptDecline();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug705932Log.usbSnapshot();
             d.put("path", "UsbMassStorageController");
@@ -29806,6 +30199,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAf054eLog.log(MainActivity.this, "MainActivity.enableUsbMassStorageFromRoot",
                     "user explicit enable", "USB-CONSENT", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // July-2: show STATE_USB_STORAGE immediately (blocks menus + stops media), then bind UMS.
         usbEnablePromptSession = false;
@@ -29817,6 +30211,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 final boolean exported = UsbMassStorageController.isMassStorageExported();
                 final boolean kernelUms = UsbMassStorageController.isKernelMassStorageMode();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = Debug705932Log.usbSnapshot();
                     d.put("enableOk", ok);
@@ -29824,6 +30219,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     d.put("exported", exported);
                     Debug705932Log.log("MainActivity.enableUsbMassStorageFromRoot", "after enable", "H2,H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 runOnUiThread(new Runnable() {
                     @Override
@@ -29880,6 +30276,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (evaluate) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("hostConnected", usbFocusHelper != null && usbFocusHelper.isHostConnected());
@@ -29890,6 +30287,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         "MainActivity.routeUsbOverlayLaunchExtras",
                         "evaluate_host extra", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-14 — Wake extra is one-shot; skip if this plug already decided (H3).
             if (UsbHostSessionPolicy.hasPromptEvaluatedThisSession(this)
@@ -29913,6 +30311,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     void applyUsbHandoffFromExternal(boolean enable, boolean lock) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("enable", enable);
@@ -29924,6 +30323,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug050a40Log.log(this, "MainActivity.applyUsbHandoffFromExternal",
                     "handoff apply", "H2,H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (lock && !enable) {
             if (UsbMassStorageController.isMassStorageExported()
@@ -29953,11 +30353,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 enableUsbMassStorageAutoConnect();
             } else if (!isUsbEnablePromptShowing() && !isUsbMassStorageUiLocked()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     Debug050a40Log.log(this, "MainActivity.applyUsbHandoffFromExternal",
                             "show Solar USB dialog (bridge still routing)", "H2",
                             new org.json.JSONObject());
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 showUsbMassStorageDialog();
             }
@@ -29987,6 +30389,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     @Override
                     public void run() {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("success", success);
@@ -29995,6 +30398,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             d.put("usbConfig", readGetprop("sys.usb.config"));
                             DebugSessionLog.log("MainActivity.disableUsbMassStorageFromRoot", "done", "H-USB-OFF", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         // Mark session dismissed so reconnect does not immediately re-prompt.
                         UsbHostSessionPolicy.markUserDismissed(MainActivity.this);
@@ -30052,6 +30456,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Reversal: drop armContextHoldThrobber(); menu clear path still fine.
         armContextHoldThrobber();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("sessionId", "083511");
@@ -30062,6 +30467,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug032ca7Log.log(this, "MainActivity.handleContextPowerHoldIntent",
                     "power hold → arm throbber", "H-INSTANT", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-20 — Open Options on this frame (was Handler.post → +1 frame of artificial lag).
         // Layman: Power-hold should show the menu as soon as the hold fires, not a beat later.
@@ -30085,6 +30491,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Mix/Stem pick / queue Add: OK navigates library; never open global context. 2026-07-19 / 2026-07-21
         if (mixAssignMode || stemPickMode || queueAppendBrowseMode) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("mix", mixAssignMode);
@@ -30092,6 +30499,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("queueAdd", queueAppendBrowseMode);
                 Debug8b0481Log.log("MainActivity.showThemedContextMenu", "blocked pick mode", "H-MIX-OK", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -30100,6 +30508,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Was: clear at start + TRANSITION — spinner vanished mid-hold / before Options painted.
         // Reversal: clearContextHoldThrobber() then armNavFeedbackThrobber(TRANSITION) here.
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("beforeClear", com.solar.launcher.ui.UiBusy.snapshotReasons());
@@ -30110,6 +30519,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugCb4747Log.log("MainActivity.showThemedContextMenu",
                     "context opening — keep hold throbber", "E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         volumeHandler.removeCallbacks(hideVolumeContextTask);
         contextMenuInVolumeSlider = false;
@@ -30139,6 +30549,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 createContextMenuListListener(), y1RowHeightPx, panelW, menuRows, false,
                 buildContextQuickBar(), createContextQuickBarListener());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             long afterShow = System.currentTimeMillis();
             org.json.JSONObject d = new org.json.JSONObject();
@@ -30156,6 +30567,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     : (_dbg032SinceCenter >= 0L ? _dbg032SinceCenter : (afterShow - _dbg032ShowT0));
             DebugA177c4Log.onContextMenuOpen(holdToShow);
         } catch (Exception ignored) {}
+        }
         // #endregion
         themedContextMenu.setSubmenuTierOpen(false);
         contextMenuTierStack.clear();
@@ -30201,11 +30613,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             SolarRescueHoldState.disarm();
         } catch (Exception ignored) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", reason != null ? reason : "");
             Debug434250Log.log("MainActivity.clearBackHoldRescueTimers", "disarm back hold", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -31365,6 +31779,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         boolean usbPrompt = isUsbEnablePromptShowing() || usbEnablePromptSession
                 || isUsbEnablePromptTierActive();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", reason != null ? reason : "");
@@ -31376,6 +31791,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             + "\"message\":\"sleep dismiss\",\"data\":" + d.toString()
                             + ",\"timestamp\":" + System.currentTimeMillis() + "}");
         } catch (Exception ignored) {}
+        }
         // #endregion
         dismissThemedContextMenu();
         UsbStorageOverlayReceiver.dismissCompanionShell(this);
@@ -31911,6 +32327,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void toggleWifiFromContextMenu() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("wifiOn", isWifiPowerOn());
@@ -31919,6 +32336,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("needsWarning", wifiDisableNeedsWarning());
             DebugAgentLog.log(this, "MainActivity.toggleWifiFromContextMenu", "toggle", "H6-H7", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!isWifiPowerOn()) {
             applyWifiPowerState(true);
@@ -32061,10 +32479,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         dismissPleaseWaitOverlay();
         isIntentionalFocusLoss = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug434250Log.rockboxModeSnapshot(this);
             Debug434250Log.log("MainActivity.dismissRockboxSwitchOverlayIfNeeded", "cleared", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -32944,6 +33364,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     com.solar.launcher.plex.PlexArtist ar = new com.solar.launcher.plex.PlexArtist();
                     ar.name = al.artist;
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("source", "getMusic");
@@ -32952,6 +33373,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 "MainActivity.addMusicSearchEntryContextActions",
                                 "plex save", "C", "post-fix", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     PlexDownloader.downloadAlbum(MainActivity.this, ar, al,
                             java.util.Collections.singletonList(song),
@@ -33294,12 +33716,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         deezerBackgroundQueue.enqueue(jobs);
         Toast.makeText(this, getString(R.string.deezer_album_queued), Toast.LENGTH_SHORT).show();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("trackCount", jobs.size());
             DebugAgentLog.log(this, "MainActivity.startDeezerAlbumBackgroundQueue",
                     "album queued for bg download", "H-ALB-Q", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (isGetMusicUnifiedUi() && currentScreenState == STATE_SOULSEEK) {
             getMusicEmbeddedInDeezer = false;
@@ -33443,6 +33867,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void handleBackShortPress() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
@@ -33457,6 +33882,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("ctxShowing", themedContextMenu != null && themedContextMenu.isShowing());
             Debug54d8beLog.log("MainActivity.handleBackShortPress", "back short entry", "H2,H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Stem/Mix: Back is a pad (Vocals) / noop — exit only via PREV+NEXT hold. 2026-07-19
         // Was: exitStemOrMixToHome on short Back. Reversal: restore home exit here.
@@ -33476,18 +33902,21 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // ponytail: media roots should always exit via handleBack(); this guards unknown sub-states
         if (MediaSuiteHost.isMediaListBrowseState(currentScreenState)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("screen", currentScreenState);
                 DebugAgentLog.log(this, "MainActivity.handleBackShortPress",
                         "media browse fallback home", "H-BACK", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             navigateToHome();
             return;
         }
         if (currentScreenState == STATE_WIFI_KEYBOARD) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("runId", "pre-fix");
@@ -33499,6 +33928,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug1f0248Log.log(this, "MainActivity.handleBackShortPress",
                         "keyboard dismiss via Back", "H-A,H-C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (keyboardPurpose == KEYBOARD_SOULSEEK_MSG && keyboardComposeFromContextPm) {
                 restoreSettingsAfterSoulseekAccount();
@@ -33512,12 +33942,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (currentScreenState == STATE_FLOW) {
             boolean handled = flowScreenHost != null && flowScreenHost.handleBack();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("handled", handled);
                 com.solar.launcher.flow.FlowBackDebugLog.log(
                         "MainActivity.handleBackShortPress", "STATE_FLOW", "H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (handled) return;
             exitFlowScreen();
@@ -33854,6 +34286,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (handleAboutSettingsBack()) return;
             if (handleThemeGalleryBack()) return;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("subKey", settingsSubScreenKey != null ? settingsSubScreenKey : "");
@@ -33861,6 +34294,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug54d8beLog.log("MainActivity.handleBackShortPress",
                         "settings root → menu", "H4,H5", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             changeScreen(STATE_MENU, true);
             return;
@@ -33876,6 +34310,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
@@ -33885,6 +34320,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug54d8beLog.log("MainActivity.handleBackShortPress",
                     "no-op fallthrough (likely MENU)", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -33951,6 +34387,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         OverlayKeyGate.forwardKeyToOverlay(this, keyCode, action);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("keyCode", keyCode);
@@ -33961,6 +34398,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAf054eLog.log(this, "MainActivity.forwardOverlayKeyIfGlobalModalActive",
                     "tier-3 main forward", "S2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return true;
     }
@@ -34050,6 +34488,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             clockHandler.postDelayed(backForceQuitHintRunnable, BACK_FORCE_QUIT_HINT_MS);
             clockHandler.postDelayed(backForceQuitRunnable, BACK_FORCE_QUIT_MS);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("policyHoldMs", BACK_LONG_PRESS_MS);
@@ -34064,6 +34503,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug032ca7Log.log(this, "MainActivity.handleBackKeyDown",
                         "back DOWN armed hold", "H-INSTANT", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
         return true;
@@ -34136,6 +34576,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             public boolean onLongClick(View v) {
                 try {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         int sysLp = android.view.ViewConfiguration.getLongPressTimeout();
                         org.json.JSONObject d = new org.json.JSONObject();
@@ -34146,6 +34587,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         Debug032ca7Log.log(MainActivity.this, "MainActivity.attachA5RowLongPress",
                                 "A5 row long-click", "H4", d);
                     } catch (Exception ignored2) {}
+                    }
                     // #endregion
                     // 2026-07-15 — Require a deliberate hold on an already-focused row.
                     // Was: long-press after first-tap focus-DOWN opened context on slightly long taps.
@@ -37065,11 +37507,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         cached = MusicLibraryStore.getInstance(getApplicationContext()).durationSecByPath();
         cachedShareDurations = cached;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("count", cached != null ? cached.size() : 0);
             DebugSessionLog.log("MainActivity.shareDurationCache", "loaded", "H-CRASH1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return cached;
     }
@@ -37490,6 +37934,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             containerSettingsItems.getChildAt(1).requestFocus();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("messagingEnabled", soulseekMessagingEnabled);
@@ -37500,6 +37945,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.buildSoulseekSettingsUI",
                     "reach settings built", "F", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         applyMessagingLayoutMode();
     }
@@ -38484,11 +38930,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void buildSoulseekMessagesUI() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("subKey", settingsSubScreenKey);
             DebugSessionLog.log("MainActivity.buildSoulseekMessagesUI", "enter", "H-M1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         showSoulseekConversationPanel(false);
         showSoulseekRoomPanel(false);
@@ -38627,6 +39075,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     @Override
                     public void run() {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("gen", gen);
@@ -38636,6 +39085,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             DebugSessionLog.log("MainActivity.loadReachInboxData",
                                     "ui result", errFinal != null ? "H-M5" : "H-M1", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         if (gen != reachInboxLoadGen) return;
                         if (!SettingsScreens.SOULSEEK_MESSAGES.equals(settingsSubScreenKey)) return;
@@ -38732,6 +39182,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (settingsScrollView != null) settingsScrollView.setVisibility(View.GONE);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("show", show);
@@ -38753,6 +39204,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.showSoulseekConversationPanel",
                     "panel", "H1-H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -38953,6 +39405,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         clearConversationAdapterSelection();
         boolean ok = btnConversationBack.requestFocus();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("focused", ok);
@@ -38960,6 +39413,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugSessionLog.log("MainActivity.focusConversationBackButton",
                     "back focus", "H-CONV-BACK", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return ok;
     }
@@ -39052,6 +39506,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (next < headerCount || next > maxPos) return false;
         focusConversationListPosition(next);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("runId", "post-fix");
@@ -39062,6 +39517,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugSessionLog.log("MainActivity.moveConversationListFocus",
                     "conv list wheel", "H3-fix", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return true;
     }
@@ -39416,11 +39872,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void buildSoulseekChatRoomsUI() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("subKey", settingsSubScreenKey);
             DebugAgentLog.log(this, "MainActivity.buildSoulseekChatRoomsUI", "enter", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         showSoulseekConversationPanel(false);
         showSoulseekRoomPanel(false);
@@ -39595,6 +40053,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     /** Dismiss message context modal and return to the screen that opened this thread. */
     private void finishSoulseekConversationBack() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("returnScreen", soulseekConversationReturnScreen);
@@ -39605,6 +40064,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug898913Log.log("MainActivity.finishSoulseekConversationBack",
                     "conversation back", "H-BACK-CTX", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         dismissThemedContextMenu();
         contextReachMessagePosition = -1;
@@ -39667,6 +40127,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             soulseekConversationReturnSubKey = settingsSubScreenKey;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("returnScreen", soulseekConversationReturnScreen);
@@ -39675,6 +40136,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug898913Log.log("MainActivity.captureSoulseekConversationReturn",
                     "captured", "H-BACK-CAP", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -40664,6 +41126,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         btnBack.requestFocus();
         updateSoulseekConnectionInfoPreview();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("sharingLabel", soulseekSharingStatusLabel());
@@ -40673,6 +41136,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("clientShutDown", soulseekClient != null && soulseekClient.isShutDown());
             DebugAgentLog.log(this, "buildSoulseekConnectionInfoUI", "connection preview", "H1-H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -42411,6 +42875,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         final int gen = libraryScanGen;
         activeLibraryScanGen = gen;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
@@ -42444,6 +42909,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("sinceBootMs", android.os.SystemClock.uptimeMillis() - bootUptimeMs);
             Debug9cd8d5Log.boot(this, "MainActivity.startLibraryScan", "library scan started", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Cold-start / background: no full-screen block until a real filesystem walk. 2026-07-19
         // Was: overlay on every boot while SQLite hydrate + art gap check (~20s jank).
@@ -42474,6 +42940,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.library.LibraryMemoryBudget.Mode hydrateMode =
                     com.solar.launcher.library.LibraryMemoryBudget.chooseMode(dbCount);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("gen", gen);
@@ -42484,6 +42951,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug9cd8d5Log.boot(MainActivity.this, "MainActivity.runLibraryScanWorker",
                         "sqlite hydrate", "B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (libraryScanGen != gen) {
                 abortLibraryScanWorker(gen);
@@ -42503,6 +42971,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (!userInitiated && tryFinishScanFromFreshCache(gen, userInitiated)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("gen", gen);
@@ -42512,10 +42981,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug9cd8d5Log.boot(MainActivity.this, "MainActivity.runLibraryScanWorker",
                         "fast-path cache fresh — skip walk", "B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
@@ -42524,6 +42995,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug9cd8d5Log.boot(MainActivity.this, "MainActivity.runLibraryScanWorker",
                     "full filesystem walk starting", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Full walk needed — show blocking overlay (skipped for silent cold-start fast-path). 2026-07-19
         if (!userInitiated) {
@@ -42552,6 +43024,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         for (File musicFolder : com.solar.launcher.DeviceFeatures.getMusicRoots()) {
             if (!musicFolder.exists()) musicFolder.mkdirs();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("gen", gen);
@@ -42559,10 +43032,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("root", musicFolder.getAbsolutePath());
                 Debug543e15Log.log("MainActivity.runLibraryScanWorker", "scan root begin", "C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             result = LibraryScanner.scan(musicFolder, store,
                     blacklist, prefs, seenPaths, scanCb);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("gen", gen);
@@ -42579,6 +43054,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
                 Debug543e15Log.log("MainActivity.runLibraryScanWorker", "scan root done", "B,C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             rootIndex++;
             if (libraryScanGen != gen) {
@@ -42591,6 +43067,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         long scanMs = System.currentTimeMillis() - tScan0;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
@@ -42624,6 +43101,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             + ",\"ms\":" + scanMs
                             + ",\"userInitiated\":" + userInitiated + "}");
         } catch (Exception ignored) {}
+        }
         // #endregion        // Perf log: full scan timing is recorded after album-art ingest below.
         store.deleteExcept(seenPaths);
         reconcileCustomLibrary(scanned);
@@ -42641,12 +43119,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Art ingest off the scan critical path — do not block overlay dismissal.
         scheduleAlbumArtIngestAsync(gen);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
             Debug898913Log.logAlways("MainActivity.runLibraryScanWorker",
                     "scan ui finish scheduled, art async", "H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         ScanPerfLog.record(scanned.size(), scanMs, result != null ? result.phases() : null);
         if (libraryScanGen != gen) {
@@ -42665,6 +43145,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         final int cancelledGen = activeLibraryScanGen;
         abortLibraryScanWorker(cancelledGen);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", reason);
@@ -42672,6 +43153,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("newGen", libraryScanGen);
             DebugSessionLog.log("MainActivity.cancelLibraryScanGracefully", "scan cancelled", "H-LIB-USB", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -42852,6 +43334,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         int staleTrackCount = files.size() - freshMap.size();
         long freshMs = System.currentTimeMillis() - tFresh0;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("libSize", files.size());
@@ -42861,6 +43344,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug9cd8d5Log.boot(MainActivity.this, "MainActivity.tryFinishScanFromFreshCache",
                     staleTrackCount > 0 ? "cache stale — need walk" : "cache fresh check", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-19 — Stamp 0 is a poison value (empty-lib mark); treat as unset.
         // Was: readyTracks==0 ≠ libSize → expensive FlowCatalog gap walk every boot.
@@ -42895,12 +43379,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return; // one ingest at a time
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
             d.put("libSize", customLibrary.size());
             Debug543e15Log.log("MainActivity.scheduleAlbumArtIngestAsync", "art ingest scheduled", "D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         new Thread(new Runnable() {
             @Override
@@ -42926,6 +43412,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             if (readyTracks > 0 && readyTracks == customLibrary.size()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("readyTracks", readyTracks);
@@ -42933,6 +43420,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     Debug3b26caLog.log("MainActivity.albumArtCacheHasGaps",
                             "stamp match skip gap check", "H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return false;
             }
@@ -42948,6 +43436,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (!com.solar.launcher.flow.AlbumArtCache.has(artDir, item.coverKey)) missing++;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("albums", albums.size());
@@ -42955,6 +43444,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug3b26caLog.log("MainActivity.albumArtCacheHasGaps",
                     "gap scan", "H5,H8", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         return missing > 0;
     }
@@ -42986,6 +43476,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             applySegmentedLibraryHydrate(
                     MusicLibraryStore.getInstance(getApplicationContext()));
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 Debug0b8f80Log.log("MainActivity.reconcileCustomLibrary", "after SEGMENTED", "H1",
                         "{\"customLib\":" + customLibrary.size()
@@ -42994,6 +43485,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 + ",\"dbTracks\":" + MusicLibraryStore.getInstance(this).countTracks()
                                 + "}");
             } catch (Throwable ignored) {}
+            }
             // #endregion
             return;
         }
@@ -43414,6 +43906,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // 2026-08-05 — LRCGET-in-Solar: background-match tracks that still lack .lrc sidecars.
         LyricsLibraryMatcher.kickOffLibraryMatch(this, prefs);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("gen", gen);
@@ -43429,6 +43922,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug9cd8d5Log.boot(this, "MainActivity.finishLibraryScan",
                     "library scan finished", "A,B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         requestSoulseekShareRescan();
         if (soulseekActive() && soulseekSharingEnabled
@@ -44191,6 +44685,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         updateMusicTrackCountUi();
         isPausedByHand = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("startIndex", startIndex);
@@ -44199,6 +44694,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.debug.AgentDebugLog.log(
                     "MainActivity.playNavidromeSongs", "F", "navidrome play start", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (currentScreenState != STATE_PLAYER) {
             changeScreen(STATE_PLAYER);
@@ -44273,6 +44769,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (item == null || item.kind != PlayQueue.ItemKind.NAVIDROME_STREAM) return;
         if (item.navidromeSongId == null || item.navidromeSongId.isEmpty()) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("songId", item.navidromeSongId);
@@ -44284,6 +44781,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.Debug8cf8b0Log.log(
                     "MainActivity.prepareNavidromeStream", "navidrome control prep", "E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         releasePodcastIjkPlayer();
         try {
@@ -44298,12 +44796,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 @Override public void onPrepared(MediaPlayer mp) {
                     mediaPlayerPreparing = false;
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("duration", mp.getDuration());
                         com.solar.launcher.Debug8cf8b0Log.log(
                                 "MainActivity.prepareNavidromeStream", "onPrepared", "E", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     int dur = mp.getDuration();
                     if (dur > 0 && tvPlayerTimeTotal != null) {
@@ -44388,6 +44888,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void applyNavidromeNowPlaying(final com.solar.launcher.navidrome.NavidromeSong song) {
         if (song == null) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("title", song.title != null ? song.title : "");
@@ -44397,6 +44898,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.debug.AgentDebugLog.log(
                     "MainActivity.applyNavidromeNowPlaying", "D", "now playing meta", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         String title = song.title != null ? song.title : "";
         if (tvPlayerTitle != null) tvPlayerTitle.setText(title);
@@ -44425,6 +44927,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void updateNavidromeBrowsePreview(final com.solar.launcher.navidrome.NavidromeBrowseRow row) {
         if (!navidromeDualPaneActive() || row == null) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("label", row.label);
@@ -44433,6 +44936,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.debug.AgentDebugLog.log(
                     "MainActivity.updateNavidromeBrowsePreview", "C", "browse preview", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (tvPodcastPreviewShow != null) {
             tvPodcastPreviewShow.setText(row.label != null ? row.label : "");
@@ -44527,6 +45031,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void playPlexSongs(java.util.List<com.solar.launcher.plex.PlexSong> songs,
             int startIndex, String playlistLabel) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("songsNull", songs == null);
@@ -44538,6 +45043,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.Debug5c1a93Log.log(
                     "MainActivity.playPlexSongs", "enter", "B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (songs == null || songs.isEmpty() || startIndex < 0 || startIndex >= songs.size()) {
             // #region agent log
@@ -44571,6 +45077,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (currentScreenState != STATE_PLAYER) changeScreen(STATE_PLAYER);
         PlayQueue.QueueItem startItem = playback.currentItem();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("kind", startItem != null ? String.valueOf(startItem.kind) : "null");
@@ -44584,6 +45091,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.Debug8cf8b0Log.log(
                     "MainActivity.playPlexSongs", "after activate part meta lost?", "C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (startItem != null && startItem.kind == PlayQueue.ItemKind.PLEX_STREAM) {
             preparePlexStream(startItem);
@@ -44620,6 +45128,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override public void onPrepared(MediaPlayer mp) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("duration", mp.getDuration());
@@ -44627,6 +45136,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         com.solar.launcher.Debug5c1a93Log.log(
                                 "MainActivity.preparePlexStream", "onPrepared", "E", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     int dur = mp.getDuration();
                     if (dur > 0 && tvPlayerTimeTotal != null) tvPlayerTimeTotal.setText(formatTime(dur));
@@ -44639,6 +45149,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                 @Override public boolean onError(MediaPlayer mp, int what, int extra) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("what", what);
@@ -44650,6 +45161,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         com.solar.launcher.debug.Debug2241b1Log.log(
                                 "MainActivity.preparePlexStream", "onError toast", "B", "post-fix", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     // 2026-07-15 — Surface Plex stream failures (was silent return true).
                     Toast.makeText(MainActivity.this, R.string.plex_stream_fail, Toast.LENGTH_SHORT).show();
@@ -44718,6 +45230,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             syncAvrcpTrackInfo(true);
         } catch (Exception e) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("ex", e.getClass().getSimpleName());
@@ -44725,6 +45238,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 com.solar.launcher.Debug5c1a93Log.log(
                         "MainActivity.preparePlexStream", "exception", "D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -44832,6 +45346,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (item == null || item.kind != PlayQueue.ItemKind.JELLYFIN_STREAM) return;
         if (item.navidromeSongId == null || item.navidromeSongId.isEmpty()) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("songIdLen", item.navidromeSongId.length());
@@ -44841,6 +45356,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.Debug8cf8b0Log.log(
                     "MainActivity.prepareJellyfinStream", "enter", "A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         releasePodcastIjkPlayer();
         applyJellyfinNowPlaying(jellyfinSongFromQueueItem(item));
@@ -44875,6 +45391,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override public void onPrepared(MediaPlayer mp) {
                                     // #region agent log
+                                    if (com.solar.launcher.debug.DebugGate.ON) {
                                     try {
                                         org.json.JSONObject d = new org.json.JSONObject();
                                         d.put("duration", mp.getDuration());
@@ -44882,6 +45399,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                         com.solar.launcher.Debug8cf8b0Log.log(
                                                 "MainActivity.prepareJellyfinStream", "onPrepared", "B", d);
                                     } catch (Exception ignored) {}
+                                    }
                                     // #endregion
                                     int dur = mp.getDuration();
                                     if (dur > 0 && tvPlayerTimeTotal != null) {
@@ -44896,6 +45414,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                                 @Override public boolean onError(MediaPlayer mp, int what, int extra) {
                                     // #region agent log
+                                    if (com.solar.launcher.debug.DebugGate.ON) {
                                     try {
                                         org.json.JSONObject d = new org.json.JSONObject();
                                         d.put("what", what);
@@ -44906,6 +45425,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                                 "MainActivity.prepareJellyfinStream", "onError toast",
                                                 "B", "post-fix", d);
                                     } catch (Exception ignored) {}
+                                    }
                                     // #endregion
                                     // 2026-07-15 — Surface Jellyfin stream failures (was silent).
                                     Toast.makeText(MainActivity.this, R.string.jellyfin_stream_fail,
@@ -44938,6 +45458,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             syncAvrcpTrackInfo(true);
                         } catch (Exception e) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("ex", e.getClass().getSimpleName());
@@ -44945,6 +45466,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 com.solar.launcher.Debug8cf8b0Log.log(
                                         "MainActivity.prepareJellyfinStream", "exception", "B", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
@@ -45501,6 +46023,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         currentScrollIndexList.clear();
         currentScrollIndexList.addAll(categories);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("type", type);
@@ -45521,6 +46044,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug6eff1eLog.log(this, "MainActivity.buildVirtualCategoriesNow",
                     "category bind", "H-BIND", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         CategoryListAdapter adapter = new CategoryListAdapter(categories, type, null);
         listVirtualSongs.setAdapter(adapter);
@@ -45669,6 +46193,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void openLibrarySearchKeyboard() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("stemPickMode", stemPickMode);
@@ -45681,6 +46206,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     "opened search keyboard", "H-ART-KB", d);
             DebugEcc8c8Log.log("MainActivity.openLibrarySearchKeyboard", "open search kb", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         keyboardPurpose = KEYBOARD_LIBRARY_SEARCH;
         keyboardReturnState = STATE_BROWSER;
@@ -45690,6 +46216,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void finishLibrarySearchEntry() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("stemPickMode", stemPickMode);
@@ -45698,6 +46225,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("queryLen", typedPassword != null ? typedPassword.trim().length() : 0);
             DebugEcc8c8Log.log("MainActivity.finishLibrarySearchEntry", "search done", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         librarySearchQuery = typedPassword.trim();
         librarySearchVisible.clear();
@@ -45887,6 +46415,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         @Override public void playSong(File file) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("stemPickMode", stemPickMode);
@@ -45895,6 +46424,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("name", file != null ? file.getName() : "null");
                 DebugEcc8c8Log.log("MainActivity.librarySearch.playSong", "center on search hit", "H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (file == null) return;
             java.util.ArrayList<File> pl = new java.util.ArrayList<File>();
@@ -47001,6 +47531,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             searchQuery = safeFileName.replace("-", " ").replace("_", " ");
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("file", track.getName());
@@ -47009,6 +47540,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("query", searchQuery);
             DebugAgentLog.log(this, "MainActivity.maybeAutoFetchTrackInfo", "auto-fetch", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         fetchTrackInfoFromInternet(track, searchQuery, AudioTags.hasValidTags(tags),
                 tags.title, tags.artist);
@@ -47527,6 +48059,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     || currentBrowserMode == BROWSER_FAVORITES) {
                 File f = virtualFocusedAudioFile();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("mode", currentBrowserMode);
@@ -47535,6 +48068,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     DebugA92996Log.log("MainActivity.focusedMusicTrackForContext",
                             "virtual list track", "H1", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return f;
             }
@@ -48634,6 +49168,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void buildVirtualSongs() {
         if (isCustomScanning) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("queryType", virtualQueryType);
@@ -48642,6 +49177,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug032ca7Log.log(this, "MainActivity.buildVirtualSongs",
                         "bail to root Search", "H-ART-SCAN", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             showLoadingPopup();
             currentBrowserMode = BROWSER_ROOT;
@@ -48676,6 +49212,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         java.util.List<SongItem> placeholder = new ArrayList<SongItem>();
         listVirtualSongs.setAdapter(new SongListAdapter(placeholder, false));
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("queryType", virtualQueryType);
@@ -48688,6 +49225,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug032ca7Log.log(this, "MainActivity.buildVirtualSongs",
                     "placeholder Search-only?", "H-ART-PH", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Show a single loading row via category-style empty — SongListAdapter empty is blank;
         // use status throbber + disable list until filled.
@@ -48700,6 +49238,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 try {
                     if (libraryScanGen != gen) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("armedGen", gen);
@@ -48710,6 +49249,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                     "MainActivity.buildVirtualSongs",
                                     "gen abort — Search placeholder stuck", "H-ART-ABORT", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return;
                     }
@@ -48884,6 +49424,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 if (n <= 0) n = libraryRamCache.trackCount();
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("queryType", virtualQueryType);
@@ -48901,6 +49442,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug6eff1eLog.log(this, "MainActivity.buildVirtualSongsNow",
                         "segmented song drill", "H-SONGS", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             clearSongBrowseSegments();
             songListSegmentedMode = true;
@@ -48947,6 +49489,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         setSongListAdapter(targetSongs, false);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("queryType", virtualQueryType);
@@ -48962,6 +49505,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     "songs bound", "H-ART-EMPTY", d);
             DebugLibraryMenuLog.log("MainActivity.buildVirtualSongs", "adapter set ok", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         listVirtualSongs.post(new Runnable() {
             @Override
@@ -49229,6 +49773,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // 2026-07-20 — Instant paint before handoff/crossfade work.
         armNavFeedbackThrobber(com.solar.launcher.ui.UiBusy.REASON_FLOW_OPEN, 12_000L);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("revInProgress", reverseHandoffInProgress);
@@ -49239,6 +49784,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("inCatalog", isNowPlayingInFlowAlbumCatalog());
             Debug898913Log.log("MainActivity.enterFlowFromNowPlaying", "entry", "H-B,H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (reverseHandoffInProgress || FlowPlayerHandoff.isHandoffAnimating()) {
             reverseHandoffInProgress = false;
@@ -49251,6 +49797,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         int flowBack = returnScreen == STATE_PLAYER
                 ? flowReturnScreenExcludingPlayer() : returnScreen;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("nowPlaying3d", nowPlaying3dAlbumArt);
@@ -49264,6 +49811,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugB8b871Log.log(this, "MainActivity.enterFlowFromNowPlaying", "entry", "H-C", d);
             Debug1cf0c7Log.log(this, "MainActivity.enterFlowFromNowPlaying", "entry", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Compromise route: crossfade with carousel pre-bound (fixes center pop-in + cold morph wait).
         enterFlowFromNowPlaying2dCrossfade(focusKeyOverride, flowBack);
@@ -49334,6 +49882,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             startFlowReverseCatalogPrep(mode, originFinal, coverPinned);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("cachedSize", cached != null ? cached.size() : -1);
@@ -49341,6 +49890,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("matchKey", matchKeyFinal);
             Debug898913Log.log("MainActivity.beginNpToFlowCoverHandoff", "morph prep state", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!flowScreenHost.performNpToFlowHandoffFromNowPlaying(
                 coverPinned, matchKeyFinal, warmState, warmCatalog, fromRect, reverseComplete)) {
@@ -49377,6 +49927,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         boolean carouselReady = flowScreenHost != null
                 && flowScreenHost.prepareNpToFlowCrossfade(focusKey, playerHandoffCoverBitmapFast());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("focusKey", focusKey != null ? focusKey : "");
@@ -49384,8 +49935,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug898913Log.log("MainActivity.enterFlowFromNowPlaying2dCrossfade",
                     "crossfade route taken", "H-B,H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("focusKey", focusKey != null ? focusKey : "");
@@ -49403,12 +49956,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug1cf0c7Log.log(this, "MainActivity.enterFlowFromNowPlaying2dCrossfade",
                     "before crossfade — catalog not bound yet", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         com.solar.launcher.flow.FlowScreenTransition.crossfadeToFlow(
                 layoutFlowMode, layoutPlayerMode, ivPlayerBgBlur, new Runnable() {
                     @Override
                     public void run() {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("flowAlpha", layoutFlowMode != null ? layoutFlowMode.getAlpha() : -1f);
@@ -49418,6 +49973,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                     "MainActivity.enterFlowFromNowPlaying2dCrossfade",
                                     "crossfade complete", "H-A", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         skipFlowLayoutFade = true;
                         npToFlowHandoffLanding = true;
@@ -49527,6 +50083,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             int fallback = sanitizeFlowExitReturnScreen(
                     flowLaunchRequest != null ? flowLaunchRequest.returnScreen : flowEntryReturnSnapshot);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("wasTarget", STATE_FLOW);
@@ -49534,11 +50091,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 com.solar.launcher.flow.FlowBackDebugLog.log(
                         "MainActivity.returnFromPlayer", "break flow loop", "H-LOOP", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             target = fallback;
             playerReturnScreen = fallback;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("target", target);
@@ -49555,18 +50114,21 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("coverFromPlayer", playerHandoffCoverBitmap() != null);
             DebugSessionLog.log("MainActivity.returnFromPlayer", "back pressed", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // NP→Flow: crossfade when eligible; flip-select → play → Back keeps 3D morph only.
         if (flowEligible && flowScreenHost != null && target == STATE_FLOW) {
             if (pendingReturn && flowScreenHost.hasFlipReturnSnapshot()) {
                 if (tryFlowFlipReverseHandoff()) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("branch", "MORPH_FLIP");
                         Debug898913Log.log("MainActivity.returnFromPlayer",
                                 "flip reverse morph", "H-BACK", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return;
                 }
@@ -49574,6 +50136,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             String focusKey = pendingReturn ? flowScreenHost.getPendingReturnCoverKey() : null;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("branch", "CROSSFADE_BACK");
@@ -49582,6 +50145,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug898913Log.log("MainActivity.returnFromPlayer",
                         "crossfade back to flow", "H-BACK", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             enterFlowFromNowPlaying(focusKey, STATE_FLOW);
             return;
@@ -49652,6 +50216,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 : resolveHandoffCoverBitmap();
         if (cover == null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fail", "cover_null");
@@ -49659,6 +50224,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("art3dAlpha", ivAlbumArt3d != null ? ivAlbumArt3d.getAlpha() : -1f);
                 DebugSessionLog.log("MainActivity.tryFlowFlipReverseHandoff", "abort", "H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -49752,12 +50318,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             boolean allowSynthesizeFromNp) {
         if (!isNpToFlowHandoffEligible()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fail", "not_eligible_or_no_host");
                 d.put("eligible", isNpToFlowHandoffEligible());
                 DebugSessionLog.log("MainActivity.tryFlowReverseHandoffOpen", "abort", "H-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -49771,11 +50339,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (origin == null || origin.kind == FlowPlaybackOrigin.Kind.FLOW_FLIP) {
             if (!allowSynthesizeFromNp) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("fail", "no_origin_synthesize_denied");
                     DebugSessionLog.log("MainActivity.tryFlowReverseHandoffOpen", "abort", "H-B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 return false;
             }
@@ -49783,11 +50353,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (origin == null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fail", "origin_null");
                 DebugSessionLog.log("MainActivity.tryFlowReverseHandoffOpen", "abort", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -49798,11 +50370,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (matchKey == null || matchKey.isEmpty()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fail", "match_key_empty");
                 DebugSessionLog.log("MainActivity.tryFlowReverseHandoffOpen", "abort", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -49817,12 +50391,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         android.graphics.Bitmap cover = resolveHandoffCoverBitmapOrPlaceholder(matchKey);
         if (cover == null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fail", "cover_null");
                 d.put("matchKey", matchKey);
                 DebugSessionLog.log("MainActivity.tryFlowReverseHandoffOpen", "abort", "H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -49905,6 +50481,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             final android.graphics.RectF fromRect, final float toRotY,
             final Runnable onComplete, final boolean use2d) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("toRotY", toRotY);
@@ -49912,6 +50489,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("fromRectW", fromRect != null ? fromRect.width() : 0f);
             Debug1cf0c7Log.log(this, "MainActivity.launchFlowReverseHandoff", "start morph", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         runFlowHandoffReverse(cover, fromRect, toRotY, use2d, onComplete);
     }
@@ -50069,6 +50647,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void restoreScreenFromFlowRequest(int dest) {
         dest = sanitizeFlowExitReturnScreen(dest);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("dest", dest);
@@ -50077,6 +50656,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.flow.FlowBackDebugLog.log(
                     "MainActivity.restoreScreenFromFlowRequest", "restore", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (dest == STATE_FLOW) {
             navigateToHome();
@@ -50401,6 +50981,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void finishPodcastSearchEntry() {
         final String q = typedPassword.trim();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("q", q);
@@ -50409,6 +50990,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugA3e8ffLog.log(this, "MainActivity.finishPodcastSearchEntry",
                     "search always fetches shows", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         podcastUiModeOnReturn = PODCAST_UI_RESTORE_NONE;
         changeScreen(STATE_PODCASTS);
@@ -50864,6 +51446,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     Toast.makeText(MainActivity.this, R.string.youtube_save_done, Toast.LENGTH_SHORT).show();
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("audioOnly", audioOnly);
@@ -50874,6 +51457,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     com.solar.launcher.debug.Debug2241b1Log.log(
                             "MainActivity.startYouTubeSave", "save complete", "YT1", "post-fix", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 // 2026-07-15 — Force full walk; scan(false) can hit SQLite mtime fast-path and miss new file.
                 if (audioOnly) {
@@ -50972,6 +51556,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 public void run() {
                                     if (gen != podcastUiGen || !isPodcastUiActive()) return;
                                     // #region agent log
+                                    if (com.solar.launcher.debug.DebugGate.ON) {
                                     try {
                                         org.json.JSONObject d = new org.json.JSONObject();
                                         d.put("probeGen", gen);
@@ -50982,6 +51567,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                                 "MainActivity.fetchPodcastShows.onProbed",
                                                 "late show probe append", "H1", d);
                                     } catch (Exception ignored) {}
+                                    }
                                     // #endregion
                                     final String focusKey = captureBrowserFocusKey();
                                     final int scrollY = scrollViewBrowser instanceof android.widget.ScrollView
@@ -51274,6 +51860,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                             }
                                             if (playableCount == 0) {
                                                 // #region agent log
+                                                if (com.solar.launcher.debug.DebugGate.ON) {
                                                 try {
                                                     org.json.JSONObject d = new org.json.JSONObject();
                                                     d.put("totalCount", totalCount);
@@ -51284,6 +51871,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                                             "zero playable → fallback show list",
                                                             "H2", d);
                                                 } catch (Exception ignored) {}
+                                                }
                                                 // #endregion
                                                 Toast.makeText(MainActivity.this,
                                                         getString(R.string.podcasts_empty_episodes),
@@ -51314,6 +51902,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void onPodcastEpisodeProbed(int index, boolean playable) {
         if (podcastUiMode != PODCAST_UI_EPISODES) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("podcastUiMode", podcastUiMode);
@@ -51322,6 +51911,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugA3e8ffLog.log(this, "MainActivity.onPodcastEpisodeProbed",
                         "stale episode probe ignored", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -51371,6 +51961,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void appendPodcastEpisodeRow(final OpenRssClient.Episode ep, final int idx) {
         if (podcastUiMode != PODCAST_UI_EPISODES) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("podcastUiMode", podcastUiMode);
@@ -51379,6 +51970,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 DebugA3e8ffLog.log(this, "MainActivity.appendPodcastEpisodeRow",
                         "blocked wrong mode", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -51427,6 +52019,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         containerBrowserItems.addView(row, insertAt);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("podcastUiMode", podcastUiMode);
@@ -51436,6 +52029,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugA3e8ffLog.log(this, "MainActivity.appendPodcastEpisodeRow",
                     "episode row added", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -51816,31 +52410,37 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 soulseekClient.setSharePolicy(soulseekSharePolicy);
                 if (shouldKeepSoulseekAwakeForTransfers()) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = soulseekSleepDecisionSnapshot();
                         d.put("deferShutdown", true);
                         DebugSessionLog.log("MainActivity.updateSoulseekSharePolicy",
                                 "soulseek sleep deferred for transfer", "H5", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 } else {
                     soulseekClient.shutdown();
                     soulseekClient = null;
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = soulseekSleepDecisionSnapshot();
                         d.put("shutdown", true);
                         DebugSessionLog.log("MainActivity.updateSoulseekSharePolicy",
                                 "soulseek screen sleep shutdown", "H5", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                 }
             } else {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     DebugSessionLog.log("MainActivity.updateSoulseekSharePolicy",
                             "soulseek screen sleep no client", "H5", soulseekSleepDecisionSnapshot());
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
             return;
@@ -51858,6 +52458,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         soulseekSharePolicy.setMessagingEnabled(soulseekMessagingEnabled);
         soulseekSharePolicy.update(wifi, peerOk, uploadActive);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("wifi", wifi);
@@ -51869,6 +52470,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.updateSoulseekSharePolicy",
                     "policy tick", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         boolean wantClient = soulseekActive();
         if (hasInternetConnection() && soulseekReachEnabled) {
@@ -51890,6 +52492,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             client.warmConnectionAsync();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("warmConnection", soulseekSharingEnabled || soulseekMessagingEnabled);
@@ -51900,6 +52503,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("sharingNeedsWarm", soulseekSharingEnabled && !soulseekMessagingEnabled);
             DebugAgentLog.log(this, "MainActivity.updateSoulseekSharePolicy", "warm decision", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (soulseekSearchInProgress || client.isSearchActive()) {
             client.setShareIndex(soulseekShareIndex);
@@ -51916,6 +52520,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             client.setShareIndex(soulseekShareIndex);
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("elapsedMs", System.currentTimeMillis() - policyStartMs);
@@ -51923,6 +52528,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("wifiConnectInProgress", wifiConnectInProgress);
             DebugSessionLog.log("MainActivity.updateSoulseekSharePolicy", "policy tick done", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -53452,6 +54058,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void buildGetMusicResultsUI() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
@@ -53459,6 +54066,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("playerVis", layoutPlayerMode != null ? layoutPlayerMode.getVisibility() : -1);
             com.solar.launcher.DebugSessionLog.log("MainActivity.buildGetMusicResultsUI", "rebuild results", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         soulseekUiMode = SOULSEEK_UI_RESULTS;
         getMusicEntryUiCount = 0;
@@ -53506,6 +54114,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (containerBrowserItems.getChildCount() > 0) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 View foc = getCurrentFocus();
                 org.json.JSONObject d = new org.json.JSONObject();
@@ -53518,6 +54127,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug701426Log.log(this, "MainActivity.buildGetMusicResultsUI",
                         "full UI rebuild forcing Back focus", "C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             containerBrowserItems.getChildAt(0).requestFocus();
         }
@@ -53710,6 +54320,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (getMusicDeezerSearchActive() && !getMusicDeezerTracksReady) return;
         if (getMusicSearchInProgress) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("runId", "pre-fix");
@@ -53720,6 +54331,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug701426Log.log(this, "MainActivity.flushGetMusicReachBatch",
                         "Reach batch forcing full rebuild", "B,E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             refreshGetMusicResultsVisible(true);
         }
@@ -53765,6 +54377,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         List<String> recent = getMusic
                 ? GetMusicSearchHistory.load(prefs) : SoulseekSearchHistory.load(prefs);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("runId", "pre-fix");
@@ -53774,6 +54387,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugF0e28cLog.log(this, "MainActivity.buildSoulseekSearchUI",
                     "search landing built", "H-EMPTY", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (!recent.isEmpty()) {
             createBrowserSectionHeader(getString(
@@ -55277,11 +55891,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 currentScreenState, STATE_STEM_PLAYER, STATE_MIX, STATE_MENU);
         persistPlaybackQueue();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("fromScreen", currentScreenState);
             com.solar.launcher.DebugSessionLog.log("MainActivity.startReachPlayFromPartial", "before player", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         changeScreen(STATE_PLAYER);
         progressHandler.post(updateProgressTask);
@@ -55305,6 +55921,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     progressHandler.postDelayed(reachGrowingEdgePoll, 200);
                 } else {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("mpDur", mpDur);
@@ -55313,6 +55930,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         DebugAgentLog.log(this, "MainActivity.markReachGrowingDownloadComplete",
                                 "stopped edge poll — tagDur ~ mpDur", "H-B", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     progressHandler.removeCallbacks(reachGrowingEdgePoll);
                 }
@@ -55334,12 +55952,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (!playback.isMusicActive() || reachGrowingCacheFile == null || !reachGrowingCacheFile.isFile()) return;
         if (reachGrowingReprepareInFlight) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("force", force);
                 DebugAgentLog.log(this, "MainActivity.maybeExtendReachGrowingPlayback",
                         "blocked: reprepare in flight", "H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             progressHandler.postDelayed(reachGrowingEdgePoll, 250);
             return;
@@ -55369,6 +55989,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 reachGrowingPreparedBytes = fileLen;
                 if (playing && durationMs > 0 && positionMs < durationMs - REACH_GROWING_EXTEND_MS) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("force", force);
@@ -55383,11 +56004,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         DebugAgentLog.log(this, "MainActivity.maybeExtendReachGrowingPlayback",
                                 "early return: mid-track at 100%", "H-A", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return;
                 }
                 if (!playing && growth <= 0) {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("force", force);
@@ -55395,6 +56018,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         DebugAgentLog.log(this, "MainActivity.maybeExtendReachGrowingPlayback",
                                 "early return: not playing, no growth", "H-C", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     return;
                 }
@@ -55415,6 +56039,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         reachGrowingSeekMs = positionMs;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("fileLen", fileLen);
@@ -55425,6 +56050,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.maybeExtendReachGrowingPlayback",
                     "reprepare growing file", "H-DZ-GROW", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         startReachFromGrowingFile(reachGrowingCacheFile, reachGrowingSeekMs);
     }
@@ -55481,6 +56107,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     if (reachGrowingCacheFile != null && reachGrowingCacheFile.isFile()) {
                         if (reachDownloadInProgress()) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("pos", mp.getCurrentPosition());
@@ -55489,6 +56116,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 DebugAgentLog.log(MainActivity.this, "MainActivity.reachOnCompletion",
                                         "completion during download — extend", "H-STREAM-C", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             maybeExtendReachGrowingPlayback(true);
                             return;
@@ -55504,6 +56132,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             return;
                         }
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("finalDone", reachGrowingFinalReprepareDone);
@@ -55514,6 +56143,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             DebugAgentLog.log(MainActivity.this, "MainActivity.reachOnCompletion",
                                     "nextTrack — no extend", "H-E", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                     }
                     if (userAudioSeekRecently()) return;
@@ -55544,6 +56174,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     updatePlayerStatusIndicators();
                     clearReachLoadingArtistLabel();
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("dur", dur);
@@ -55554,6 +56185,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         DebugAgentLog.log(MainActivity.this, "MainActivity.reachGrowingOnPrepared",
                                 "media prepared", "H-PREPARE", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     if (reachGrowingCacheFile != null
                             && DeezerCache.isTempFile(streamAppCacheRoot(), reachGrowingCacheFile)) {
@@ -55747,11 +56379,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         themeDownloadGen++;
         // ponytail: leaving settings must not abort in-flight theme downloads — only skip apply-on-complete.
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("themeDownloadGen", themeDownloadGen);
             DebugSessionLog.log("MainActivity.teardownSettingsSession", "ui teardown only", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (layoutLoadingOverlay != null) layoutLoadingOverlay.setVisibility(View.GONE);
     }
@@ -55761,6 +56395,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         final int prevGen = libraryScanGen;
         libraryScanGen++;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("prevGen", prevGen);
@@ -55777,6 +56412,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug6eff1eLog.log(this, "MainActivity.teardownBrowserSession",
                     "gen bump leaves Tier-0?", "H-GEN", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         cancelReachDownloadIfAny(false);
     }
@@ -56517,6 +57153,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         File savedArtProbe = PodcastLibrary.resolveEpisodeFile(ep, showTitle);
         loadPodcastNowPlayingArt(resolvePodcastArtworkUrl(), savedArtProbe);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("episodeTitle", ep.title);
@@ -56530,6 +57167,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.DebugSessionLog.log("MainActivity.preparePodcastEpisode",
                     "episode prep", "H-C-H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         podcastEpisodeLoading = true;
         // 2026-07-18 — Status spinner while episode file/stream prepares.
@@ -56902,6 +57540,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         podcastGrowingSeekMs = positionMs;
         saveCurrentPodcastResume();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("force", force);
@@ -56913,6 +57552,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.DebugSessionLog.log("MainActivity.maybeExtendPodcastGrowingPlayback",
                     "growing reprepare", "H-E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         startPodcastFromGrowingFile(podcastGrowingCacheFile, index, gen, podcastGrowingSeekMs);
     }
@@ -57372,12 +58012,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Was: Center toggled mashup marks 1–3. Reversal: tryStemPickMarkTrack(markFile) return.
         if (stemPickMode) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("filled", com.solar.launcher.stem.StemPickSlots.filled(stemMashupQueue));
                 d.put("reassign", stemReassignSong);
                 DebugEcc8c8Log.log("MainActivity.playTrackList", "stem pick swallow center", "H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             Toast.makeText(this, R.string.stem_pick_use_pads, Toast.LENGTH_SHORT).show();
             return;
@@ -57386,11 +58028,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Was: mixReassignDeck>=0 + Center → fadeReplace. Reversal: that playTrackList block.
         if (mixAssignMode) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("reassignDeck", mixReassignDeck);
                 DebugEcc8c8Log.log("MainActivity.playTrackList", "mix assign swallow center", "H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -57449,12 +58093,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         isPausedByHand = false;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("fromScreen", currentScreenState);
             d.put("willChangeScreen", currentScreenState != STATE_PLAYER);
             com.solar.launcher.DebugSessionLog.log("MainActivity.playTrackList", "play track list", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (currentScreenState != STATE_PLAYER) {
             changeScreen(STATE_PLAYER);
@@ -57674,6 +58320,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             boolean hasValidTags = AudioTags.hasValidTags(tags);
 
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("file", track.getName());
@@ -57691,6 +58338,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 com.solar.launcher.Debug0f5debLog.log(this,
                         "MainActivity.prepareMusicTrack", "player tags", "YT-C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
 
             // 제목 화면에 표시 — reject literal “Failed” / empty MMR junk (YouTube m4a). 2026-07-19
@@ -57824,6 +58472,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             } else if (prefersIjkLocalDecode(track)) {
                 // 2026-07-15 — YouTube/opus/webm: same IJK path live YT uses; MediaPlayer often silent-fails.
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("name", track.getName());
@@ -57831,6 +58480,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     com.solar.launcher.debug.Debug2241b1Log.log(
                             "MainActivity.prepareMusicTrack", "ijk for yt/opus", "YT3", "post-fix", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (tryPrepareMusicViaIjk(track)) {
                     try {
@@ -57891,6 +58541,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     } catch (Exception e) {
                     }
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("what", what);
@@ -57900,6 +58551,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         com.solar.launcher.debug.Debug2241b1Log.log(
                                 "MainActivity.prepareMusicTrack", "mp onError try ijk", "YT3", "post-fix", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     // 2026-07-15 — One-shot IJK retry when stock decoder rejects YT adaptive AAC/etc.
                     if (!musicUsingIjk && tryPrepareMusicViaIjk(track)) {
@@ -57958,6 +58610,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             refreshPlayerMarquee();
                             syncVisualizerMetadata();
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("file", track.getName());
@@ -57967,6 +58620,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 DebugAgentLog.log(MainActivity.this, "MainActivity.onPrepared",
                                         "prepared tags", "H-B", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                         } catch (Exception ignored) {}
                         if (!isPausedByHand) {
@@ -57977,6 +58631,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 applyQueueResumeSeekMs(mp);
                             }
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("track", track.getName());
@@ -57987,6 +58642,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 Debug290fecLog.log("MainActivity.mediaPlayer.onPrepared",
                                         "legacy MP start", "H1", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             mp.start();
                             applyPlaybackSpeed();
@@ -58032,6 +58688,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.prepareAsync();
         } catch (Throwable e) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("file", track != null ? track.getName() : "");
@@ -58040,6 +58697,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 com.solar.launcher.Debug0f5debLog.log(this,
                         "MainActivity.prepareMusicTrackMediaPlayerOnly", "load failed", "YT-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             tvPlayerTitle.setText("Load Failed: " + track.getName());
         }
@@ -58202,6 +58860,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.prepareAsync();
         } catch (Throwable t) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("file", track != null ? track.getName() : "");
@@ -58211,6 +58870,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         "MainActivity.prepareMusicTrackMediaPlayerOnly.fallback",
                         "load failed", "YT-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             tvPlayerTitle.setText("Load Failed: " + track.getName());
         }
@@ -58655,6 +59315,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             avrcpTrackInfoWriter.syncFromPlayback(
                     title, artist, album, duration, position, playing, trackChanged);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("titleLen", title.length());
@@ -58665,6 +59326,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("trackChanged", trackChanged);
                 DebugAgentLog.log(this, "MainActivity.syncAvrcpTrackInfo", "sync", "H-AV1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } catch (Exception ignored) {}
     }
@@ -58809,11 +59471,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // ponytail: Y1 wheel shares 126/127 with AVRCP — consume here so MediaSession does not play/pause.
         if (Y1InputKeys.isWheelKey(keyCode)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", keyCode);
                 DebugSessionLog.log("MainActivity.handleMediaSessionKey", "wheel consumed screen off", "H-SOFF1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return true;
         }
@@ -58903,6 +59567,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             // Reversal: delete this branch; restore mediaPlayer-only toggle below.
             if (com.solar.launcher.audio.SolarTransport.get().ownsPlayback()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("audible", isActiveAudioPlaying());
@@ -58911,6 +59576,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     Debug3103d7Log.log("MainActivity.playOrPauseMusic",
                             "playPause branch", "H4", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (isActiveAudioPlaying()) {
                     saveAudiobookBookmarkIfNeeded();
@@ -58953,6 +59619,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         lastTrackChangeTime = System.currentTimeMillis();
         saveAudiobookBookmarkIfNeeded();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("txLayer", com.solar.launcher.audio.SolarTransport.get().isLayerMode());
@@ -58962,6 +59629,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("audible", isActiveAudioPlaying());
             Debug3103d7Log.log("MainActivity.nextTrack", "next pressed", "H4,H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // Gapless promote when transport already warmed the next file. 2026-07-20
         if (tryAdvanceViaTransportPromote()) return;
@@ -59278,6 +59946,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             maybeCompletePendingAudioSeek();
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("pct", p);
@@ -59286,6 +59955,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.noteAudioBufferPercent",
                     "audio buffer %", "H-SCRUB", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -59441,6 +60111,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (!hasActiveMediaPlayback()) return;
         int dur = playbackDurationForScrub();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("dur", dur);
@@ -59450,6 +60121,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugAgentLog.log(this, "MainActivity.enterPlayerScrubCursorMode",
                     "scrub enter attempt", "H-SCRUB", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (dur <= 0) return;
         // Live position from podcast / music IJK / MediaPlayer (one helper).
@@ -59596,6 +60268,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             int pos = clampScrubPositionMs(positionMs, dur > 0 ? dur : Integer.MAX_VALUE);
             int edge = playbackBufferedEdgeMs();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("pos", pos);
@@ -59606,6 +60279,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("growing", isAudioGrowingDownload());
                 Debug0f5debLog.log(this, "MainActivity.seekMediaTo", "seek request", "H-SCRUB", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // Already buffered (or local full file) — seek immediately.
             if (StreamSeekBuffer.targetInBuffer(pos, edge, 500)
@@ -59711,6 +60385,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("target", target);
@@ -59719,6 +60394,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug0f5debLog.log(this, "MainActivity.maybeCompletePendingAudioSeek",
                     "pending seek complete", "H-SCRUB", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         playerPendingSeekMs = -1;
         com.solar.launcher.ui.UiBusy.clear(com.solar.launcher.ui.UiBusy.REASON_SEEK_BUFFER);
@@ -60161,6 +60837,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (DeviceFeatures.isY2() && (Y1InputKeys.isVolumeDownKey(keyCode) || Y1InputKeys.isVolumeUpKey(keyCode))) {
             if (currentScreenState == STATE_PLAYER || currentScreenState == MediaSuiteHost.STATE_VIDEO_PLAYER) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("keyCode", keyCode);
@@ -60168,6 +60845,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     d.put("up", Y1InputKeys.isVolumeUpKey(keyCode));
                     Debug3cf33fLog.log(this, "MainActivity.onKeyDown", "y2 volume on player", "H-V2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 adjustVolume(Y1InputKeys.isVolumeUpKey(keyCode));
                 clickFeedback();
@@ -60304,6 +60982,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 || ((!DeviceFeatures.isA5()) && (keyCode == KeyEvent.KEYCODE_MEDIA_STOP
                 || keyCode == 86))) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("runId", "power-as-ok");
@@ -60319,6 +60998,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug210a10Log.log(this, "MainActivity.onKeyDown",
                         "play/pause path", "H-C,H-D", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (handlePlayPauseKeyDown(event)) return true;
             return true;
@@ -60564,6 +61244,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     if (event != null && !WheelNavPolicy.acceptNotch(
                             event.getAction(), event.getRepeatCount(), wheelKeyHeld)) {
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("repeat", event.getRepeatCount());
@@ -60574,6 +61255,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             Debug9cd8d5Log.log(this, "MainActivity.listWheel",
                                     "drop non-notch", "A", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return true;
                     }
@@ -60591,12 +61273,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     if (isPreReverseWheelCatchup(event, direction)) {
                         // Leftover old-direction ticks behind a reverse we already honored.
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("dir", direction);
                             Debug9cd8d5Log.log(this, "MainActivity.listWheel",
                                     "drop pre-reverse catchup", "C", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return true;
                     }
@@ -60622,6 +61306,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     if (faStale) {
                         hardStopListWheel();
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("ageMs", faAge);
@@ -60633,6 +61318,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             DebugFa8512Log.log(this, "MainActivity.listWheel",
                                     "stale KEY → hard stop", "H1", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         return true;
                     }
@@ -60687,6 +61373,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (currentScreenState == STATE_SETTINGS && isThemeListActive()
                     && Y1InputKeys.isWheelKey(keyCode)) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     boolean interstitialVis = themeGalleryInterstitial != null
                             && themeGalleryInterstitial.getVisibility() == View.VISIBLE;
@@ -60698,6 +61385,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     DebugA6d897Log.log(this, "MainActivity.onKeyDown",
                             "theme wheel while list active", "B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 dispatchThemeListKey(keyCode);
                 clickFeedback();
@@ -60856,6 +61544,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (Y1InputKeys.isBackKey(keyCode)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 long heldMs = BackHoldPolicy.physicalHoldMs(
                         event != null ? event.getDownTime() : 0L,
@@ -60874,6 +61563,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("settingsVis", layoutSettingsMode != null ? layoutSettingsMode.getVisibility() : -1);
                 Debug54d8beLog.log("MainActivity.onKeyUp", "back key up", "H2,H4", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-08 — Timers already cleared above; swallow residual if soft-restart already ran.
             if (backForceQuitHandled) {
@@ -61037,6 +61727,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             if (isMediaPlayPauseKey(keyCode)) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("runId", "pre-fix");
@@ -61052,6 +61743,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     DebugAgentLog.log(this, "MainActivity.onKeyUp",
                             "keyboard pp up", "H3", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (!keyboardPpLongHandled) {
                     clickFeedback();
@@ -61187,6 +61879,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     protected void onResume() {
         super.onResume();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("screen", currentScreenState);
@@ -61203,6 +61896,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug2b0d3bLog.log(this, "MainActivity.onResume",
                     "resume gate snapshot", "A,B,C,D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         ExternalInputHandoff.invalidateForegroundPackageCache();
         wakeDisplayIfSolarHomeAndAsleep();
@@ -61243,6 +61937,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         scheduleAdbHomeWheelIfRequested(getIntent());
         LandscapeOrientationGuard.recoverIfPortrait(this);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("isA5", DeviceFeatures.isA5());
@@ -61260,6 +61955,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("isFullWidthMenus", isFullWidthMenus);
             DebugB4208eLog.log("MainActivity.onResume", "after recoverIfPortrait", "A,B,C,D,E", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -61876,6 +62572,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             MediaButtonRegistrar.ensureRegistered(app);
             final MainActivity activity = MainActivity.instance;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("keyCode", event.getKeyCode());
@@ -61885,6 +62582,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("dpadMode", ExternalInputHandoff.getDpadMode());
                 DebugE93bdbLog.log("MediaBtnReceiver.onReceive", "MEDIA_BUTTON", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             // 2026-07-06 — JJ HOME keeps Solar process alive without MainActivity; handoff must run here.
             long handoffT0 = android.os.SystemClock.uptimeMillis();
@@ -61944,12 +62642,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         // ponytail: wheel is 126/127 (and 19/20) — never transport via ACTION_MEDIA_BUTTON (no InputDevice).
                         if (Y1InputKeys.isWheelKey(keyCode)) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("keyCode", keyCode);
                                 d.put("action", event.getAction());
                                 DebugSessionLog.log("MainActivity.MediaBtnReceiver", "wheel ignored screen off", "H-SOFF2", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             return;
                         }
@@ -62783,6 +63483,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         public View getView(final int position, View convertView, android.view.ViewGroup parent) {
             if (position < 0 || position >= themeBrowserRows.size()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("position", position);
@@ -62790,6 +63491,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     DebugAgentLog.log(MainActivity.this, "ThemeUnifiedListAdapter.getView",
                             "position oob", "H-IOOB", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 TextView stub = new TextView(MainActivity.this);
                 stub.setText("");
@@ -63495,6 +64197,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     public void mediaStopMusicPlayback() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("musicUsingIjk", musicUsingIjk);
@@ -63502,6 +64205,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.debug.SessionDebugLog.log(this, "MainActivity.mediaStopMusicPlayback",
                     "stop music", "I1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-15 — Also tear down software-EQ music IJK so podcasts don't dual-play.
         try {
@@ -63609,12 +64313,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         updateMusicTrackCountUi();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("khz", khz);
             d.put("pos", pos);
             DebugF9ef0bLog.log(this, "MainActivity.syncFmTuneScrubUi", "fm tune ui", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -63673,11 +64379,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void routeFmPlayerCenterOk() {
         if (mediaSuite == null) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("scrubBefore", mediaSuite.radioScrubMode != null ? mediaSuite.radioScrubMode.name() : "null");
             DebugF9ef0bLog.log(this, "MainActivity.routeFmPlayerCenterOk", "center ok", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         mediaSuite.handleRadioCenterOk();
         syncFmTuneScrubUi();
@@ -64086,6 +64794,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         flowLaunchRequest != null ? flowLaunchRequest.returnScreen : flowEntryReturnSnapshot);
                 playerReturnScreen = dest;
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("playerReturnScreen", playerReturnScreen);
@@ -64093,6 +64802,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     com.solar.launcher.flow.FlowBackDebugLog.log(
                             "MainActivity.releaseFlowNpBackLoop", "released", "H-LOOP", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
 
@@ -64564,6 +65274,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private boolean handleFlowCenterKeyUp(long heldMs) {
         if (flowScreenHost.isHandoffOrFlipAnimating()) return true;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("heldMs", heldMs);
@@ -64571,6 +65282,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("okLibraryPref", prefs.getBoolean(PREF_DEBUG_FLOW_OK_LIBRARY, false));
             DebugSessionLog.log("MainActivity.handleFlowCenterKeyUp", "flow center up", "H-CENTER-ROUTE", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (heldMs >= FLOW_LAUNCH_HOLD_MS && !flowScreenHost.isFlipped()) {
             FlowItem item = flowScreenHost.getFocusedItem();
@@ -64829,6 +65541,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         boolean mixOk = trySoloLayerMix(origin, wantVocals, wantInstr,
                 /*fade*/ com.solar.launcher.audio.SolarTransport.get().isLayerMode());
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("origin", origin.getName());
@@ -64840,6 +65553,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug10d371Log.log("MainActivity.switchSoloPlaybackVariant",
                     mixOk ? "mixReadyReturn" : "mixMissContinue", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (mixOk) {
             return;
@@ -64850,6 +65564,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (mode == null) {
             // Original full mix (no dual stems yet).
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("origin", origin.getName());
@@ -64857,6 +65572,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug10d371Log.log("MainActivity.switchSoloPlaybackVariant",
                         "modeNullOriginal", "H-A,H-E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (playingHere) {
                 hardCutToSoloFile(origin, origin, null);
@@ -64869,6 +65585,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
         File local = com.solar.launcher.stem.LalalClient.findReadySoloFile(this, origin, mode, cache);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("originName", origin.getName());
@@ -64886,6 +65603,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug10d371Log.log("MainActivity.switchSoloPlaybackVariant",
                     local != null ? "localHit" : "needEnsure", "H-A,H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (local != null && local.isFile()) {
             // One stem ready — try ensure the other for dual mix; else legacy hard-cut. 2026-07-20
@@ -64896,6 +65614,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             com.solar.launcher.stem.SoloMode.INSTRUMENTAL, cache);
             if (otherMode == null) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("origin", origin.getName());
@@ -64905,6 +65624,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     Debug10d371Log.log("MainActivity.switchSoloPlaybackVariant",
                             "ensureOtherMissing", "H-A,H-C", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 startSoloEnsureJob(origin, mode, cache,
                         ConnectivityHelper.isOnline(this)
@@ -64935,6 +65655,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (!com.solar.launcher.stem.StemFeatures.canOfferSoloMode(
                 prefs, online, /*localReady*/ false, offlineSource)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("origin", origin.getName());
@@ -64944,6 +65665,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug10d371Log.log("MainActivity.switchSoloPlaybackVariant",
                         "canOfferRejected", "H-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (!online) {
                 Toast.makeText(this, R.string.solo_stem_need_wifi, Toast.LENGTH_SHORT).show();
@@ -64954,6 +65676,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (offlineSource) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("origin", origin.getName());
@@ -64961,12 +65684,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 Debug10d371Log.log("MainActivity.switchSoloPlaybackVariant",
                         "startEnsureOffline", "H-A,H-B", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             startSoloEnsureJob(origin, mode, cache, /*needNetwork*/ false, playingHere);
             return;
         }
         // Online + opted-in cloud ensure. 2026-07-19
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("origin", origin.getName());
@@ -64975,6 +65700,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug10d371Log.log("MainActivity.switchSoloPlaybackVariant",
                     "startEnsureOnline", "H-A,H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         startSoloEnsureJob(origin, mode, cache, /*needNetwork*/ true, playingHere);
     }
@@ -64998,6 +65724,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 this, origin, com.solar.launcher.stem.SoloMode.INSTRUMENTAL, cache);
         if (vocals == null || !vocals.isFile() || instrumental == null || !instrumental.isFile()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("origin", origin.getName());
@@ -65007,6 +65734,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 d.put("instr", instrumental != null ? instrumental.getName() : "null");
                 Debug10d371Log.log("MainActivity.trySoloLayerMix", "stemsMissing", "H-C", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return false;
         }
@@ -65041,6 +65769,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         final int posMs = activeAudioPositionMs();
         final boolean wasPlaying = isActiveAudioPlaying() && !isPausedByHand;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("origin", origin.getName());
@@ -65053,6 +65782,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("txPlaying", tx.isPlaying());
             Debug10d371Log.log("MainActivity.trySoloLayerMix", "playLayers", "H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         // Bind queue to origin without a second decode (no playTrackList). 2026-07-20
@@ -65218,6 +65948,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // playFile clears any layer pads — single owner throughout. 2026-07-20
         ensureSolarTransportListener();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("track", track.getName());
@@ -65228,6 +65959,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug290fecLog.log("MainActivity.tryPrepareMusicViaTransport",
                     "route to transport", "H1,H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         try {
             if (mediaPlayer != null) {
@@ -65482,6 +66214,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             cur = playback.musicPlaylist().get(playback.musicIndex());
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("originName", origin.getName());
@@ -65497,6 +66230,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             originatingTitleForSolo(origin), mode) : "null");
             Debug072d46Log.log("MainActivity.hardCutToSoloFile", "swap", "H-C,H-D", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (cur == null) {
             String title = mode != null
@@ -65614,12 +66348,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         com.solar.launcher.stem.LalalAccount.effectiveKey(prefs));
         if (needNetwork && provider == null) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("track", sourceTrack != null ? sourceTrack.getName() : "null");
                 d.put("needNetwork", needNetwork);
                 Debug10d371Log.log("MainActivity.startSoloEnsureJob", "providerNullAbort", "H-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             Toast.makeText(this, R.string.solo_stem_need_opt_in, Toast.LENGTH_SHORT).show();
             return;
@@ -65648,6 +66384,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 com.solar.launcher.ui.UiBusy.REASON_DOWNLOAD, 600_000L);
         updateStatusBarTitle();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("track", sourceTrack.getName());
@@ -65661,6 +66398,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             Debug072d46Log.log("MainActivity.startSoloEnsureJob", "busyUiArmed", "H-PROG", d);
             Debug10d371Log.log("MainActivity.startSoloEnsureJob", "busyUiArmed", "H-B", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
 
         final com.solar.launcher.stem.LalalClient.Progress progress =
@@ -65711,6 +66449,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         clearSoloBusyUi();
                         if (audio == null || !audio.isFile() || audio.length() < 100) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("track", src.getName());
@@ -65719,6 +66458,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 Debug10d371Log.log("MainActivity.startSoloEnsureJob",
                                         "ensureFailed", "H-C", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             Toast.makeText(MainActivity.this,
                                     failMsg != null && failMsg.length() > 0
@@ -65739,6 +66479,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 MainActivity.this, src,
                                 com.solar.launcher.stem.SoloMode.INSTRUMENTAL, cacheNow);
                         // #region agent log
+                        if (com.solar.launcher.debug.DebugGate.ON) {
                         try {
                             org.json.JSONObject d = new org.json.JSONObject();
                             d.put("track", src.getName());
@@ -65754,22 +66495,26 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             Debug10d371Log.log("MainActivity.startSoloEnsureJob",
                                     "ensureDone", "H-C,H-D", d);
                         } catch (Exception ignored) {}
+                        }
                         // #endregion
                         if (trySoloLayerMix(src, wantVocals, wantInstr,
                                 /*fade*/ com.solar.launcher.audio.SolarTransport.get().isLayerMode()
                                         || (keepPlaying && playingHereNow))) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("path", "trySoloLayerMix");
                                 Debug10d371Log.log("MainActivity.startSoloEnsureJob",
                                         "completeViaMix", "H-C,H-D", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             return;
                         }
                         if (keepPlaying && playingHereNow) {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("path", "hardCut");
@@ -65777,10 +66522,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 Debug10d371Log.log("MainActivity.startSoloEnsureJob",
                                         "completeViaHardCut", "H-C", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             hardCutToSoloFile(src, audio, mode);
                         } else {
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 org.json.JSONObject d = new org.json.JSONObject();
                                 d.put("path", "playTrackList");
@@ -65789,6 +66536,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 Debug10d371Log.log("MainActivity.startSoloEnsureJob",
                                         "completeViaNewList", "H-C", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             String title = com.solar.launcher.stem.SoloStemTitles.displayTitle(
                                     originatingTitleForSolo(src), mode);
@@ -66058,6 +66806,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         final File origin = resolveSoloOriginatingTrack(trackFile);
         if (origin == null || !origin.isFile()) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("track", trackFile.getName());
@@ -66068,6 +66817,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugA92996Log.log("MainActivity.addSoloStemContextActions",
                     "solo menu bound to file", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         File cacheDir = getCacheDir();
 
@@ -66541,6 +67291,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // Unlimited queue: Prev/Next append (slotIndex unused). 2026-07-21
         int n = com.solar.launcher.stem.StemPickSlots.append(stemMashupQueue, track);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("name", track.getName());
@@ -66548,6 +67299,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("filled", com.solar.launcher.stem.StemPickSlots.filled(stemMashupQueue));
             Debug8b0481Log.log("MainActivity.tryStemPickBindSlot", "appended", "H-A", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         Toast.makeText(this,
                 n > 0 ? getString(R.string.stem_pick_marked, n)
@@ -67207,6 +67959,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         boolean online = ConnectivityHelper.isOnline(this);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("markCount", ok.size());
@@ -67220,6 +67973,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             Debug8b0481Log.log("MainActivity.openStemPlayer", "mashup gate", "H-MIX1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         final boolean preparationOnly = stemPrepOnlyMode;
         if (!online && needLal > 0) {
@@ -67451,6 +68205,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         pendingStemTrackFiles.addAll(live);
         pendingStemTrackFile = live.isEmpty() ? null : live.get(0);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("okCount", ok != null ? ok.size() : 0);
@@ -67460,6 +68215,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("prefer", preferStemmed != null ? preferStemmed.getName() : "");
             Debug8b0481Log.log("MainActivity.openStemPlayer", "opening mashup", "H-MIX1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         changeScreen(STATE_STEM_PLAYER);
     }
@@ -68649,11 +69405,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             persistPlaybackQueue();
         } catch (Exception ignored) {}
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("slots", n);
             Debug8b0481Log.log("MainActivity.openMixPlayer", "opening mix", "H-MIX", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         changeScreen(STATE_MIX);
     }
@@ -68781,6 +69539,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // 2026-07-20 — Instant paint so OK→Flow feels acknowledged before catalog bind.
         armNavFeedbackThrobber(com.solar.launcher.ui.UiBusy.REASON_FLOW_OPEN, 12_000L);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("mode", req.mode != null ? req.mode.name() : "null");
@@ -68792,6 +69551,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             DebugSessionLog.log("MainActivity.openFlow", "open flow", "H1-H4", d);
             Debug0f5debLog.log(this, "MainActivity.openFlow", "flow open busy", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         dismissThemedContextMenu();
         int flowBack = req.returnScreen == STATE_PLAYER
@@ -68813,6 +69573,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (ivAlbumArt3d != null) ivAlbumArt3d.setAlpha(0f);
         hideMenuPreviewForHandoff();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("slotAlpha", slot != null ? slot.getAlpha() : -1f);
@@ -68821,6 +69582,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.DebugSessionLog.log("MainActivity.hidePlayerAlbumSlotForHandoff",
                     "slot hidden", "H-HANDOFF-SLOT", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -68844,6 +69606,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         revealMenuPreviewAfterHandoff();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("slotAlpha", slot != null ? slot.getAlpha() : -1f);
@@ -68851,6 +69614,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             com.solar.launcher.DebugSessionLog.log("MainActivity.revealPlayerAlbumSlotAfterHandoff",
                     "slot revealed", "H-HANDOFF-SLOT", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -69010,6 +69774,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     toRotY = flowScreenHost.getHandoffStartRotationY();
                 }
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("landingMeasured", landingMeasured);
@@ -69025,6 +69790,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             "MainActivity.runFlowHandoffReverse", "frame0 poses", "H-D", d);
                     Debug898913Log.log("MainActivity.runFlowHandoffReverse", "frame0 poses", "H-B", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 if (!landingMeasured) {
                     beginReverseStatusBarFadeOut();
@@ -69703,6 +70469,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void exitFlowScreen() {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("flowLaunchReturn", flowLaunchRequest != null ? flowLaunchRequest.returnScreen : -1);
@@ -69712,6 +70479,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     ? sanitizeFlowExitReturnScreen(flowEntryReturnSnapshot) : -1);
             com.solar.launcher.flow.FlowBackDebugLog.log("MainActivity.exitFlowScreen", "entry", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (flowScreenHost != null) flowScreenHost.clearNowPlayingBackReturn();
         if (flowLaunchRequest == null) {
@@ -69741,12 +70509,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         flowPlaybackOrigin = null;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("enteringState", enteringState);
             d.put("playerReturnScreen", playerReturnScreen);
             DebugSessionLog.log("MainActivity.clearStaleFlowReturnHints", "cleared flow np hints", "H-NAV", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

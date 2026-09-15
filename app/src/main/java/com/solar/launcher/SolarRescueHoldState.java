@@ -150,6 +150,7 @@ public final class SolarRescueHoldState {
         int prop = readHudSecondProp();
         if (deadline <= 0L && prop != 0) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("deadline", deadline);
@@ -157,6 +158,7 @@ public final class SolarRescueHoldState {
                 Debug434250Log.log("SolarRescueHoldState.healStaleHudProps",
                         "clear orphan hud prop", "H-A", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             writeHudSecond(0);
         }

@@ -37,6 +37,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
         // 2026-07-16 — Defensive: OEM may deliver null context (historical instantiate NPE path).
         if (context == null) return;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = Debug705932Log.usbSnapshot();
             d.put("action", intent != null ? intent.getAction() : null);
@@ -45,6 +46,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
             d.put("massStorageExtra", intent != null && intent.getBooleanExtra("mass_storage", false));
             Debug705932Log.log("UsbHostWakeReceiver.onReceive", "usb broadcast", "H1,H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (isUsbDisconnectIntent(intent)) {
             // 2026-07-16 — Armed UMS session: re-enum looks like unplug — wait then re-check sticky USB_STATE.
@@ -96,6 +98,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
         boolean dismissed = UsbHostSessionPolicy.hasUserDismissedThisSession(context);
         boolean evaluated = UsbHostSessionPolicy.hasPromptEvaluatedThisSession(context);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hostIntent", true);
@@ -111,6 +114,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
             Debug02fc83Log.log(context, "UsbHostWakeReceiver.onReceive",
                     "host path", "H3", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         // 2026-07-14 — Prompt already shown/dismissed this plug: idle until cable unplug (H3 logs).
         // Was: every USB_STATE started MainActivity with evaluate_host while cable stayed in.
@@ -122,6 +126,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
         UsbHostSessionPolicy.onUsbHostConnected(context);
         if (wasActive) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("wasActive", true);
@@ -129,12 +134,14 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
                 Debug02fc83Log.log(context, "UsbHostWakeReceiver.onReceive",
                         "skip relaunch — session active", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
         // Stock Android USB dialog — do not wake Solar MainActivity (2026-07-19).
         if (UsbStorageSessionFlags.preferStockUsbUi(context)) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("stockUi", true);
@@ -144,6 +151,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
                 Debug543e15Log.log("UsbHostWakeReceiver.onReceive",
                         "stock USB UI — no Solar wake", "H2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             return;
         }
@@ -170,6 +178,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
                 | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         home.putExtra(MainActivity.EXTRA_USB_EVALUATE_HOST, true);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("startActivity", true);
@@ -181,6 +190,7 @@ public final class UsbHostWakeReceiver extends BroadcastReceiver {
             Debug543e15Log.log("UsbHostWakeReceiver.onReceive",
                     "start MainActivity auto-connect", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         try {
             context.startActivity(home);

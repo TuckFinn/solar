@@ -43,6 +43,7 @@ public class SolarWebServer extends Thread {
         try {
             serverSocket = new ServerSocket(8080);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("port", 8080);
@@ -50,6 +51,7 @@ public class SolarWebServer extends Thread {
                 com.solar.launcher.deezer.DeezerDebugLog.log(context, "SolarWebServer.run",
                         "listening", "E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             while (running) {
                 Socket socket = serverSocket.accept();
@@ -57,6 +59,7 @@ public class SolarWebServer extends Thread {
             }
         } catch (Exception e) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("error", e.getClass().getSimpleName());
@@ -66,6 +69,7 @@ public class SolarWebServer extends Thread {
                 com.solar.launcher.deezer.DeezerDebugLog.log(context, "SolarWebServer.run",
                         "bind failed", "E", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         }
     }
@@ -243,6 +247,7 @@ public class SolarWebServer extends Thread {
                                 prefs.edit().putString(DeezerAccount.PREF_QUALITY, quality).commit();
                             }
                             // #region agent log
+                            if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
                                 String probeWww = com.solar.launcher.net.TlsHelper.probeProtocol(
                                         "https://www.deezer.com/");
@@ -255,6 +260,7 @@ public class SolarWebServer extends Thread {
                                 com.solar.launcher.deezer.DeezerDebugLog.log(context,
                                         "SolarWebServer.deezer", "pre-test", "A", d);
                             } catch (Exception ignored) {}
+                            }
                             // #endregion
                             DeezerClient client = new DeezerClient(prefs);
                             boolean ok = false;
@@ -268,6 +274,7 @@ public class SolarWebServer extends Thread {
                                 } catch (Exception ignored) {}
                             } catch (java.io.IOException e) {
                                 // #region agent log
+                                if (com.solar.launcher.debug.DebugGate.ON) {
                                 try {
                                     org.json.JSONObject d2 = new org.json.JSONObject();
                                     d2.put("error", e.getClass().getSimpleName());
@@ -277,6 +284,7 @@ public class SolarWebServer extends Thread {
                                     com.solar.launcher.deezer.DeezerDebugLog.log(context,
                                             "SolarWebServer.deezer", "initSession fail", "B", d2);
                                 } catch (Exception ignored) {}
+                                }
                                 // #endregion
                             }
                             ConnectivityHelper.setDeezerLoginOk(ok);
@@ -616,6 +624,7 @@ public class SolarWebServer extends Thread {
                     writeDownload(os, path);
                 } else {
                     // #region agent log
+                    if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("method", method);
@@ -623,6 +632,7 @@ public class SolarWebServer extends Thread {
                         com.solar.launcher.deezer.DeezerDebugLog.log(context,
                                 "SolarWebServer.request", "404", "E", d);
                     } catch (Exception ignored) {}
+                    }
                     // #endregion
                     String response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNot found";
                     os.write(response.getBytes("UTF-8"));
@@ -630,12 +640,14 @@ public class SolarWebServer extends Thread {
                 os.flush();
             } catch (Exception e) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("error", e.getClass().getSimpleName());
                     com.solar.launcher.deezer.DeezerDebugLog.log(context,
                             "SolarWebServer.request", "handler error", "E", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             } finally {
                 try { socket.close(); } catch (Exception e) {}
@@ -679,6 +691,7 @@ public class SolarWebServer extends Thread {
                 underAb = false;
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("dirParam", dirParam);
@@ -687,6 +700,7 @@ public class SolarWebServer extends Thread {
                 com.solar.launcher.debug.SessionDebugLog.log(context, "SolarWebServer.writeBrowsePage",
                         "browse resolve", "W1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             StringBuilder list = new StringBuilder();
             File[] kids = base.listFiles();
@@ -745,6 +759,7 @@ public class SolarWebServer extends Thread {
                 f = SolarWebPaths.resolveUnder(rootFolder, fileParam);
             }
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("fileParam", fileParam);
@@ -753,6 +768,7 @@ public class SolarWebServer extends Thread {
                 com.solar.launcher.debug.SessionDebugLog.log(context, "SolarWebServer.writeDownload",
                         "download resolve", "W2", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             if (f == null || !f.isFile()) {
                 os.write("HTTP/1.1 404 Not Found\r\n\r\n".getBytes("UTF-8"));

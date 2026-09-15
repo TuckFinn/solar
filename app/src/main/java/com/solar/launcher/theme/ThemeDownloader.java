@@ -63,11 +63,13 @@ public class ThemeDownloader {
     static void checkDownloadCancel() throws InterruptedException {
         if (downloadCancel.get()) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("activeSession", activeSession);
                 DebugSessionLog.log("ThemeDownloader.checkDownloadCancel", "cancelled", "H3", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             throw new InterruptedException("Download cancelled");
         }
@@ -91,9 +93,11 @@ public class ThemeDownloader {
 
     static void dbgLog(String location, String message, String hypothesisId, org.json.JSONObject data) {
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             DebugSessionLog.log(location, message, hypothesisId, data);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -974,12 +978,14 @@ public class ThemeDownloader {
             int done = 0;
             int skipped = 0;
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("folder", entry.folder);
                 d.put("assetCount", total);
                 dbgLog("ThemeDownloader.downloadTheme", "begin", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             dlLog("asset pass 1/2 count=" + total);
             for (String rel : assets) {
@@ -1038,6 +1044,7 @@ public class ThemeDownloader {
             still.removeAll(skipped404);
             if (!still.isEmpty()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("folder", entry.folder);
@@ -1045,6 +1052,7 @@ public class ThemeDownloader {
                     d.put("sample", still.toString());
                     dbgLog("ThemeDownloader.downloadTheme", "incomplete", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 throw new Exception("Download incomplete: missing " + still);
             }
@@ -1097,6 +1105,7 @@ public class ThemeDownloader {
             int done = 0;
             Set<String> skipped404 = new HashSet<String>();
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("installFolder", installFolder);
@@ -1105,6 +1114,7 @@ public class ThemeDownloader {
                 d.put("themesRoot", ThemeManager.themesRoot());
                 dbgLog("ThemeDownloader.downloadThemeVariant", "begin", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             dlLog("variant asset pass count=" + galleryAssets.size() + " catalog=" + catalogFolder);
 
@@ -1157,6 +1167,7 @@ public class ThemeDownloader {
             still.removeAll(skipped404);
             if (!still.isEmpty()) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("installFolder", installFolder);
@@ -1164,18 +1175,21 @@ public class ThemeDownloader {
                     d.put("sample", still.toString());
                     dbgLog("ThemeDownloader.downloadThemeVariant", "incomplete", "H2", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
                 throw new Exception("Variant download incomplete: missing " + still);
             }
             endSession(true, installFolder);
             ThemeManager.scheduleThemeLibrarySync(null, true);
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 org.json.JSONObject d = new org.json.JSONObject();
                 d.put("installFolder", installFolder);
                 d.put("themesRoot", ThemeManager.themesRoot());
                 dbgLog("ThemeDownloader.downloadThemeVariant", "ok", "H1", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
         } catch (Exception e) {
             dlLogError("downloadThemeVariant", e);
@@ -1485,12 +1499,14 @@ public class ThemeDownloader {
         }
         dlLogError("httpGet exhausted " + urlStr, last);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("url", urlStr);
             d.put("error", last != null ? last.getMessage() : "null");
             dbgLog("ThemeDownloader.httpGet", "exhausted", "H1", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         throw last != null ? last : new Exception("HTTP GET failed");
     }

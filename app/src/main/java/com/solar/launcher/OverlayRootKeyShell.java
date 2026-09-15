@@ -39,6 +39,7 @@ final class OverlayRootKeyShell {
                 stdin.flush();
                 lastForwardAt = System.currentTimeMillis();
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     JSONObject d = new JSONObject();
                     d.put("keyCode", keyCode);
@@ -46,6 +47,7 @@ final class OverlayRootKeyShell {
                     DebugAf054eLog.logStandalone("OverlayRootKeyShell.forward",
                             "tier-2 root forward", "H6,H7", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             } catch (Exception e) {
                 resetShellLocked();

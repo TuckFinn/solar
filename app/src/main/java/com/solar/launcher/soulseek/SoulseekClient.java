@@ -415,11 +415,13 @@ public final class SoulseekClient extends Thread {
             && now - lastShareAnnounceMs < SHARE_ANNOUNCE_MIN_INTERVAL_MS
             && dirs == lastAnnouncedDirs && files == lastAnnouncedFiles) {
       // #region agent log
+      if (com.solar.launcher.debug.DebugGate.ON) {
       try {
         agentLog("SoulseekClient.refreshShareAnnouncement", "debounced", "H1",
             new JSONObject().put("dirs", dirs).put("files", files)
                 .put("ageMs", now - lastShareAnnounceMs));
       } catch (Exception ignored) {}
+      }
       // #endregion
       return;
     }
@@ -470,12 +472,14 @@ public final class SoulseekClient extends Thread {
     } catch (Exception e) {
       debugLog("share announce fail: " + e);
       // #region agent log
+      if (com.solar.launcher.debug.DebugGate.ON) {
       try {
         agentLog("SoulseekClient.runShareAnnouncementOnce", "fail", "H1",
             new JSONObject().put("err", e.getClass().getSimpleName())
                 .put("msg", e.getMessage() != null ? e.getMessage() : "")
                 .put("running", running.get()));
       } catch (Exception ignored) {}
+      }
       // #endregion
       if (isTransientConnectError(e)) {
         synchronized (serverLock) {
@@ -502,10 +506,12 @@ public final class SoulseekClient extends Thread {
         SoulseekWire.packSharedFolderCounts(dirs, files));
     debugLog("share announce dirs=" + dirs + " files=" + files);
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.runShareAnnouncementOnce", "announced", "H1",
           new JSONObject().put("dirs", dirs).put("files", files));
     } catch (Exception ignored) {}
+    }
     // #endregion
   }
 
@@ -762,11 +768,13 @@ public final class SoulseekClient extends Thread {
   public void warmConnectionAsync() {
     if (!running.get()) return;
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.warmConnectionAsync", "start", "H1",
           new JSONObject().put("running", running.get()).put("loggedIn", loggedIn)
               .put("listenPort", listenPort));
     } catch (Exception ignored) {}
+    }
     // #endregion
     new Thread(new Runnable() {
       @Override
@@ -774,18 +782,22 @@ public final class SoulseekClient extends Thread {
         try {
           ensureConnected();
           // #region agent log
+          if (com.solar.launcher.debug.DebugGate.ON) {
           try {
             agentLog("SoulseekClient.warmConnectionAsync", "ok", "H1",
                 new JSONObject().put("loggedIn", loggedIn).put("listenPort", listenPort)
                     .put("nat", lastNatpmp != null ? lastNatpmp.status : "null"));
           } catch (Exception ignored) {}
+          }
           // #endregion
         } catch (Exception e) {
           // #region agent log
+          if (com.solar.launcher.debug.DebugGate.ON) {
           try {
             agentLog("SoulseekClient.warmConnectionAsync", "fail", "H1",
                 new JSONObject().put("err", formatError(e)));
           } catch (Exception ignored) {}
+          }
           // #endregion
         }
       }
@@ -867,11 +879,13 @@ public final class SoulseekClient extends Thread {
     if (searchCancelled) return;
     if (listener != null) listener.onSearchFinished(activeSearchToken, pendingResults.size());
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.search", "search finished", "H3",
           new JSONObject().put("token", activeSearchToken).put("results", pendingResults.size())
               .put("q", originalSearchQuery));
     } catch (Exception ignored) {}
+    }
     // #endregion
   }
 
@@ -886,10 +900,12 @@ public final class SoulseekClient extends Thread {
     String msg = formatError(err);
     debugLog("search fail: " + err.getClass().getSimpleName() + " " + msg);
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.search", "search fail", "H2",
           new JSONObject().put("err", err.getClass().getSimpleName()).put("msg", msg));
     } catch (Exception ignored) {}
+    }
     // #endregion
     if (msg.startsWith("Login rejected:")) {
       notifyLoginFailed(msg.substring("Login rejected:".length()).trim());
@@ -992,11 +1008,13 @@ public final class SoulseekClient extends Thread {
         }
         debugLog("server read error: " + e);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
           agentLog("SoulseekClient.run", "server read error", "H2",
               new JSONObject().put("err", e.getClass().getSimpleName())
                   .put("msg", formatError(e)).put("running", running.get()));
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (running.get()) notifyError(formatError(e));
         sleepQuiet(500);
@@ -1041,10 +1059,12 @@ public final class SoulseekClient extends Thread {
     closeQuietly(distribSocket);
     distribSocket = null;
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.invalidateServerSessionLocked", "session cleared", "H2",
           new JSONObject().put("reason", reason != null ? reason : ""));
     } catch (Exception ignored) {}
+    }
     // #endregion
   }
 
@@ -1075,11 +1095,13 @@ public final class SoulseekClient extends Thread {
     SoulseekNatpmp.Result nat = mapListenPortWithRetry();
     lastNatpmp = nat;
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.connectAndLoginLocked", "nat mapped", "H5",
           new JSONObject().put("listen", listenPort).put("mapped", nat.mapped())
               .put("status", nat.status != null ? nat.status : ""));
     } catch (Exception ignored) {}
+    }
     // #endregion
     int reported = nat.publicPort > 0 ? nat.publicPort : listenPort;
     reportedListenPort = reported;
@@ -1110,12 +1132,14 @@ public final class SoulseekClient extends Thread {
     notifyConnected();
     ReachPeerConnectivity.onServerLoginOk(appContext, nat);
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.connectAndLoginLocked", "login ok", "H2",
           new JSONObject().put("listen", listenPort).put("reported", reportedListenPort)
               .put("nat", lastNatpmp != null ? lastNatpmp.status : "null")
               .put("hasParent", hasDistribParent));
     } catch (Exception ignored) {}
+    }
     // #endregion
     if (running.get() && sharePolicy.announceShares()) refreshShareAnnouncement();
     announceUploadSpeedLocked();
@@ -1192,11 +1216,13 @@ public final class SoulseekClient extends Thread {
         if (appContext != null) {
           SoulseekNatpmp.Result fin = lastNatpmp;
           // #region agent log
+          if (com.solar.launcher.debug.DebugGate.ON) {
           try {
             agentLog("SoulseekClient.startNatpmpRetryUntilMapped", "exhausted", "H5",
                 new JSONObject().put("mapped", fin != null && fin.mapped())
                     .put("status", fin != null ? fin.status : "null"));
           } catch (Exception ignored) {}
+          }
           // #endregion
           if (fin == null || !fin.mapped()) {
             ReachPeerConnectivity.onNatRetriesExhausted(appContext, fin);
@@ -1285,11 +1311,13 @@ public final class SoulseekClient extends Thread {
     phaseLog("dl1", true, "FileSearch token=" + token);
     notifyStatus("Searching: " + activeSearchQuery);
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.sendSearchLocked", "search sent", "H3",
           new JSONObject().put("token", token).put("q", activeSearchQuery)
               .put("loggedIn", loggedIn).put("hasParent", hasDistribParent));
     } catch (Exception ignored) {}
+    }
     // #endregion
   }
 
@@ -2119,11 +2147,13 @@ public final class SoulseekClient extends Thread {
           op.run(peer);
         } catch (Exception e) {
           // #region agent log
+          if (com.solar.launcher.debug.DebugGate.ON) {
           try {
             agentLog("SoulseekClient.runPeerOperation", "peer op failed", "H3",
                 new JSONObject().put("peerUser", peerUser)
                     .put("err", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
           } catch (Exception ignored) {}
+          }
           // #endregion
           if (op != null) op.onError(e.getMessage() != null ? e.getMessage() : "Peer failed");
         } finally {
@@ -2520,10 +2550,12 @@ public final class SoulseekClient extends Thread {
 
   private void handleIncomingPeer(Socket peer) {
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.handleIncomingPeer", "inbound peer connect", "H1",
           new JSONObject().put("remote", String.valueOf(peer.getRemoteSocketAddress())));
     } catch (Exception ignored) {}
+    }
     // #endregion
     try {
       SoulseekWire.PeerInitFrame init = SoulseekWire.readPeerInitFrame(peer.getInputStream());
@@ -2570,20 +2602,24 @@ public final class SoulseekClient extends Thread {
         SoulseekWire.PeerFrame frame = SoulseekWire.readPeerFrame(in);
         if (frame.code == SoulseekWire.PEER_SHARES_REQUEST) {
           // #region agent log
+          if (com.solar.launcher.debug.DebugGate.ON) {
           try {
             agentLog("SoulseekClient.handlePeerSocket", "PEER_SHARES_REQUEST", "H1-H2",
                 new JSONObject().put("peerUser", peerUser));
           } catch (Exception ignored) {}
+          }
           // #endregion
           replySharesList(peer);
         } else if (frame.code == SoulseekWire.PEER_FOLDER_CONTENTS_REQUEST) {
           replyFolderContents(peer, frame.body);
         } else if (frame.code == SoulseekWire.PEER_USER_INFO_REQUEST) {
           // #region agent log
+          if (com.solar.launcher.debug.DebugGate.ON) {
           try {
             agentLog("SoulseekClient.handlePeerSocket", "PEER_USER_INFO_REQUEST", "H1-H4",
                 new JSONObject().put("peerUser", peerUser));
           } catch (Exception ignored) {}
+          }
           // #endregion
           replyUserInfo(peer);
         } else if (frame.code == SoulseekWire.PEER_QUEUE_UPLOAD) {
@@ -2666,12 +2702,14 @@ public final class SoulseekClient extends Thread {
     byte[] body = SoulseekWire.packUserInfoResponse(buildOutboundUserBio(), pic,
             slots, queued, MAX_UPLOAD_SLOTS, permitted);
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.replyUserInfo", "user info reply", "H4",
           new JSONObject().put("bioLen", userBio != null ? userBio.length() : 0)
               .put("picLen", pic != null ? pic.length : 0)
               .put("bodyLen", body.length));
     } catch (Exception ignored) {}
+    }
     // #endregion
     peer.getOutputStream().write(SoulseekWire.peerMessage(SoulseekWire.PEER_USER_INFO_RESPONSE, body));
     peer.getOutputStream().flush();
@@ -2683,22 +2721,26 @@ public final class SoulseekClient extends Thread {
     int files = shareIndex.fileCount();
     int dirs = shareIndex.dirCount();
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.replySharesList", "shares request", "H4",
           new JSONObject().put("serve", serve).put("announce", announce)
               .put("files", files).put("dirs", dirs));
     } catch (Exception ignored) {}
+    }
     // #endregion
     byte[] raw = serve
         ? shareIndex.buildShareListUncompressed()
         : SoulseekShareIndex.empty().buildShareListUncompressed();
     byte[] body = SoulseekShareIndex.zlibCompress(raw);
     // #region agent log
+    if (com.solar.launcher.debug.DebugGate.ON) {
     try {
       agentLog("SoulseekClient.replySharesList", "shares reply sent", "H2-H3",
           new JSONObject().put("announce", announce).put("files", files).put("dirs", dirs)
               .put("rawLen", raw.length).put("zlibLen", body.length));
     } catch (Exception ignored) {}
+    }
     // #endregion
     peer.getOutputStream().write(SoulseekWire.peerMessage(SoulseekWire.PEER_SHARES_REPLY, body));
     peer.getOutputStream().flush();

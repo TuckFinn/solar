@@ -293,6 +293,7 @@ public final class SolarHttp {
     private static Response execute(Request req) throws IOException {
         OkHttpClient base = TlsHelper.client();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             JSONObject d = new JSONObject();
             d.put("url", req.url().toString());
@@ -300,6 +301,7 @@ public final class SolarHttp {
             d.put("connectionSpecs", "RESTRICTED_TLS-only via TlsHelper");
             AgentDebugLog.log("SolarHttp.execute", "A", "OkHttp execute", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         Call call = base.newCall(req);
         try {
@@ -312,6 +314,7 @@ public final class SolarHttp {
             return resp;
         } catch (IOException e) {
             // #region agent log
+            if (com.solar.launcher.debug.DebugGate.ON) {
             try {
                 JSONObject d = new JSONObject();
                 d.put("url", req.url().toString());
@@ -319,6 +322,7 @@ public final class SolarHttp {
                 d.put("error", e.getMessage() != null ? e.getMessage() : e.getClass().getName());
                 AgentDebugLog.log("SolarHttp.execute", "A", "OkHttp execute failed", d);
             } catch (Exception ignored) {}
+            }
             // #endregion
             throw e;
         }

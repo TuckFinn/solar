@@ -25,6 +25,7 @@ public final class OverlayKeyReceiver extends BroadcastReceiver {
         if (keyCode == 0) return;
         final int action = intent.getIntExtra(OverlayTriggers.EXTRA_KEY_ACTION, KeyEvent.ACTION_DOWN);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("keyCode", keyCode);
@@ -32,6 +33,7 @@ public final class OverlayKeyReceiver extends BroadcastReceiver {
             d.put("prop", readProp());
             DebugOverlayKeyLog.log("OverlayKeyReceiver.onReceive", "xposed forward", "H2", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         MAIN.post(new Runnable() {
             @Override

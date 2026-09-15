@@ -383,6 +383,7 @@ public final class FlowView extends View {
             handoffCenterRevealAlpha = 0f;
         }
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("centerAlphaNow", handoffCenterRevealAlpha);
@@ -390,6 +391,7 @@ public final class FlowView extends View {
             com.solar.launcher.Debug898913Log.log("FlowView.prepareHandoffFlyerOnly",
                     "center alpha suppressed for morph", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -410,6 +412,7 @@ public final class FlowView extends View {
         titleAlpha = 0f;
         titleFadeFrom = -1;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("centerAlphaNow", handoffCenterRevealAlpha);
@@ -417,6 +420,7 @@ public final class FlowView extends View {
             com.solar.launcher.Debug898913Log.log("FlowView.prepareHandoffHidden",
                     "all reveal alphas zeroed (unmeasured prep)", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -528,12 +532,14 @@ public final class FlowView extends View {
         // Keep any handoff pin — crossfade seeds center art from NP; cleared on landing.
         invalidate();
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("centerAlpha", handoffCenterRevealAlpha);
             com.solar.launcher.Debug898913Log.log("FlowView.resetHandoffRevealForDisplay",
                     "all reveal alphas reset for crossfade", "H-C", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 

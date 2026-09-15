@@ -56,6 +56,7 @@ public final class SolarImeFullscreenOverlay {
         // Touch attach lives on A5 real input view (SolarInputMethodService) — WM overlay
         // is Y1/Y2 and has no touchscreen; centerPress alone would skip InputConnection commit.
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("title", title);
@@ -63,6 +64,7 @@ public final class SolarImeFullscreenOverlay {
             d.put("trayUi", SolarImeRouteArbiter.isTrayUiVisible());
             DebugImeLog.log(context, "SolarImeFullscreenOverlay.show", "wm addView", "H4", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
@@ -70,6 +72,7 @@ public final class SolarImeFullscreenOverlay {
     public void dismiss() {
         boolean hadShell = shellRoot != null;
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("hadShell", hadShell);
@@ -77,17 +80,20 @@ public final class SolarImeFullscreenOverlay {
             d.put("trayUiBefore", SolarImeRouteArbiter.isTrayUiVisible());
             DebugImeLog.log(context, "SolarImeFullscreenOverlay.dismiss", "enter", "H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
         if (windowManager != null && shellRoot != null) {
             try {
                 windowManager.removeView(shellRoot);
             } catch (Exception e) {
                 // #region agent log
+                if (com.solar.launcher.debug.DebugGate.ON) {
                 try {
                     org.json.JSONObject d = new org.json.JSONObject();
                     d.put("err", e.getClass().getSimpleName());
                     DebugImeLog.log(context, "SolarImeFullscreenOverlay.dismiss", "removeView failed", "H5", d);
                 } catch (Exception ignored) {}
+                }
                 // #endregion
             }
         }
@@ -96,11 +102,13 @@ public final class SolarImeFullscreenOverlay {
         windowManager = null;
         SolarImeRouteArbiter.setTrayUiVisible(false);
         // #region agent log
+        if (com.solar.launcher.debug.DebugGate.ON) {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("trayUiAfter", SolarImeRouteArbiter.isTrayUiVisible());
             DebugImeLog.log(context, "SolarImeFullscreenOverlay.dismiss", "exit", "H5", d);
         } catch (Exception ignored) {}
+        }
         // #endregion
     }
 
