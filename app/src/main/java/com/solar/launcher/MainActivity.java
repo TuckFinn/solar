@@ -29533,17 +29533,22 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             globalPpLongFlowHandled = false;
             clockHandler.removeCallbacks(globalPpFlowHoldRunnable);
             clockHandler.removeCallbacks(globalPpHeartHoldRunnable);
+            // 2026-09-14 — Heart hold for Navidrome streams. Posted BEFORE the Flow hold so it
+            // runs first at the same delay and Flow then sees the hold as handled; on Home the
+            // Flow hold otherwise won the race and only showed "Nothing to show".
+            PlayQueue.QueueItem heartCur = playback.currentItem();
+            boolean heartArmed = heartCur != null && heartCur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM;
+            if (heartArmed) {
+                clockHandler.postDelayed(globalPpHeartHoldRunnable, FLOW_LAUNCH_HOLD_MS);
+            }
             if (isFlowEnabled() && currentScreenState != STATE_FLOW) {
                 clockHandler.postDelayed(globalPpFlowHoldRunnable, FLOW_LAUNCH_HOLD_MS);
-                // 2026-07-18 — NP: keep holding Play/Pause for Flow tip while finger is down.
-                showNpLiveHoldHintForFlow();
-                // 2026-07-18 — Throbber from hold start until Flow paints (or abort).
-                armFlowHoldThrobber();
-            }
-            // 2026-09-14 — Heart hold for Navidrome streams (Flow never claims those).
-            PlayQueue.QueueItem heartCur = playback.currentItem();
-            if (heartCur != null && heartCur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM) {
-                clockHandler.postDelayed(globalPpHeartHoldRunnable, FLOW_LAUNCH_HOLD_MS);
+                if (!heartArmed) {
+                    // 2026-07-18 — NP: keep holding Play/Pause for Flow tip while finger is down.
+                    showNpLiveHoldHintForFlow();
+                    // 2026-07-18 — Throbber from hold start until Flow paints (or abort).
+                    armFlowHoldThrobber();
+                }
             }
             // #region agent log
             if (com.solar.launcher.debug.DebugGate.ON) {
