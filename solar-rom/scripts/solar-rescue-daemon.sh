@@ -54,14 +54,22 @@ log -p i -t "$PID_TAG" "starting watchdog pid=$$"
 # 2026-09-14 — Process scans: one grep -l over /proc/*/cmdline instead of tr|grep per
 # process (the old loops forked ~2× the process count, every pass, in four places).
 # grep -l matches across the NUL-separated argv. pids_matching prints one pid per line.
+#
+# 2026-09-15 — Callers MUST bracket the first letter of every alternative, e.g.
+# '[C]ompanionRootInputDaemon'. grep carries the pattern in its own argv, so an
+# unbracketed pattern makes grep find *itself* in /proc/<its pid>/cmdline: the
+# daemon then counted one phantom extra, logged "daemon_count=2 pruning" on every
+# pass and killed the live daemon, which respawned — a self-inflicted kill/respawn
+# loop. Bracketing leaves the regex matching the real name while grep's own argv
+# (which contains the brackets) does not match.
 pids_matching() {
     grep -lE "$1" /proc/[0-9]*/cmdline 2>/dev/null | cut -d/ -f3
 }
 daemon_running() {
-    pids_matching 'CompanionRootInputDaemon|GlobalOverlayTriggerMain' | grep -q .
+    pids_matching '[C]ompanionRootInputDaemon|[G]lobalOverlayTriggerMain' | grep -q .
 }
 hud_watch_running() {
-    pids_matching 'solar-rescue-hud-watch|SolarRescueHudMain' | grep -q .
+    pids_matching '[s]olar-rescue-hud-watch|[S]olarRescueHudMain' | grep -q .
 }
 prune_extra() {
     _keep=""
@@ -74,10 +82,10 @@ prune_extra() {
     done
 }
 prune_extra_daemons() {
-    prune_extra 'CompanionRootInputDaemon|GlobalOverlayTriggerMain'
+    prune_extra '[C]ompanionRootInputDaemon|[G]lobalOverlayTriggerMain'
 }
 prune_extra_hud_watches() {
-    prune_extra 'solar-rescue-hud-watch'
+    prune_extra '[s]olar-rescue-hud-watch'
 }
 # 2026-09-14 — Never spawn helpers into an already-thrashing system (see platform daemon).
 load_ok() {
@@ -126,7 +134,7 @@ while true; do
     if ! daemon_running && load_ok; then
         start_daemon
     fi
-    _dc=$(pids_matching 'CompanionRootInputDaemon|GlobalOverlayTriggerMain' | grep -c .)
+    _dc=$(pids_matching '[C]ompanionRootInputDaemon|[G]lobalOverlayTriggerMain' | grep -c .)
     if [ "$_dc" -gt 1 ]; then
         log -p w -t "$PID_TAG" "daemon_count=$_dc pruning"
     fi
