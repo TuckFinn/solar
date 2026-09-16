@@ -56259,15 +56259,26 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     // #endregion
                     return;
                 }
-                if (!playing && growth <= 0) {
+                // 2026-09-16 — No new bytes since the last prepare: there is nothing
+                // to extend, whether or not a track is playing. Was: !playing && growth
+                // <= 0, which let the last REACH_GROWING_EXTEND_MS of a finished file
+                // fall through. Re-preparing there tears down a working MediaPlayer for
+                // a file it has already read to the end: a burst of error (-38), a
+                // duration of 1,375,098,440 ms, and playback jumping 20 tracks down the
+                // queue six seconds before the song was due to end.
+                // Reversal: restore the !playing conjunct.
+                if (growth <= 0) {
                     // #region agent log
                     if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
                         org.json.JSONObject d = new org.json.JSONObject();
                         d.put("force", force);
                         d.put("growth", growth);
+                        d.put("playing", playing);
+                        d.put("positionMs", positionMs);
+                        d.put("durationMs", durationMs);
                         DebugAgentLog.log(this, "MainActivity.maybeExtendReachGrowingPlayback",
-                                "early return: not playing, no growth", "H-C", d);
+                                "early return: no growth since last prepare", "H-C", d);
                     } catch (Exception ignored) {}
                     }
                     // #endregion
