@@ -33879,13 +33879,19 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             ext = probe.fileExtension();
         } catch (Exception ignored) {}
         final ArrayList<DeezerBackgroundQueue.Job> jobs = new ArrayList<DeezerBackgroundQueue.Job>();
-        for (DeezerResult r : tracks) {
+        // Queue back to front. queueDeezerAfterCurrent always inserts at the
+        // play head, so adding in order leaves the list reversed -- playback
+        // then walks away from whatever the downloader is fetching and every
+        // track it reaches is a 0-byte placeholder. Downloading still has to
+        // go front to back, hence add(0, ...).
+        for (int i = tracks.size() - 1; i >= 0; i--) {
+            DeezerResult r = tracks.get(i);
             if (r == null) continue;
             try {
                 File dest = DeezerBackgroundQueue.reservePlaceholder(cacheDir, r, ext);
                 playback.queueDeezerAfterCurrent(dest, r.displayTitle(), r.id);
                 deezerQueueProgressByPath.put(dest.getAbsolutePath(), 0);
-                jobs.add(new DeezerBackgroundQueue.Job(r, dest));
+                jobs.add(0, new DeezerBackgroundQueue.Job(r, dest));
             } catch (Exception e) {
                 android.util.Log.w("SolarDeezer", "queue placeholder failed: " + r.displayTitle(), e);
             }
