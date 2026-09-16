@@ -57,6 +57,11 @@ public final class DiscoveryScreen {
     private DeezerSearch search;
     /** Bumped on every play, so a superseded queue-ahead stops resolving. */
     private volatile int queueGeneration;
+    /**
+     * What the last queue-ahead put in. Handed back on the next one so those
+     * tracks are dropped rather than left stacked below it.
+     */
+    private volatile java.util.Set<Long> queuedIds = new java.util.HashSet<Long>();
 
     public DiscoveryScreen(DeezerScreen.Host host, DeezerScreen deezer) {
         this.host = host;
@@ -251,9 +256,15 @@ public final class DiscoveryScreen {
                 }
                 if (out.isEmpty() || generation != queueGeneration) return;
                 final List<DeezerResult> queued = out;
+                final java.util.Set<Long> previous = queuedIds;
+                java.util.Set<Long> now = new java.util.HashSet<Long>();
+                for (DeezerResult r : queued) now.add(Long.valueOf(r.id));
+                queuedIds = now;
                 host.runOnUi(new Runnable() {
                     @Override public void run() {
-                        if (generation == queueGeneration) host.queueDeezerTracks(queued);
+                        if (generation == queueGeneration) {
+                            host.queueDeezerTracks(queued, previous);
+                        }
                     }
                 });
             }

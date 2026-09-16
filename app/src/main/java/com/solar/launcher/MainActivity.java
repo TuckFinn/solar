@@ -18241,7 +18241,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             playback.queueDeezerAfterCurrent(f, meta, trackId);
             persistPlaybackQueue();
         }
-        @Override public void queueDeezerTracks(java.util.List<DeezerResult> tracks) {
+        @Override public void queueDeezerTracks(java.util.List<DeezerResult> tracks,
+                java.util.Set<Long> replaceDeezerIds) {
+            dropQueuedDeezerBelowCurrent(replaceDeezerIds);
             startDeezerAlbumBackgroundQueue(tracks);
         }
         @Override public void replaceDeezerInQueue(File oldF, File newF, String meta) {
@@ -33863,6 +33865,35 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         deezerBatchTransferIndex = index;
         if (deezerScreen == null) deezerScreen = new DeezerScreen(deezerHost);
         deezerScreen.startTransfer(deezerBatchTransfer.get(index), deezerBatchTransferAction);
+    }
+
+    /**
+     * Drop tracks a previous Discovery playlist queued, below the play head.
+     *
+     * Nothing was ever removed from the queue, so each playlist stacked on the
+     * last: 81 items after a few, and once a window ran out playback carried on
+     * into stale entries, including duplicates of tracks just heard. Only ids
+     * the caller says it queued are touched, and only below the play head, so
+     * what is playing and anything queued by hand from Get Music both survive.
+     */
+    private void dropQueuedDeezerBelowCurrent(java.util.Set<Long> ids) {
+        if (ids == null || ids.isEmpty()) return;
+        PlayQueue q = playback.unifiedQueue();
+        if (q == null) return;
+        int removed = 0;
+        for (int i = q.size() - 1; i > q.index(); i--) {
+            PlayQueue.QueueItem it = q.items().get(i);
+            if (it != null && it.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                    && ids.contains(Long.valueOf(it.deezerTrackId))) {
+                playback.removeQueueItemAt(i);
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            persistPlaybackQueue();
+            android.util.Log.i("SolarDiscovery",
+                    "dropped " + removed + " track(s) from the previous playlist");
+        }
     }
 
     /** Queue every album track immediately; download sequentially in the background. */

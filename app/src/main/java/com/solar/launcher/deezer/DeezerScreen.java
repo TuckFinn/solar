@@ -77,8 +77,14 @@ public final class DeezerScreen {
         void changeToPlayer();
         void playDeezerPartial(File f, String meta, long trackId);
         void queueDeezerPartial(File f, String meta, long trackId);
-        /** Queue a run of tracks now, downloading them in the background. */
-        void queueDeezerTracks(java.util.List<DeezerResult> tracks);
+        /**
+         * Queue a run of tracks now, downloading them in the background, first
+         * dropping any track in {@code replaceDeezerIds} that sits below the
+         * play head -- so starting a playlist replaces the last one's tail
+         * instead of stacking behind it.
+         */
+        void queueDeezerTracks(java.util.List<DeezerResult> tracks,
+                java.util.Set<Long> replaceDeezerIds);
         void replaceDeezerInQueue(File oldF, File newF, String meta);
         void launchDeezerSearchFromSuggestion(String q, boolean openKeyboard);
         void launchReachSearchFromSuggestion(String q, boolean openKeyboard);
