@@ -203,6 +203,27 @@ public final class DiscoveryScreen {
         } else {
             renderPlaylists(container);
         }
+        focusFirstRow(container);
+    }
+
+    /**
+     * Give the first row focus after rebuilding the list.
+     *
+     * render() replaces every child, which destroys whatever had focus, and a
+     * list with nothing focused swallows the wheel: the centre key reaches
+     * MainActivity's global handler and there is no row for it to activate.
+     * Posting it runs after layout, when the view can actually take focus.
+     */
+    private void focusFirstRow(final LinearLayout container) {
+        if (container.getChildCount() == 0) return;
+        final View first = container.getChildAt(0);
+        first.post(new Runnable() {
+            @Override public void run() {
+                first.setFocusable(true);
+                first.setFocusableInTouchMode(true);
+                first.requestFocus();
+            }
+        });
     }
 
     private void renderPlaylists(LinearLayout container) {
