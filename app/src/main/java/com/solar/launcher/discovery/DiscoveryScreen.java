@@ -5,9 +5,12 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.solar.launcher.DebugAgentLog;
 import com.solar.launcher.R;
+import com.solar.launcher.deezer.DeezerClient;
 import com.solar.launcher.deezer.DeezerResult;
 import com.solar.launcher.deezer.DeezerScreen;
+import com.solar.launcher.deezer.DeezerSearch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +25,11 @@ import java.util.List;
  * fetching the same song through nookTunes' Subsonic endpoint took 28 to 77
  * because it cannot send a byte until the whole track has landed.
  *
- * Genre rows only, for now. A Deezer genre chart is Deezer end to end, so every
- * song carries an exact id and needs no searching; the country and seed rows
- * come from Apple and Spotify and have to be matched by artist and title first.
+ * Genre and country rows. A Deezer genre chart is Deezer end to end, so every
+ * song carries an exact id; a country chart comes from Apple, so those are
+ * matched by artist and title through {@link DiscoveryMatch}, which refuses a
+ * doubtful match rather than playing the wrong song. Seed-artist rows are not
+ * listed yet.
  */
 public final class DiscoveryScreen {
 
@@ -43,6 +48,13 @@ public final class DiscoveryScreen {
     private String error;
     /** The last song started from here, so a heart knows what to keep. */
     private DiscoveryClient.Track lastPlayed;
+    /**
+     * The Deezer id it actually played under. A country row has none of its
+     * own -- it was resolved by search -- so the heart has to compare against
+     * what was played, not against what the row carried.
+     */
+    private long lastPlayedDeezerId;
+    private DeezerSearch search;
 
     public DiscoveryScreen(DeezerScreen.Host host, DeezerScreen deezer) {
         this.host = host;
@@ -92,7 +104,9 @@ public final class DiscoveryScreen {
                 String err = null;
                 try {
                     for (DiscoveryClient.Playlist p : DiscoveryClient.playlists(baseUrl())) {
-                        if (p.resolvesExactly()) got.add(p);
+                        // Genres and countries. Seed-artist rows are a third
+                        // kind and are not listed here yet.
+                        if ("chart".equals(p.kind)) got.add(p);
                     }
                 } catch (Exception e) {
                     err = String.valueOf(e.getMessage());
@@ -141,17 +155,53 @@ public final class DiscoveryScreen {
         });
     }
 
-    private void play(DiscoveryClient.Track t) {
-        if (t.deezerId <= 0) {
-            // Only reachable if a genre chart ever serves a row without an id.
-            Toast.makeText(host.context(), host.string(R.string.discovery_no_source),
-                    Toast.LENGTH_SHORT).show();
+    private DeezerSearch search() {
+        if (search == null) search = new DeezerSearch(new DeezerClient(host.prefs()));
+        return search;
+    }
+
+    private void play(final DiscoveryClient.Track t) {
+        if (!host.requireInternet(R.string.deezer_wifi_required)) return;
+        if (t.deezerId > 0) {
+            start(t, new DeezerResult(t.deezerId, t.title, t.artist, t.album,
+                    0L, t.durationSec, "", t.cover));
             return;
         }
-        if (!host.requireInternet(R.string.deezer_wifi_required)) return;
+        // A country row knows only who and what, so find it first. Searching
+        // blocks, and a wrong hit is worse than none, so this runs off the UI
+        // thread and DiscoveryMatch refuses anything it cannot vouch for.
+        Toast.makeText(host.context(), host.string(R.string.discovery_finding, t.title),
+                Toast.LENGTH_SHORT).show();
+        host.runOnBg(new Runnable() {
+            @Override public void run() {
+                DeezerResult hit = null;
+                try {
+                    hit = DiscoveryMatch.best(search().searchTracks(t.searchQuery()),
+                            t.artist, t.title);
+                } catch (Exception e) {
+                    DebugAgentLog.log(host.context(), "DiscoveryScreen.play",
+                            "search failed", "H-DISC", null);
+                }
+                final DeezerResult found = hit;
+                host.runOnUi(new Runnable() {
+                    @Override public void run() {
+                        if (found == null) {
+                            Toast.makeText(host.context(),
+                                    host.string(R.string.discovery_not_found, t.displayTitle()),
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        start(t, found);
+                    }
+                });
+            }
+        });
+    }
+
+    private void start(DiscoveryClient.Track t, DeezerResult r) {
         lastPlayed = t;
-        deezer.startTransfer(new DeezerResult(t.deezerId, t.title, t.artist, t.album,
-                0L, t.durationSec, "", t.cover), DeezerScreen.ACTION_PLAY);
+        lastPlayedDeezerId = r.id;
+        deezer.startTransfer(r, DeezerScreen.ACTION_PLAY);
     }
 
     /**
@@ -161,8 +211,10 @@ public final class DiscoveryScreen {
      * song once the listener has moved on to something Discovery did not pick.
      */
     public boolean heartIfDeezerTrack(long deezerTrackId) {
-        DiscoveryClient.Track t = lastPlayed;
-        if (t == null || deezerTrackId <= 0 || t.deezerId != deezerTrackId) return false;
+        if (lastPlayed == null || deezerTrackId <= 0
+                || lastPlayedDeezerId != deezerTrackId) {
+            return false;
+        }
         return heartLastPlayed();
     }
 
