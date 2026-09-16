@@ -61,36 +61,6 @@ public final class UsbHostSessionPolicy {
      * Call from {@link BootReceiver} and {@link SolarApplication} once per boot.
      * Records whether PC host was already connected and arms settle timer if needed.
      */
-    /**
-     * True only in the launcher's own process, not {@code :overlay} or
-     * {@code :watchdog}.
-     *
-     * SOLAR_SETTINGS is MODE_PRIVATE, so every process keeps its own cached
-     * copy and a commit rewrites the whole file from it. A helper process that
-     * loaded the file an hour ago and commits now silently reverts everything
-     * written since -- which is how externally provisioned settings kept
-     * vanishing, taking home_menu_order back to an older value with them
-     * (2026-09-16). Reads were already protected by the sysprop mirror above;
-     * writes never were.
-     */
-    static boolean isMainProcess(Context context) {
-        try {
-            int pid = android.os.Process.myPid();
-            android.app.ActivityManager am = (android.app.ActivityManager)
-                    context.getSystemService(Context.ACTIVITY_SERVICE);
-            if (am == null || am.getRunningAppProcesses() == null) return true;
-            for (android.app.ActivityManager.RunningAppProcessInfo info
-                    : am.getRunningAppProcesses()) {
-                if (info.pid == pid) {
-                    return info.processName != null
-                            && info.processName.equals(context.getPackageName());
-                }
-            }
-        } catch (Exception ignored) {}
-        // Unknown: behave as before rather than silently skipping the record.
-        return true;
-    }
-
     public static void onBootCompleted(Context context) {
         if (context == null) return;
         final Context app = context.getApplicationContext();
@@ -98,7 +68,7 @@ public final class UsbHostSessionPolicy {
         // boot record is written three times -- and each write is a whole-file
         // rewrite from that process's stale map. The sysprops set below are how
         // :overlay sees this state, so it loses nothing by not writing.
-        if (!isMainProcess(app)) return;
+        if (!SolarProcess.isMain(app)) return;
         // 2026-07-16 — Drop sticky dismiss/evaluated from prior process so a PC cable
         // can show USB Connection after Solar restarts (ADB left session flags stuck).
         clearStaleSessionForNewProcess(app);

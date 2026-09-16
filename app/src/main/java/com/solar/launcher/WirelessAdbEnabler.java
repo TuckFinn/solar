@@ -14,6 +14,11 @@ public final class WirelessAdbEnabler {
 
     public static void ensureWirelessAdb(final Context context) {
         if (context == null) return;
+        // Enabling wireless adb is a device-level action, so doing it once from
+        // the launcher process is right -- and it writes the randomised adb id
+        // back to SOLAR_SETTINGS, which a helper process must not do: its
+        // commit would rewrite the whole file from a stale map.
+        if (!SolarProcess.isMain(context)) return;
         final SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (!prefs.getBoolean("settings.debug.wireless_adb_enabled", true)) return;
         new Thread(new Runnable() {
