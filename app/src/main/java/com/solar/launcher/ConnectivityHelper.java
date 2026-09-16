@@ -234,6 +234,15 @@ public final class ConnectivityHelper {
             return (internetAvailable || localNetworkAvailable)
                     && prefs != null && com.solar.launcher.navidrome.NavidromePrefs.isConfigured(prefs);
         }
+        // Discovery lists come from nookTunes (the same server as Navidrome) and
+        // the songs come from Deezer, so it needs a reachable network, that
+        // server configured, and a usable Deezer -- any one missing and the row
+        // would only lead to an error.
+        if (HomeMenuConfig.ID_DISCOVERY.equals(id)) {
+            return (internetAvailable || localNetworkAvailable) && prefs != null
+                    && com.solar.launcher.navidrome.NavidromePrefs.isConfigured(prefs)
+                    && com.solar.launcher.deezer.DeezerAccount.hasUsableDeezer(prefs);
+        }
         if (itemNeedsInternetForDiscovery(id)) return internetAvailable;
         if (itemNeedsLocalNetwork(id)) return localNetworkAvailable;
         if (HomeMenuConfig.ID_PODCASTS.equals(id)) return internetAvailable || podcastsSaved;

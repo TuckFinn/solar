@@ -43,6 +43,13 @@ public final class HomeMenuConfig {
     public static final String ID_DEEZER = "deezer";
     /** 2026-09-14 — Navidrome as a home shortcut (was reachable only inside the Music hub). */
     public static final String ID_NAVIDROME = "navidrome";
+    /**
+     * 2026-09-16 — nookTunes Discovery in its own right. Reached Navidrome's
+     * playlist screen before, which meant every song had to arrive whole from
+     * nookTunes before it could start; this plays through the Deezer path that
+     * starts from a file still downloading.
+     */
+    public static final String ID_DISCOVERY = "discovery";
     /** @deprecated migrated to {@link #ID_THEMES} */
     public static final String ID_GET_THEMES = "get_themes";
     public static final String ID_THEMES = "themes";
@@ -65,7 +72,8 @@ public final class HomeMenuConfig {
      * Was: pc_upload, podcasts, soulseek, themes, apps. Reversal: restore that list.
      */
     private static final List<String> SOLAR_HOME_EXTRAS = Arrays.asList(
-            ID_PC_UPLOAD, ID_PODCASTS, ID_SOULSEEK, ID_NAVIDROME, ID_THEMES, ID_APPS);
+            ID_PC_UPLOAD, ID_PODCASTS, ID_SOULSEEK, ID_NAVIDROME, ID_DISCOVERY,
+            ID_THEMES, ID_APPS);
 
     /**
      * Default enabled home shortcuts (coming-soon opt-in items omitted).
@@ -283,6 +291,7 @@ public final class HomeMenuConfig {
             new Entry(ID_AUDIOBOOKS, R.string.home_menu_audiobooks, "audiobooks", R.drawable.music_list, null, false),
             new Entry(ID_APPS, R.string.home_menu_apps, null, R.drawable.setting_circle, "Apps", false),
             new Entry(ID_NAVIDROME, R.string.home_menu_navidrome, null, R.drawable.music_list, "Navidrome", false),
+            new Entry(ID_DISCOVERY, R.string.home_menu_discovery, null, R.drawable.music_list, "Discovery", false),
     };
 
     /**
@@ -292,7 +301,8 @@ public final class HomeMenuConfig {
     public static String y1HomeIconFallbackKey(String id) {
         if (id == null) return null;
         id = migrateId(id);
-        if (ID_SOULSEEK.equals(id) || ID_YOUTUBE_AUDIO.equals(id) || ID_NAVIDROME.equals(id)) return "music";
+        if (ID_SOULSEEK.equals(id) || ID_YOUTUBE_AUDIO.equals(id) || ID_NAVIDROME.equals(id)
+                || ID_DISCOVERY.equals(id)) return "music";
         if (ID_PODCASTS.equals(id) || ID_AUDIOBOOKS.equals(id)) return "audiobooks";
         if (ID_PHOTOS.equals(id)) return "photos";
         return null;

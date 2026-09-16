@@ -263,6 +263,8 @@ public class MainActivity extends Activity {
     static final int STATE_STEM_PLAYER = 33;
     /** 2026-07-19 — 3-deck Mix (full tracks; replaces NP while active). */
     static final int STATE_MIX = 34;
+    /** 2026-09-16 — nookTunes Discovery, played through the Deezer growing-file path. */
+    static final int STATE_DISCOVERY = 35;
     private static final int KEYBOARD_WIFI = 0;
     private static final int KEYBOARD_SOULSEEK_USER = 1;
     private static final int KEYBOARD_SOULSEEK_PASS = 2;
@@ -1071,6 +1073,7 @@ public class MainActivity extends Activity {
             new java.util.HashMap<String, Integer>();
     private int deezerReturnScreen = STATE_MENU;
     private DeezerScreen deezerScreen;
+    private com.solar.launcher.discovery.DiscoveryScreen discoveryScreen;
     private String pendingSearchPickerQuery;
     private boolean pendingSearchPickerOpenKeyboard;
     private boolean soulseekMessagingEnabled = true;
@@ -5140,6 +5143,10 @@ public class MainActivity extends Activity {
             SolarGeoRegion.onInternetAvailable(this);
         }
         deezerScreen = new DeezerScreen(deezerHost);
+        // Discovery reuses deezerHost as-is: it needs exactly the same chrome,
+        // and it plays by handing deezerScreen a result.
+        discoveryScreen = new com.solar.launcher.discovery.DiscoveryScreen(
+                deezerHost, deezerScreen);
         if (deezerActive() && DeezerAccount.hasArl(prefs)) {
             new Thread(new Runnable() {
                 @Override public void run() {
@@ -6140,7 +6147,8 @@ public class MainActivity extends Activity {
         boolean serverBrowse = currentScreenState == STATE_NAVIDROME
                 || currentScreenState == STATE_PLEX
                 || currentScreenState == STATE_JELLYFIN
-                || currentScreenState == STATE_DEEZER;
+                || currentScreenState == STATE_DEEZER
+                || currentScreenState == STATE_DISCOVERY;
         boolean mediaBrowse = currentScreenState == STATE_PODCASTS
                 || currentScreenState == MediaSuiteHost.STATE_VIDEOS
                 || currentScreenState == MediaSuiteHost.STATE_VIDEO_HUB;
@@ -11429,6 +11437,7 @@ public class MainActivity extends Activity {
         settingsBrowseFullWidth = isReachBrowseScreen(settingsSubScreenKey)
                 || isSettingsFullWidthSubScreen(settingsSubScreenKey)
                 || currentScreenState == STATE_DEEZER
+                || currentScreenState == STATE_DISCOVERY
                 || currentScreenState == STATE_SOULSEEK
                 || MediaSuiteHost.isMediaSuiteState(currentScreenState);
         applyFullWidthMenusLayout();
@@ -13103,6 +13112,9 @@ public class MainActivity extends Activity {
             openGetMusicScreen();
         } else if (HomeMenuConfig.ID_NAVIDROME.equals(id)) {
             openNavidrome(); // 2026-09-14 — home shortcut; openNavidrome() handles Wi-Fi/setup gating
+        } else if (HomeMenuConfig.ID_DISCOVERY.equals(id)) {
+            if (!requireInternet(R.string.toast_internet_required)) return;
+            changeScreen(STATE_DISCOVERY);
         } else if (HomeMenuConfig.ID_THEMES.equals(id) || HomeMenuConfig.ID_GET_THEMES.equals(id)) {
             openThemesScreen(null);
         } else if (HomeMenuConfig.ID_MORE.equals(id)) {
@@ -13521,6 +13533,7 @@ public class MainActivity extends Activity {
                 return browserStatusTitle != null && isGetMusicUnifiedUi()
                         ? browserStatusTitle : getString(R.string.status_soulseek);
             case STATE_DEEZER: return getString(R.string.status_deezer);
+            case STATE_DISCOVERY: return getString(R.string.home_menu_discovery);
             case STATE_DEEZER_SETUP: return getString(R.string.status_deezer_setup);
             case STATE_APPS: return getString(R.string.status_apps);
             case STATE_MORE: return getString(R.string.path_more);
@@ -14917,7 +14930,7 @@ public class MainActivity extends Activity {
         if (state != STATE_MENU && layoutMainMenu != null) {
             layoutMainMenu.setVisibility(View.GONE);
         }
-        layoutBrowserMode.setVisibility((state == STATE_BROWSER || state == STATE_PODCASTS || state == STATE_SOULSEEK || state == STATE_DEEZER || state == STATE_APPS || state == STATE_MORE
+        layoutBrowserMode.setVisibility((state == STATE_BROWSER || state == STATE_PODCASTS || state == STATE_SOULSEEK || state == STATE_DEEZER || state == STATE_DISCOVERY || state == STATE_APPS || state == STATE_MORE
                 || state == STATE_USB_STORAGE || state == STATE_NAVIDROME || state == STATE_PLEX || state == STATE_JELLYFIN
                 || state == MediaSuiteHost.STATE_RADIO || state == MediaSuiteHost.STATE_RADIO_FM_BROWSE
                 || state == MediaSuiteHost.STATE_RADIO_FM_PLAYER
@@ -14925,7 +14938,7 @@ public class MainActivity extends Activity {
                 || state == MediaSuiteHost.STATE_VIDEO_HUB || state == MediaSuiteHost.STATE_YOUTUBE_BROWSE
                 || state == MediaSuiteHost.STATE_YOUTUBE_DETAIL
                 || state == MediaSuiteHost.STATE_PHOTOS) ? View.VISIBLE : View.GONE);
-        if (state == STATE_BROWSER || state == STATE_PODCASTS || state == STATE_SOULSEEK || state == STATE_DEEZER
+        if (state == STATE_BROWSER || state == STATE_PODCASTS || state == STATE_SOULSEEK || state == STATE_DEEZER || state == STATE_DISCOVERY
                 || state == STATE_APPS || state == STATE_MORE || state == STATE_USB_STORAGE
                 || state == STATE_NAVIDROME || state == STATE_PLEX || state == STATE_JELLYFIN
                 || state == MediaSuiteHost.STATE_RADIO || state == MediaSuiteHost.STATE_RADIO_FM_BROWSE
@@ -15295,6 +15308,9 @@ public class MainActivity extends Activity {
             } else {
                 buildDeezerSearchUI();
             }
+        } else if (state == STATE_DISCOVERY) {
+            applyReachBrowseLayoutMode();
+            if (discoveryScreen != null) discoveryScreen.open();
         } else if (state == STATE_APPS) {
             buildAppsLauncherUI();
         } else if (state == STATE_MORE) {
@@ -15338,7 +15354,7 @@ public class MainActivity extends Activity {
             }
         }
         // 2026-07-15 — Media suite (YouTube/radio/videos/photos) also needs host width on enter.
-        if (state == STATE_BROWSER || state == STATE_SOULSEEK || state == STATE_DEEZER
+        if (state == STATE_BROWSER || state == STATE_SOULSEEK || state == STATE_DEEZER || state == STATE_DISCOVERY
                 || state == STATE_PODCASTS || state == STATE_APPS || state == STATE_MORE
                 || state == STATE_NAVIDROME || state == STATE_PLEX || state == STATE_JELLYFIN
                 || MediaSuiteHost.isMediaSuiteState(state)) {
@@ -20744,6 +20760,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 || currentScreenState == STATE_BROWSER
                 || currentScreenState == STATE_SOULSEEK
                 || currentScreenState == STATE_DEEZER
+                || currentScreenState == STATE_DISCOVERY
                 || currentScreenState == STATE_USB_STORAGE
                 || mediaSuiteWide
                 || (currentScreenState == STATE_NAVIDROME && !navidromeDual)
@@ -20763,7 +20780,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             blp.leftMargin = 0;
             if (!isFullWidthMenus && (currentScreenState == STATE_PODCASTS
                     || currentScreenState == STATE_BROWSER || currentScreenState == STATE_SOULSEEK
-                    || currentScreenState == STATE_DEEZER || currentScreenState == STATE_USB_STORAGE
+                    || currentScreenState == STATE_DEEZER || currentScreenState == STATE_DISCOVERY || currentScreenState == STATE_USB_STORAGE
                     || currentScreenState == STATE_NAVIDROME || currentScreenState == STATE_PLEX
                     || currentScreenState == STATE_JELLYFIN
                     || mediaSuiteWide)) {
@@ -23072,6 +23089,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             case STATE_BROWSER:
             case STATE_PODCASTS:
             case STATE_DEEZER:
+            case STATE_DISCOVERY:
             case STATE_APPS:
             case STATE_MORE:
             case STATE_USB_STORAGE:
@@ -23185,6 +23203,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 || currentScreenState == STATE_PODCASTS
                 || currentScreenState == STATE_SOULSEEK
                 || currentScreenState == STATE_DEEZER
+                || currentScreenState == STATE_DISCOVERY
                 || currentScreenState == STATE_APPS
                 || currentScreenState == STATE_MORE
                 || currentScreenState == STATE_NAVIDROME
@@ -34494,7 +34513,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 && layoutBrowserMode.getVisibility() == View.VISIBLE) {
             // Browser root is shared by many browse states — only orphan when not a browse state.
             if (currentScreenState != STATE_BROWSER && currentScreenState != STATE_PODCASTS
-                    && currentScreenState != STATE_SOULSEEK && currentScreenState != STATE_DEEZER
+                    && currentScreenState != STATE_SOULSEEK && currentScreenState != STATE_DEEZER && currentScreenState != STATE_DISCOVERY
                     && currentScreenState != STATE_APPS && currentScreenState != STATE_MORE
                     && currentScreenState != STATE_USB_STORAGE
                     && currentScreenState != STATE_NAVIDROME && currentScreenState != STATE_PLEX
@@ -51392,6 +51411,15 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 @Override public void run() {
                     if (deezerScreen != null) deezerScreen.popToResults();
                     else changeScreen(STATE_DEEZER);
+                }
+            };
+        }
+        if (currentScreenState == STATE_DISCOVERY) {
+            return new Runnable() {
+                @Override public void run() {
+                    if (discoveryScreen == null || !discoveryScreen.handleBackPress()) {
+                        changeScreen(STATE_MENU);
+                    }
                 }
             };
         }

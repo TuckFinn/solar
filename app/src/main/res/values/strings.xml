@@ -564,6 +564,13 @@
     <string name="home_menu_soulseek">Get Music</string>
     <string name="home_menu_deezer">Deezer</string>
     <string name="home_menu_navidrome">Navidrome</string>
+    <string name="home_menu_discovery">Discovery</string>
+    <string name="discovery_loading">Loading…</string>
+    <string name="discovery_error">Could not reach nookTunes: %1$s</string>
+    <string name="discovery_empty">Nothing here yet</string>
+    <string name="discovery_back_playlists">← All genres</string>
+    <string name="discovery_no_source">No source for that song</string>
+    <string name="discovery_keeping">Keeping %1$s…</string>
     <string name="home_menu_themes">Themes</string>
     <string name="home_menu_more">More</string>
     <string name="more_menu_empty">No shortcuts in More</string>
