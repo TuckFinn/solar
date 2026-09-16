@@ -25,11 +25,11 @@ import java.util.List;
  * fetching the same song through nookTunes' Subsonic endpoint took 28 to 77
  * because it cannot send a byte until the whole track has landed.
  *
- * Genre and country rows. A Deezer genre chart is Deezer end to end, so every
- * song carries an exact id; a country chart comes from Apple, so those are
- * matched by artist and title through {@link DiscoveryMatch}, which refuses a
- * doubtful match rather than playing the wrong song. Seed-artist rows are not
- * listed yet.
+ * Genres, countries and seed artists. A Deezer genre chart is Deezer end to
+ * end, so every song carries an exact id; country and seed rows come from Apple
+ * and Spotify, so those are matched by artist and title through
+ * {@link DiscoveryMatch}, which refuses a doubtful match rather than playing
+ * the wrong song.
  */
 public final class DiscoveryScreen {
 
@@ -103,11 +103,11 @@ public final class DiscoveryScreen {
                         new ArrayList<DiscoveryClient.Playlist>();
                 String err = null;
                 try {
-                    for (DiscoveryClient.Playlist p : DiscoveryClient.playlists(baseUrl())) {
-                        // Genres and countries. Seed-artist rows are a third
-                        // kind and are not listed here yet.
-                        if ("chart".equals(p.kind)) got.add(p);
-                    }
+                    // Everything nookTunes offers. It decides which seed-artist
+                    // rows are worth showing and in what order -- it has the
+                    // play history to rank them and this does not -- so the
+                    // list is taken as given rather than filtered again here.
+                    got.addAll(DiscoveryClient.playlists(baseUrl()));
                 } catch (Exception e) {
                     err = String.valueOf(e.getMessage());
                 }
