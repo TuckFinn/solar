@@ -1294,6 +1294,22 @@ public class MainActivity extends Activity {
                 + " screen=" + currentScreenState);
         if (globalPpLongFlowHandled) return;
         final PlayQueue.QueueItem cur = playback.currentItem();
+        // A Discovery song plays from Deezer, so it arrives as a DEEZER_STREAM
+        // with no navidromeSongId and the Navidrome branch below would ignore
+        // it. Keep it through nookTunes instead, which fetches the lossless
+        // original: the archive is never built from the compressed copy that
+        // actually played. The id match means a stale pick cannot be hearted.
+        if (cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                && discoveryScreen != null
+                && discoveryScreen.heartIfDeezerTrack(cur.deezerTrackId)) {
+            android.util.Log.i("SolarHeart", "discovery keep for deezer track "
+                    + cur.deezerTrackId);
+            globalPpLongFlowHandled = true;
+            clearFlowHoldThrobber();
+            hideNpLiveHoldHint();
+            heartVibrate(120L);
+            return;
+        }
         if (cur == null || cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
                 || cur.navidromeSongId == null || cur.navidromeSongId.isEmpty()) {
             return;

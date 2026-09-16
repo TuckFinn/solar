@@ -155,6 +155,18 @@ public final class DiscoveryScreen {
     }
 
     /**
+     * Keep the playing song, but only if it is the one Discovery started.
+     *
+     * The id comes from the queue item itself, so this cannot heart the wrong
+     * song once the listener has moved on to something Discovery did not pick.
+     */
+    public boolean heartIfDeezerTrack(long deezerTrackId) {
+        DiscoveryClient.Track t = lastPlayed;
+        if (t == null || deezerTrackId <= 0 || t.deezerId != deezerTrackId) return false;
+        return heartLastPlayed();
+    }
+
+    /**
      * Keep whatever was last started here. nookTunes fetches the lossless
      * original for the archive, so the compressed copy the device played is
      * never what gets kept.
