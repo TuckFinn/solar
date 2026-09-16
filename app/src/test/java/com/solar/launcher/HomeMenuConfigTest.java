@@ -20,6 +20,61 @@ public class HomeMenuConfigTest {
         prefs = new MemPrefs();
     }
 
+    /**
+     * 2026-09-15 — The Navidrome home row could never appear.
+     *
+     * Its gate is "(internet || lan) && prefs != null && NavidromePrefs.isConfigured(prefs)",
+     * but loadVisibleForDisplay called the 4-arg shouldShowHomeShortcut, and that overload
+     * forwards prefs as null. So the row was unconditionally hidden however the device was
+     * configured. Observed on 2Y1: navidrome sat in home_menu_order across restarts and a
+     * full reboot, with the server configured and reachable, and never drew.
+     */
+    @Test
+    public void navidromeRow_showsWhenConfigured() {
+        prefs.edit()
+                .putString("home_menu_order", "now_playing,music,navidrome,settings")
+                .putString("navidrome_url", "http://192.168.0.105:5690")
+                .putString("navidrome_user", "tucker")
+                .commit();
+        List<HomeMenuConfig.Entry> visible =
+                HomeMenuConfig.loadVisibleForDisplay(prefs, true, true, false);
+        boolean found = false;
+        for (HomeMenuConfig.Entry e : visible) {
+            if (HomeMenuConfig.ID_NAVIDROME.equals(e.id)) found = true;
+        }
+        if (!found) throw new AssertionError("configured Navidrome row missing from home");
+    }
+
+    /** Still hidden with no server configured, or the row would lead only to setup. */
+    @Test
+    public void navidromeRow_hiddenWhenNotConfigured() {
+        prefs.edit()
+                .putString("home_menu_order", "now_playing,music,navidrome,settings")
+                .commit();
+        for (HomeMenuConfig.Entry e
+                : HomeMenuConfig.loadVisibleForDisplay(prefs, true, true, false)) {
+            if (HomeMenuConfig.ID_NAVIDROME.equals(e.id)) {
+                throw new AssertionError("unconfigured Navidrome row should not show");
+            }
+        }
+    }
+
+    /** And hidden with no network at all, configured or not. */
+    @Test
+    public void navidromeRow_hiddenWithNoNetwork() {
+        prefs.edit()
+                .putString("home_menu_order", "now_playing,music,navidrome,settings")
+                .putString("navidrome_url", "http://192.168.0.105:5690")
+                .putString("navidrome_user", "tucker")
+                .commit();
+        for (HomeMenuConfig.Entry e
+                : HomeMenuConfig.loadVisibleForDisplay(prefs, false, false, false)) {
+            if (HomeMenuConfig.ID_NAVIDROME.equals(e.id)) {
+                throw new AssertionError("Navidrome row should not show with no network");
+            }
+        }
+    }
+
     @Test
     public void stockHomeOrder_matchesY1Layout() {
         List<String> stock = HomeMenuConfig.STOCK_Y1_HOME_ORDER;

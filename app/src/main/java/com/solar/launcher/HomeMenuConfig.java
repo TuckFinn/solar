@@ -343,7 +343,7 @@ public final class HomeMenuConfig {
                 if (!ConnectivityHelper.isGetMusicShortcutAvailable(prefs)) continue;
                 if (!internetAvailable) continue;
             } else if (!ConnectivityHelper.shouldShowHomeShortcut(id, internetAvailable,
-                    localNetworkAvailable, podcastsSaved)) {
+                    localNetworkAvailable, podcastsSaved, prefs)) {
                 continue;
             }
             Entry e = find(id);
