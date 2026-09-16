@@ -3856,6 +3856,10 @@ public class MainActivity extends Activity {
         }
         // #region agent log
         Debug898913Log.ENABLED = getIntent().getBooleanExtra("solar_adb_debug_898913", false);
+        // 2026-09-15 — DebugAgentLog reports to logcat whenever AGENT_LOGS is built in; this
+        // switch adds the NDJSON files on top, for a session where the log has to be pulled.
+        // Kept opt-in because those writes are synchronous across 114 call sites.
+        DebugAgentLog.FILES = getIntent().getBooleanExtra("solar_adb_debug_5c5611", false);
         final Thread.UncaughtExceptionHandler prevHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -5432,20 +5436,7 @@ public class MainActivity extends Activity {
             }, 1500);
         }
 
-        if (getIntent().getBooleanExtra("solar_adb_log_home_menu", false)) {
-            getIntent().removeExtra("solar_adb_log_home_menu");
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    StringBuilder sb = new StringBuilder("home_menu focus=" + focusedHomeMenuIndex
-                            + " nowPlaying=" + shouldShowNowPlayingHome());
-                    for (int i = 0; i < homeMenuEntries.size(); i++) {
-                        sb.append(' ').append(i).append('=').append(homeMenuEntries.get(i).id);
-                    }
-                    SolarAdbTest.pass(sb.toString());
-                }
-            }, 2000);
-        }
+        scheduleAdbLogHomeMenuIfRequested(getIntent());
 
         if (getIntent().getBooleanExtra("solar_adb_apply_installed_theme", false)) {
             getIntent().removeExtra("solar_adb_apply_installed_theme");
@@ -5520,6 +5511,53 @@ public class MainActivity extends Activity {
      * or touch files/adb_home_wheel.flag
      * Logcat tag SolarAdbTest: homeFocus lines + PASS/FAIL home_wheel.
      */
+    /**
+     * 2026-09-15 — Make the launcher report its own home menu, on demand.
+     *
+     *   adb shell am start -n com.solar.launcher/.MainActivity --ez solar_adb_log_home_menu true
+     *   adb logcat -d -s SolarAdbTest:I
+     *
+     * This lived inline in onCreate, so it only ever fired on a cold start. The home activity
+     * is single-instance, so an am start against a running launcher lands in onNewIntent and
+     * the block was never reached — three attempts to trigger it all reported "delivered to
+     * currently running top-most instance". Called from both paths now.
+     *
+     * It also reports WHY a row is missing, not just which rows rendered. Diagnosing the
+     * Navidrome row meant reading the shouldShowHomeShortcut overload chain to find that
+     * prefs arrived null; these fields would have shown it in one run.
+     */
+    private void scheduleAdbLogHomeMenuIfRequested(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra("solar_adb_log_home_menu", false)) return;
+        intent.removeExtra("solar_adb_log_home_menu");
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                StringBuilder sb = new StringBuilder("home_menu focus=" + focusedHomeMenuIndex
+                        + " nowPlaying=" + shouldShowNowPlayingHome());
+                java.util.Set<String> shown = new java.util.HashSet<String>();
+                for (int i = 0; i < homeMenuEntries.size(); i++) {
+                    sb.append(' ').append(i).append('=').append(homeMenuEntries.get(i).id);
+                    shown.add(homeMenuEntries.get(i).id);
+                }
+                java.util.List<String> saved = HomeMenuConfig.loadHomeOrderIds(prefs);
+                StringBuilder ord = new StringBuilder();
+                StringBuilder dropped = new StringBuilder();
+                for (String id : saved) {
+                    if (ord.length() > 0) ord.append(',');
+                    ord.append(id);
+                    if (!shown.contains(id)) dropped.append(' ').append(id);
+                }
+                sb.append(" order=").append(ord);
+                sb.append(" dropped=")
+                        .append(dropped.length() == 0 ? "none" : dropped.toString().trim());
+                sb.append(" online=").append(ConnectivityHelper.isOnline(MainActivity.this));
+                sb.append(" lan=").append(ConnectivityHelper.hasLocalNetwork(MainActivity.this));
+                sb.append(" navidromeConfigured=").append(NavidromePrefs.isConfigured(prefs));
+                SolarAdbTest.pass(sb.toString());
+            }
+        }, 2000);
+    }
+
     private void scheduleAdbHomeWheelIfRequested(Intent intent) {
         boolean fromIntent = intent != null
                 && intent.getBooleanExtra("solar_adb_home_wheel", false);
@@ -61905,6 +61943,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (intent != null && intent.getBooleanExtra("solar_adb_debug_898913", false)) {
             Debug898913Log.ENABLED = true;
         }
+        if (intent != null && intent.getBooleanExtra("solar_adb_debug_5c5611", false)) {
+            DebugAgentLog.FILES = true;
+        }
+        // The reason this method matters: the launcher is single-instance, so this is the
+        // only path an am start reaches once it is already running.
+        scheduleAdbLogHomeMenuIfRequested(intent);
         if (intent != null && (OverlayTriggers.ACTION_OPEN_CONTEXT_MENU.equals(intent.getAction())
                 || intent.getBooleanExtra(OverlayTriggers.EXTRA_CONTEXT_POWER_HOLD, false))) {
             handleContextPowerHoldIntent();

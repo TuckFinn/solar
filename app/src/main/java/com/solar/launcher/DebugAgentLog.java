@@ -13,8 +13,23 @@ public final class DebugAgentLog {
     private static final String TAG = "SolarDbg5c5611";
     private static final String FILE = "debug-5c5611.log";
     private static final String SESSION = "5c5611";
-    /** ponytail: hot-path sync file I/O was freezing UI — flip true only for short debug sessions. */
-    public static volatile boolean ENABLED = false;
+    /**
+     * Emit to logcat. Follows the agent-log build flag, so an agent-log build reports itself
+     * through {@code logcat -s SolarDbg5c5611:I} with no extra step.
+     *
+     * 2026-09-15 — This defaulted to false, so "home menu built" and its rowLabels never
+     * emitted even in a build with AGENT_LOGS on. A home row that silently refused to render
+     * then had to be diagnosed by reading overload chains instead of asking the launcher.
+     */
+    public static volatile boolean ENABLED = BuildConfig.AGENT_LOGS;
+    /**
+     * Also persist each line to SD and app files. Off by default, opt-in per debug session:
+     * {@code adb shell am start -n com.solar.launcher/.MainActivity --ez solar_adb_debug_5c5611 true}
+     *
+     * ponytail: hot-path sync file I/O was freezing the UI. Logcat is cheap; two synchronous
+     * FileWriter round-trips across 114 call sites are not, so the two are separate switches.
+     */
+    public static volatile boolean FILES = false;
 
     private DebugAgentLog() {}
 
@@ -31,6 +46,8 @@ public final class DebugAgentLog {
             if (data != null) o.put("data", data);
             String line = o.toString();
             Log.i(TAG, line);
+            // Logcat is the default report. Disk is the expensive half, so it is opt-in.
+            if (!FILES) return;
             File sdRoot = DeviceFeatures.getPrimaryStorageRoot();
             if (sdRoot != null) {
                 try {
