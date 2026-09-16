@@ -55,6 +55,8 @@ public final class DiscoveryScreen {
      */
     private long lastPlayedDeezerId;
     private DeezerSearch search;
+    /** Bumped on every play, so a superseded queue-ahead stops resolving. */
+    private volatile int queueGeneration;
 
     public DiscoveryScreen(DeezerScreen.Host host, DeezerScreen deezer) {
         this.host = host;
@@ -202,6 +204,60 @@ public final class DiscoveryScreen {
         lastPlayed = t;
         lastPlayedDeezerId = r.id;
         deezer.startTransfer(r, DeezerScreen.ACTION_PLAY);
+        queueRestOfPlaylist(t);
+    }
+
+    /**
+     * Queue what follows in the same playlist, so it keeps going.
+     *
+     * A play on its own is one song: when it ended the player fell back to
+     * whatever queue was already loaded, which meant picking a Classical track
+     * dropped you back into the Navidrome stream from before. The rest of the
+     * window goes in behind it as placeholders and downloads in sequence --
+     * the same path a Deezer album takes.
+     *
+     * Resolving a country or seed row costs a search each, so this runs off
+     * the UI thread and simply skips anything it cannot vouch for rather than
+     * queueing the wrong song.
+     */
+    private void queueRestOfPlaylist(DiscoveryClient.Track from) {
+        final List<DiscoveryClient.Track> rest = new ArrayList<DiscoveryClient.Track>();
+        boolean after = false;
+        for (DiscoveryClient.Track t : tracks) {
+            if (after) rest.add(t);
+            if (t == from) after = true;
+        }
+        if (rest.isEmpty()) return;
+        final int generation = ++queueGeneration;
+        host.runOnBg(new Runnable() {
+            @Override public void run() {
+                List<DeezerResult> out = new ArrayList<DeezerResult>();
+                for (DiscoveryClient.Track t : rest) {
+                    // A newer pick supersedes this one; stop resolving for a
+                    // queue nobody is waiting on any more.
+                    if (generation != queueGeneration) return;
+                    if (t.deezerId > 0) {
+                        out.add(new DeezerResult(t.deezerId, t.title, t.artist, t.album,
+                                0L, t.durationSec, "", t.cover));
+                        continue;
+                    }
+                    try {
+                        DeezerResult hit = DiscoveryMatch.best(
+                                search().searchTracks(t.searchQuery()), t.artist, t.title);
+                        if (hit != null) out.add(hit);
+                    } catch (Exception ignored) {
+                        // One unreachable search should not cost the rest.
+                    }
+                }
+                if (out.isEmpty() || generation != queueGeneration) return;
+                final List<DeezerResult> queued = out;
+                host.runOnUi(new Runnable() {
+                    @Override public void run() {
+                        if (generation == queueGeneration) host.queueDeezerTracks(queued);
+                    }
+                });
+            }
+        });
     }
 
     /**

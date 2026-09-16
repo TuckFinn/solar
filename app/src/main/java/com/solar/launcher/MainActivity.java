@@ -18241,6 +18241,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             playback.queueDeezerAfterCurrent(f, meta, trackId);
             persistPlaybackQueue();
         }
+        @Override public void queueDeezerTracks(java.util.List<DeezerResult> tracks) {
+            startDeezerAlbumBackgroundQueue(tracks);
+        }
         @Override public void replaceDeezerInQueue(File oldF, File newF, String meta) {
             playback.replaceDeezerFileInQueue(oldF, newF, meta);
         }

@@ -77,6 +77,8 @@ public final class DeezerScreen {
         void changeToPlayer();
         void playDeezerPartial(File f, String meta, long trackId);
         void queueDeezerPartial(File f, String meta, long trackId);
+        /** Queue a run of tracks now, downloading them in the background. */
+        void queueDeezerTracks(java.util.List<DeezerResult> tracks);
         void replaceDeezerInQueue(File oldF, File newF, String meta);
         void launchDeezerSearchFromSuggestion(String q, boolean openKeyboard);
         void launchReachSearchFromSuggestion(String q, boolean openKeyboard);
