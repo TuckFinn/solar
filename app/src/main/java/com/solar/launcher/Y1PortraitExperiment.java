@@ -49,7 +49,7 @@ public final class Y1PortraitExperiment {
 
     public static String mode(Context ctx) {
         if (ctx == null || !isAvailable()) return MODE_OFF;
-        return mode(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE));
+        return mode(PrefsWriteAudit.get(ctx, PREFS));
     }
 
     public static boolean isEnabled(SharedPreferences prefs) {
@@ -59,7 +59,7 @@ public final class Y1PortraitExperiment {
 
     public static boolean isEnabled(Context ctx) {
         if (ctx == null || !isAvailable()) return false;
-        return isEnabled(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE));
+        return isEnabled(PrefsWriteAudit.get(ctx, PREFS));
     }
 
     /** True when wheel sits left of the tall display (former PORTRAIT). */
@@ -92,7 +92,7 @@ public final class Y1PortraitExperiment {
     public static void setMode(Context ctx, String mode) {
         if (ctx == null || !isAvailable()) return;
         String m = MODE_RIGHT.equals(mode) || MODE_LEFT.equals(mode) ? mode : MODE_OFF;
-        SharedPreferences.Editor ed = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
+        SharedPreferences.Editor ed = PrefsWriteAudit.get(ctx, PREFS).edit();
         ed.putString(PREF_Y1_PORTRAIT_MODE, m);
         // Keep legacy boolean in sync for older readers / dumps.
         ed.putBoolean(PREF_Y1_PORTRAIT_EXPERIMENT, !MODE_OFF.equals(m));

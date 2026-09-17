@@ -1,5 +1,7 @@
 package com.solar.launcher.ui;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.View;
@@ -30,7 +32,7 @@ public final class ListDrillTransition {
     public static boolean enabled(Context ctx) {
         if (ctx == null) return false;
         if (ScreenTransition.systemAnimationsDisabled(ctx)) return false;
-        SharedPreferences prefs = ctx.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, "SOLAR_SETTINGS");
         return prefs.getBoolean(PREF_MENU_TRANSITIONS, true);
     }
 

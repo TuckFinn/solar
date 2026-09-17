@@ -27,7 +27,7 @@ public final class A5LandscapeExperiment {
 
     public static boolean isEnabled(Context ctx) {
         if (ctx == null) return false;
-        return isEnabled(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE));
+        return isEnabled(PrefsWriteAudit.get(ctx, PREFS));
     }
 
     /**
@@ -37,7 +37,7 @@ public final class A5LandscapeExperiment {
      */
     public static void setEnabled(Context ctx, boolean enable) {
         if (ctx == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        PrefsWriteAudit.get(ctx, PREFS)
                 .edit()
                 .putBoolean(PREF_A5_LANDSCAPE_EXPERIMENT, enable)
                 .apply();

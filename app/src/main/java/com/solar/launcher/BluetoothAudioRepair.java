@@ -61,7 +61,7 @@ final class BluetoothAudioRepair {
 
     static BluetoothDevice lastRememberedDevice(Context context) {
         if (context == null) return null;
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(context, PREFS);
         return deviceForAddress(prefs.getString(PREF_LAST_BT_AUDIO, null));
     }
 
@@ -85,7 +85,7 @@ final class BluetoothAudioRepair {
 
     static String pairingPinForAddress(Context context, String address) {
         if (context == null) return "0000";
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(context, PREFS);
         String fallback = prefs.getString(PREF_PAIRING_PIN, "0000");
         if (address == null || address.length() == 0) return normalizePairingPin(fallback);
         return normalizePairingPin(prefs.getString(PREF_PAIRING_PIN_PREFIX + address, fallback));
@@ -102,7 +102,7 @@ final class BluetoothAudioRepair {
     static void savePairingPin(Context context, String address, String pin) {
         if (context == null) return;
         String cleaned = normalizePairingPin(pin);
-        SharedPreferences.Editor edit = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
+        SharedPreferences.Editor edit = PrefsWriteAudit.get(context, PREFS).edit();
         if (address != null && address.length() > 0) {
             edit.putString(PREF_PAIRING_PIN_PREFIX + address, cleaned);
         } else {
@@ -153,7 +153,7 @@ final class BluetoothAudioRepair {
     static void rememberLastAudioDevice(Context context, BluetoothDevice device) {
         if (context == null || device == null || !isLikelyAudioSink(device)) return;
         try {
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            PrefsWriteAudit.get(context, PREFS).edit()
                     .putString(PREF_LAST_BT_AUDIO, device.getAddress())
                     .apply();
         } catch (Exception ignored) {}

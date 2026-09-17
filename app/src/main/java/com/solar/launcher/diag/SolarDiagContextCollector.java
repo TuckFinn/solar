@@ -1,5 +1,7 @@
 package com.solar.launcher.diag;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
@@ -216,7 +218,7 @@ public final class SolarDiagContextCollector {
         sb.append("detail: ").append(fullArl ? "full" : "light").append('\n');
         sb.append("time_ms: ").append(System.currentTimeMillis()).append('\n');
         if (prefs == null && context != null) {
-            prefs = context.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+            prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
         }
         if (prefs == null) {
             sb.append("prefs: unavailable\n");
@@ -800,7 +802,7 @@ public final class SolarDiagContextCollector {
         sb.append("\n--- prefs_keys (no values) ---\n");
         if (context == null) return;
         try {
-            SharedPreferences prefs = context.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+            SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
             java.util.Map<String, ?> all = prefs.getAll();
             if (all == null) return;
             List<String> keys = new java.util.ArrayList<String>(all.keySet());

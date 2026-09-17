@@ -1,5 +1,7 @@
 package com.solar.launcher.theme;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -137,7 +139,7 @@ public class SettingLookup {
     public static void applySolarConfigOverrides(Context ctx, Map<String, Object> overrides) {
         if (ctx == null || overrides == null || overrides.isEmpty()) return;
         // 2026-07-11 — Must match MainActivity / ActiveThemeEngine (was package_preferences → no-op).
-        SharedPreferences prefs = ctx.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, "SOLAR_SETTINGS");
         SharedPreferences.Editor editor = prefs.edit();
         boolean anyChange = false;
         // ponytail: if theme enables both LCD and 3D album art, skip both — user pref wins.

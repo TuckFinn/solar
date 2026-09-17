@@ -33,7 +33,7 @@ public final class UsbMassStorageExperiment {
 
     public static boolean isEnabled(Context ctx) {
         if (ctx == null) return !DeviceFeatures.isY2();
-        return isEnabled(ctx.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE));
+        return isEnabled(PrefsWriteAudit.get(ctx, "SOLAR_SETTINGS"));
     }
 
     /** Force sysprop 0 on Y2 so system_server UMS hooks stay off; no-op on Y1. */
@@ -47,7 +47,7 @@ public final class UsbMassStorageExperiment {
     /** No-op — Y2 UMS cannot be enabled in product builds. */
     public static void setEnabled(Context ctx, boolean enable) {
         if (ctx == null || !DeviceFeatures.isY2()) return;
-        ctx.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE)
+        PrefsWriteAudit.get(ctx, "SOLAR_SETTINGS")
                 .edit()
                 .putBoolean(PREF_USB_MASS_STORAGE_EXPERIMENT, false)
                 .apply();

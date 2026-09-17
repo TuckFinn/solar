@@ -1,5 +1,7 @@
 package com.solar.launcher.theme;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import com.solar.launcher.HomeMenuConfig;
 import com.solar.launcher.SolarOverlayHost;
 import com.solar.launcher.A5NavigationMode;
@@ -734,7 +736,7 @@ public class ThemeManager {
         reloadSolarSettingsPrefsFromDisk(ctx);
         ensureThemesRootReady(ctx);
         ensureBundledDefault(ctx);
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS_NAME);
         String folder = prefs.getString(PREF_THEME_FOLDER, "");
         String savedPath = prefs.getString(PREF_THEME_PATH, "");
         ThemeEntry cur = getCurrentTheme();

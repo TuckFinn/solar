@@ -1,5 +1,7 @@
 package com.solar.launcher.scrobble;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -169,7 +171,7 @@ public final class ScrobbleManager {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS_NAME);
                 if (prefs.getBoolean(PREF_LASTFM_ENABLED, false)) {
                     sendLastFmNowPlaying(prefs, title, artist, album, durationSec);
                 }
@@ -186,7 +188,7 @@ public final class ScrobbleManager {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS_NAME);
                 if (prefs.getBoolean(PREF_LASTFM_ENABLED, false)) {
                     sendLastFmScrobble(prefs, title, artist, album, timestampSec, durationSec);
                 }
@@ -300,7 +302,7 @@ public final class ScrobbleManager {
         if (ctx == null || token == null || token.trim().isEmpty()) {
             return "Token required";
         }
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS_NAME);
         String apiKey = prefs.getString(PREF_LASTFM_API_KEY, DEFAULT_LASTFM_API_KEY);
         String apiSecret = prefs.getString(PREF_LASTFM_API_SECRET, DEFAULT_LASTFM_API_SECRET);
 

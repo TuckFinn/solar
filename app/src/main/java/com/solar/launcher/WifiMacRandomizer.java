@@ -43,7 +43,7 @@ public final class WifiMacRandomizer {
 
     public static boolean hasRandomizedOnce(Context context) {
         if (context == null) return false;
-        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(PREF_DONE, false);
+        return PrefsWriteAudit.get(context, PREFS).getBoolean(PREF_DONE, false);
     }
 
     /** First Solar start only — silent failure if su/NVRAM missing. */
@@ -82,7 +82,7 @@ public final class WifiMacRandomizer {
     }
 
     private static void markDone(Context context, String mac) {
-        SharedPreferences.Editor ed = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
+        SharedPreferences.Editor ed = PrefsWriteAudit.get(context, PREFS).edit();
         ed.putBoolean(PREF_DONE, true);
         if (mac != null) ed.putString(PREF_LAST_MAC, mac);
         ed.commit();

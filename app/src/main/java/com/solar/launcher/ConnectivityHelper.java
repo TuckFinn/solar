@@ -203,7 +203,7 @@ public final class ConnectivityHelper {
 
     public static boolean shouldShowHomeShortcut(Context context, String id) {
         if (context == null) return shouldShowHomeShortcut(id, false, false, false);
-        SharedPreferences prefs = context.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
         return shouldShowHomeShortcut(id,
                 isOnline(context),
                 hasLocalNetwork(context),

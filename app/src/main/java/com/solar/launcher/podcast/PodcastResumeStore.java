@@ -1,5 +1,7 @@
 package com.solar.launcher.podcast;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -64,7 +66,7 @@ public final class PodcastResumeStore {
 
     public static int restorePositionMs(Context ctx, String key, int durationMs) {
         if (ctx == null || key == null) return 0;
-        String raw = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(key, null);
+        String raw = PrefsWriteAudit.get(ctx, PREFS).getString(key, null);
         return parseStoredPosition(raw, durationMs);
     }
 
@@ -87,7 +89,7 @@ public final class PodcastResumeStore {
 
     public static void save(Context ctx, String key, int positionMs, int durationMs) {
         if (ctx == null || key == null || positionMs < MIN_RESUME_MS) return;
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS);
         int storedDur = parseStoredDurationMs(prefs.getString(key, null));
         int dur = effectiveDurationMs(durationMs, storedDur);
         if (dur > 0 && positionMs >= dur * COMPLETE_RATIO) {
@@ -104,7 +106,7 @@ public final class PodcastResumeStore {
 
     public static void clear(Context ctx, String key) {
         if (ctx == null || key == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(key).commit();
+        PrefsWriteAudit.get(ctx, PREFS).edit().remove(key).commit();
     }
 
     static String sha1Hex(String input) {

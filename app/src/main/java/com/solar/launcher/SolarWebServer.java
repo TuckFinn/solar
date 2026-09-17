@@ -355,8 +355,7 @@ public class SolarWebServer extends Thread {
                         String navUrl = formValue(bodyStr, "url");
                         String navUser = formValue(bodyStr, "user");
                         String navPass = formValue(bodyStr, "pass");
-                        SharedPreferences prefs = context.getSharedPreferences(
-                                "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                        SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                         com.solar.launcher.navidrome.NavidromePrefs.save(context, prefs, navUrl, navUser, navPass);
                         String msg = com.solar.launcher.navidrome.NavidromePrefs.isConfigured(prefs)
                                 ? "✅ Navidrome settings saved." : "Saved: enter URL and username.";
@@ -364,8 +363,7 @@ public class SolarWebServer extends Thread {
                     }
                 }
                 else if (method.equals("GET") && path.equals("/api/navidrome-settings")) {
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     org.json.JSONObject d = new org.json.JSONObject();
                     try {
                         d.put("url", prefs.getString("navidrome_url", ""));
@@ -378,8 +376,7 @@ public class SolarWebServer extends Thread {
                 else if (method.equals("POST") && path.equals("/api/navidrome-settings")) {
                     byte[] body = readBody(is, contentLength);
                     String bodyStr = new String(body, "UTF-8");
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     com.solar.launcher.navidrome.NavidromePrefs.save(context, prefs,
                             formValue(bodyStr, "url"), formValue(bodyStr, "user"), formValue(bodyStr, "pass"));
                     String response = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"ok\":true}";
@@ -391,8 +388,7 @@ public class SolarWebServer extends Thread {
                     } else if (method.equals("POST")) {
                         byte[] body = readBody(is, contentLength);
                         String bodyStr = new String(body, "UTF-8");
-                        SharedPreferences prefs = context.getSharedPreferences(
-                                "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                        SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                         com.solar.launcher.plex.PlexPrefs.save(context, prefs,
                                 formValue(bodyStr, "url"), formValue(bodyStr, "token"));
                         // 2026-07-14: Saving from Wi‑Fi transfer also arms the Debug experiment.
@@ -406,8 +402,7 @@ public class SolarWebServer extends Thread {
                     }
                 }
                 else if (method.equals("GET") && path.equals("/api/plex-settings")) {
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     org.json.JSONObject d = new org.json.JSONObject();
                     try {
                         d.put("url", prefs.getString("plex_url", ""));
@@ -420,8 +415,7 @@ public class SolarWebServer extends Thread {
                 else if (method.equals("POST") && path.equals("/api/plex-settings")) {
                     byte[] body = readBody(is, contentLength);
                     String bodyStr = new String(body, "UTF-8");
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     com.solar.launcher.plex.PlexPrefs.save(context, prefs,
                             formValue(bodyStr, "url"), formValue(bodyStr, "token"));
                     if (com.solar.launcher.plex.PlexPrefs.isConfigured(prefs)) {
@@ -436,8 +430,7 @@ public class SolarWebServer extends Thread {
                     } else if (method.equals("POST")) {
                         byte[] body = readBody(is, contentLength);
                         String bodyStr = new String(body, "UTF-8");
-                        SharedPreferences prefs = context.getSharedPreferences(
-                                "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                        SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                         com.solar.launcher.jellyfin.JellyfinPrefs.save(context, prefs,
                                 formValue(bodyStr, "url"), formValue(bodyStr, "user"),
                                 formValue(bodyStr, "pass"));
@@ -452,8 +445,7 @@ public class SolarWebServer extends Thread {
                     }
                 }
                 else if (method.equals("GET") && path.equals("/api/jellyfin-settings")) {
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     org.json.JSONObject d = new org.json.JSONObject();
                     try {
                         d.put("url", prefs.getString("jellyfin_url", ""));
@@ -468,8 +460,7 @@ public class SolarWebServer extends Thread {
                 else if (method.equals("POST") && path.equals("/api/jellyfin-settings")) {
                     byte[] body = readBody(is, contentLength);
                     String bodyStr = new String(body, "UTF-8");
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     com.solar.launcher.jellyfin.JellyfinPrefs.save(context, prefs,
                             formValue(bodyStr, "url"), formValue(bodyStr, "user"), formValue(bodyStr, "pass"));
                     if (com.solar.launcher.jellyfin.JellyfinPrefs.isConfigured(prefs)) {
@@ -484,8 +475,7 @@ public class SolarWebServer extends Thread {
                     } else if (method.equals("POST")) {
                         byte[] body = readBody(is, contentLength);
                         String bodyStr = new String(body, "UTF-8");
-                        SharedPreferences prefs = context.getSharedPreferences(
-                                "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                        SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                         boolean lfmEnabled = "true".equalsIgnoreCase(formValue(bodyStr, "lastfm_enabled"));
                         boolean lbEnabled = "true".equalsIgnoreCase(formValue(bodyStr, "listenbrainz_enabled"));
                         String lbToken = formValue(bodyStr, "listenbrainz_token");
@@ -525,8 +515,7 @@ public class SolarWebServer extends Thread {
                     writeScrobbleSetupPage(os, msg, host);
                 }
                 else if (method.equals("GET") && path.equals("/api/scrobbling-settings")) {
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     org.json.JSONObject d = new org.json.JSONObject();
                     try {
                         d.put("lastfm_enabled", prefs.getBoolean(com.solar.launcher.scrobble.ScrobbleManager.PREF_LASTFM_ENABLED, false));
@@ -541,8 +530,7 @@ public class SolarWebServer extends Thread {
                 else if (method.equals("POST") && path.equals("/api/scrobbling-settings")) {
                     byte[] body = readBody(is, contentLength);
                     String bodyStr = new String(body, "UTF-8");
-                    SharedPreferences prefs = context.getSharedPreferences(
-                            "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+                    SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
                     boolean lfmEnabled = "true".equalsIgnoreCase(formValue(bodyStr, "lastfm_enabled"));
                     boolean lbEnabled = "true".equalsIgnoreCase(formValue(bodyStr, "listenbrainz_enabled"));
                     String lbToken = formValue(bodyStr, "listenbrainz_token");
@@ -932,8 +920,7 @@ public class SolarWebServer extends Thread {
         }
 
         private void writeNavidromeSetupPage(OutputStream os, String message) throws java.io.IOException {
-            SharedPreferences prefs = context.getSharedPreferences(
-                    "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+            SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
             String url = prefs.getString("navidrome_url", "");
             String user = prefs.getString("navidrome_user", "");
             String pass = prefs.getString("navidrome_pass", "");
@@ -957,8 +944,7 @@ public class SolarWebServer extends Thread {
 
         /** 2026-07-14: PC companion form — Plex URL + X-Plex-Token. */
         private void writePlexSetupPage(OutputStream os, String message) throws java.io.IOException {
-            SharedPreferences prefs = context.getSharedPreferences(
-                    "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+            SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
             String url = prefs.getString("plex_url", "");
             String token = prefs.getString("plex_token", "");
             String msgHtml = message != null
@@ -981,8 +967,7 @@ public class SolarWebServer extends Thread {
 
         /** 2026-07-14: PC companion form — Jellyfin URL + user + password. */
         private void writeJellyfinSetupPage(OutputStream os, String message) throws java.io.IOException {
-            SharedPreferences prefs = context.getSharedPreferences(
-                    "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+            SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
             String url = prefs.getString("jellyfin_url", "");
             String user = prefs.getString("jellyfin_user", "");
             String pass = prefs.getString("jellyfin_pass", "");
@@ -1007,8 +992,7 @@ public class SolarWebServer extends Thread {
 
         /** 2026-07-16: PC companion form — Scrobbling (Last.fm & ListenBrainz). */
         private void writeScrobbleSetupPage(OutputStream os, String message, String host) throws java.io.IOException {
-            SharedPreferences prefs = context.getSharedPreferences(
-                    "SOLAR_SETTINGS", Context.MODE_PRIVATE);
+            SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
             boolean lastfmEnabled = prefs.getBoolean(com.solar.launcher.scrobble.ScrobbleManager.PREF_LASTFM_ENABLED, false);
             String lastfmUser = prefs.getString(com.solar.launcher.scrobble.ScrobbleManager.PREF_LASTFM_USERNAME, "");
             String lastfmSk = prefs.getString(com.solar.launcher.scrobble.ScrobbleManager.PREF_LASTFM_SK, "");

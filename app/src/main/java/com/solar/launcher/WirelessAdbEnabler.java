@@ -19,7 +19,7 @@ public final class WirelessAdbEnabler {
         // back to SOLAR_SETTINGS, which a helper process must not do: its
         // commit would rewrite the whole file from a stale map.
         if (!SolarProcess.isMain(context)) return;
-        final SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        final SharedPreferences prefs = PrefsWriteAudit.get(context, PREFS);
         if (!prefs.getBoolean("settings.debug.wireless_adb_enabled", true)) return;
         new Thread(new Runnable() {
             @Override
@@ -62,7 +62,7 @@ public final class WirelessAdbEnabler {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                SharedPreferences prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+                SharedPreferences prefs = PrefsWriteAudit.get(activity, PREFS);
                 // 2026-09-15 — This ran once per launcher start and rebooted the device two
                 // seconds later. Its "already done" flag lived in SOLAR_SETTINGS, and that
                 // reboot lands while Solar is still flushing preferences, so the file came

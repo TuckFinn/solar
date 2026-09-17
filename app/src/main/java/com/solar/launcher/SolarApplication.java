@@ -34,6 +34,22 @@ public class SolarApplication extends Application {
         return sApp;
     }
 
+    /**
+     * 2026-09-16 — Every SOLAR_SETTINGS write says which process made it.
+     *
+     * Helper classes reach the settings through the application context
+     * ({@code app.getSharedPreferences(PREFS, MODE_PRIVATE)}), so one override here
+     * covers them without touching 166 call sites. See {@link PrefsWriteAudit} for
+     * what the wipe looks like in the log. Diagnostic only: the wrapper delegates
+     * everything and changes nothing about what is stored.
+     */
+    @Override
+    public android.content.SharedPreferences getSharedPreferences(String name, int mode) {
+        android.content.SharedPreferences real = super.getSharedPreferences(name, mode);
+        if (!"SOLAR_SETTINGS".equals(name)) return real;
+        return PrefsWriteAudit.wrap(real, name);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();

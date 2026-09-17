@@ -15,7 +15,7 @@ public final class LocaleHelper {
     private LocaleHelper() {}
 
     public static Context wrap(Context base) {
-        SharedPreferences prefs = base.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(base, "SOLAR_SETTINGS");
         String tag = prefs.getString(PREF_LOCALE, LOCALE_SYSTEM);
         if ("ko".equals(tag)) {
             prefs.edit().putString(PREF_LOCALE, LOCALE_SYSTEM).commit();
@@ -34,7 +34,7 @@ public final class LocaleHelper {
     }
 
     public static Locale getEffectiveLocale(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(context, "SOLAR_SETTINGS");
         Locale loc = localeFromTag(prefs.getString(PREF_LOCALE, LOCALE_SYSTEM), context);
         return loc != null ? loc : Locale.getDefault();
     }

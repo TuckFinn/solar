@@ -1,5 +1,7 @@
 package com.solar.launcher.soulseek;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -35,7 +37,7 @@ public final class SolarDeveloperOutbox {
             recipients = SolarDeveloperAccounts.developerUsernames();
         }
         try {
-            SharedPreferences prefs = ctx.getSharedPreferences("SOLAR_SETTINGS", Context.MODE_PRIVATE);
+            SharedPreferences prefs = PrefsWriteAudit.get(ctx, "SOLAR_SETTINGS");
             JSONArray arr = load(prefs);
             JSONObject item = new JSONObject();
             item.put("body", body);

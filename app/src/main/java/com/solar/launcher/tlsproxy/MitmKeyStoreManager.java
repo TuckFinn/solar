@@ -1,5 +1,7 @@
 package com.solar.launcher.tlsproxy;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -132,7 +134,7 @@ public class MitmKeyStoreManager {
     }
 
     public void updateSigType(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(context, PREFS);
         String defaultAlgo = (Build.VERSION.SDK_INT >= 16) ? SIG_SHA256 : SIG_SHA1;
         String sigAlgo = prefs.getString(KEY_CERT_SIG, defaultAlgo);
         int newSigType = SIG_SHA256.equals(sigAlgo) ? 1 : 0;

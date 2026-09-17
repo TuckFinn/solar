@@ -103,7 +103,7 @@ public final class UsbStorageSessionFlags {
     public static void syncSkipPromptSysprop(Context ctx) {
         if (ctx == null) return;
         // Force legacy pref so old builds/readers stay hands-off.
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS);
         if (!prefs.getBoolean(PREF_USB_SUPPRESS_CONNECT_PROMPT, DEFAULT_SKIP_SOLAR_PROMPT)) {
             prefs.edit().putBoolean(PREF_USB_SUPPRESS_CONNECT_PROMPT, true).commit();
         }
@@ -138,7 +138,7 @@ public final class UsbStorageSessionFlags {
      */
     public static void applyAutoConnectSideEffects(Context ctx, boolean autoConnect) {
         if (ctx == null) return;
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS);
         // Always leave suppress on — Solar never shows a plug-in nag dialog.
         prefs.edit().putBoolean(PREF_USB_SUPPRESS_CONNECT_PROMPT, true).commit();
         syncUsbSessionSysprops(ctx);
@@ -196,7 +196,7 @@ public final class UsbStorageSessionFlags {
             return false;
         }
         if (ctx == null) return false;
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS);
         return prefs.getBoolean(PREF_USB_AUTO_CONNECT, false)
                 && !prefs.getBoolean(PREF_USB_MANUAL_DISABLE, false);
     }
@@ -204,7 +204,7 @@ public final class UsbStorageSessionFlags {
     /** Overlay dismiss — persist until MainActivity applies {@code onUsbStorageEnableDialogDismissed}. */
     public static void markOverlayDismissPending(Context ctx) {
         if (ctx == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        PrefsWriteAudit.get(ctx, PREFS)
                 .edit()
                 .putBoolean(KEY_OVERLAY_DISMISS_PENDING, true)
                 .commit();
@@ -213,7 +213,7 @@ public final class UsbStorageSessionFlags {
     /** Consume one-shot dismiss flag written by the global USB overlay tier. */
     public static boolean consumeOverlayDismissPending(Context ctx) {
         if (ctx == null) return false;
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(ctx, PREFS);
         if (!prefs.getBoolean(KEY_OVERLAY_DISMISS_PENDING, false)) {
             return false;
         }

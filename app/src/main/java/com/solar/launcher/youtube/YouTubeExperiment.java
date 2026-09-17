@@ -1,5 +1,7 @@
 package com.solar.launcher.youtube;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -30,12 +32,12 @@ public final class YouTubeExperiment {
 
     public static boolean isEnabled(Context ctx) {
         if (ctx == null) return true;
-        return isEnabled(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE));
+        return isEnabled(PrefsWriteAudit.get(ctx, PREFS));
     }
 
     public static void setEnabled(Context ctx, boolean enable) {
         if (ctx == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        PrefsWriteAudit.get(ctx, PREFS)
                 .edit()
                 .putBoolean(PREF_YOUTUBE_EXPERIMENT, enable)
                 .apply();

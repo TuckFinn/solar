@@ -25,12 +25,12 @@ public final class RockboxExperiment {
 
     public static boolean isEnabled(Context ctx) {
         if (ctx == null) return false;
-        return isEnabled(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE));
+        return isEnabled(PrefsWriteAudit.get(ctx, PREFS));
     }
 
     public static void setEnabled(Context ctx, boolean enable) {
         if (ctx == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        PrefsWriteAudit.get(ctx, PREFS)
                 .edit()
                 .putBoolean(PREF_ROCKBOX_EXPERIMENT, enable)
                 .apply();

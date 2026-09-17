@@ -1,5 +1,7 @@
 package com.solar.launcher.podcast;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -16,17 +18,17 @@ public final class PodcastPlayedStore {
 
     public static boolean isPlayed(Context ctx, String key) {
         if (ctx == null || key == null) return false;
-        return ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(key, false);
+        return PrefsWriteAudit.get(ctx, PREFS).getBoolean(key, false);
     }
 
     public static void markPlayed(Context ctx, String key) {
         if (ctx == null || key == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(key, true).commit();
+        PrefsWriteAudit.get(ctx, PREFS).edit().putBoolean(key, true).commit();
     }
 
     public static void clearPlayed(Context ctx, String key) {
         if (ctx == null || key == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(key).commit();
+        PrefsWriteAudit.get(ctx, PREFS).edit().remove(key).commit();
     }
 
     public static void selfCheck() {

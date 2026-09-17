@@ -460,7 +460,7 @@ public final class UsbHostSessionPolicy {
      */
     public static boolean isPromptAllowedAfterBootSettle(Context context) {
         if (context == null) return true;
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(context, PREFS);
         if (!prefs.getBoolean(PREF_BOOT_HOST_AT_BOOT, false)) {
             return true;
         }
@@ -482,7 +482,7 @@ public final class UsbHostSessionPolicy {
     /** Sync sysprops so SystemUI Xposed sees boot-settle + session dismiss without SP (2026-07-06). */
     public static void syncSysprops(Context context) {
         if (context == null) return;
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PrefsWriteAudit.get(context, PREFS);
         syncSysprops(context,
                 prefs.getBoolean(PREF_BOOT_HOST_AT_BOOT, false),
                 prefs.getBoolean(PREF_HOST_DISC_SINCE_BOOT, false),
@@ -538,7 +538,7 @@ public final class UsbHostSessionPolicy {
         try {
             org.json.JSONObject d = new org.json.JSONObject();
             d.put("reason", reason);
-            SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs = PrefsWriteAudit.get(context, PREFS);
             d.put("hostAtBoot", prefs.getBoolean(PREF_BOOT_HOST_AT_BOOT, false));
             d.put("discSinceBoot", prefs.getBoolean(PREF_HOST_DISC_SINCE_BOOT, false));
             long bootElapsed = prefs.getLong(PREF_BOOT_ELAPSED_RT, 0L);

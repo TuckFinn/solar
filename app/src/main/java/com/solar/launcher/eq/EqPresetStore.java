@@ -1,5 +1,7 @@
 package com.solar.launcher.eq;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -32,7 +34,7 @@ public final class EqPresetStore {
     public static EqBandModel loadActive(Context ctx) {
         EqBandModel model = new EqBandModel();
         if (ctx == null) return model;
-        SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences p = PrefsWriteAudit.get(ctx, PREFS);
         model.setEnabled(p.getBoolean(KEY_ENABLED, true));
         model.setPreampDb(p.getFloat(KEY_PREAMP, 0f));
         String gains = p.getString(KEY_GAINS, null);
@@ -58,7 +60,7 @@ public final class EqPresetStore {
             if (i > 0) sb.append(',');
             sb.append(String.format(Locale.US, "%.2f", model.getGainDb(i)));
         }
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+        PrefsWriteAudit.get(ctx, PREFS).edit()
                 .putBoolean(KEY_ENABLED, model.isEnabled())
                 .putFloat(KEY_PREAMP, model.getPreampDb())
                 .putString(KEY_GAINS, sb.toString())
@@ -67,12 +69,12 @@ public final class EqPresetStore {
 
     public static String getActiveName(Context ctx) {
         if (ctx == null) return null;
-        return ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_ACTIVE_NAME, null);
+        return PrefsWriteAudit.get(ctx, PREFS).getString(KEY_ACTIVE_NAME, null);
     }
 
     public static void setActiveName(Context ctx, String name) {
         if (ctx == null) return;
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+        PrefsWriteAudit.get(ctx, PREFS).edit()
                 .putString(KEY_ACTIVE_NAME, name)
                 .commit();
     }

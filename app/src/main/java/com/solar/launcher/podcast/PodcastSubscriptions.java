@@ -1,5 +1,7 @@
 package com.solar.launcher.podcast;
 
+import com.solar.launcher.PrefsWriteAudit;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -38,7 +40,7 @@ public final class PodcastSubscriptions {
     public static List<Show> list(Context ctx) {
         List<Show> out = new ArrayList<Show>();
         if (ctx == null) return out;
-        String raw = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_JSON, "[]");
+        String raw = PrefsWriteAudit.get(ctx, PREFS).getString(KEY_JSON, "[]");
         try {
             JSONArray arr = new JSONArray(raw);
             for (int i = 0; i < arr.length(); i++) {
@@ -101,7 +103,7 @@ public final class PodcastSubscriptions {
                 o.put("art", s.artUrl);
                 arr.put(o);
             }
-            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            PrefsWriteAudit.get(ctx, PREFS).edit()
                     .putString(KEY_JSON, arr.toString())
                     .commit();
         } catch (Exception ignored) {
