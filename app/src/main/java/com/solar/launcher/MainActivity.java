@@ -33921,7 +33921,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             try {
                 File dest = DeezerBackgroundQueue.reservePlaceholder(cacheDir, r, ext);
                 playback.queueDeezerAfterCurrent(dest, r.displayTitle(), r.id);
-                deezerQueueProgressByPath.put(dest.getAbsolutePath(), 0);
+                // A reused cache file is already whole; starting it at 0 would show
+                // "[0%] Loading..." over a track that is ready to play.
+                deezerQueueProgressByPath.put(dest.getAbsolutePath(),
+                        dest.length() > 0 ? 100 : 0);
                 jobs.add(0, new DeezerBackgroundQueue.Job(r, dest));
             } catch (Exception e) {
                 android.util.Log.w("SolarDeezer", "queue placeholder failed: " + r.displayTitle(), e);

@@ -72,6 +72,16 @@ public final class DeezerBackgroundQueue {
         for (int i = 0; i < jobs.size(); i++) {
             if (cancel.get()) return;
             final Job j = jobs.get(i);
+            // Placeholders are created empty, and a failed download deletes its file,
+            // so bytes here mean a finished download -- possibly the one playing right
+            // now. Fetching it again would truncate it under the player.
+            if (j.dest != null && j.dest.length() > 0) {
+                if (listener != null) {
+                    listener.onTrackProgress(j, 100);
+                    listener.onTrackComplete(j);
+                }
+                continue;
+            }
             DeezerDownloadRunner.Progress progress = new DeezerDownloadRunner.Progress() {
                 @Override public void onProgress(int percent, long done, long total) {
                     if (listener == null) return;
@@ -99,17 +109,33 @@ public final class DeezerBackgroundQueue {
         }
     }
 
-    /** Reserve a unique temp path under cache (empty file so queue rows can reference it). */
+    /**
+     * 2026-09-16 — Cache path for a track: its Deezer id.
+     *
+     * Was: "Artist - Title.ext", with a {@code while (exists)} loop appending " (n)".
+     * The downloader ran the same loop independently, so the two could land on
+     * different files -- a queue row pointing at a 0-byte sibling of a complete
+     * download, and playback sitting at "[0%] Loading..." for ever. An id cannot
+     * be spelt two ways, and it is the recording, so an existing file under this
+     * name is always the right audio -- unlike a title, which "Song" and
+     * "Song (Edit)" both reduce to.
+     *
+     * Human-readable names still belong in the music library; this is the cache.
+     * Reversal: restore the filenameBase + " (n)" walk here and in reservePlaceholder.
+     */
+    public static File cacheFileFor(File cacheDir, DeezerResult result, String ext) {
+        String base = result.id > 0 ? String.valueOf(result.id) : result.filenameBase();
+        return new File(cacheDir, base + "." + ext);
+    }
+
+    /** Reserve the track's cache path (empty file so queue rows can reference it). */
     public static File reservePlaceholder(File cacheDir, DeezerResult result, String ext)
             throws IOException {
         if (cacheDir != null && !cacheDir.isDirectory()) cacheDir.mkdirs();
-        String safe = result.filenameBase() + "." + ext;
-        File dest = new File(cacheDir, safe);
-        int n = 1;
-        while (dest.exists()) {
-            dest = new File(cacheDir, result.filenameBase() + " (" + n + ")." + ext);
-            n++;
-        }
+        File dest = cacheFileFor(cacheDir, result, ext);
+        // Already there: the same id, so the same recording. Queueing a track twice
+        // now costs a repeat in the list, not a download that goes nowhere.
+        if (dest.exists()) return dest;
         if (!dest.createNewFile()) throw new IOException("mkdir placeholder");
         return dest;
     }
