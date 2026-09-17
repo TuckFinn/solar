@@ -731,10 +731,21 @@ public final class DeezerScreen {
         buildDownloadUi(r, action);
         if (downloader != null) downloader.cancel();
         downloader = new DeezerDownloader(client);
-        final File dest = (action == ACTION_SAVE || action == ACTION_SAVE_AND_STEMS)
-                ? host.rootFolder() : host.deezerCacheDir();
+        final boolean saving = (action == ACTION_SAVE || action == ACTION_SAVE_AND_STEMS);
         final String ext = client.fileExtension();
-        downloader.download(r, dest, ext, new DeezerDownloader.Listener() {
+        /*
+         * 2026-09-16 — The cache is keyed by track id; the library is not.
+         *
+         * Both used to go through download(dir, ext), which walks " (1)", " (2)"
+         * past whatever is already on disk. For a music library that is right, since
+         * two different recordings can share an artist and a title. For the cache it
+         * meant the track you tapped landed beside the copies of itself the queue had
+         * already fetched under its id -- three files of Dai Dai for one song, and the
+         * queue row and the download once again naming different files.
+         *
+         * Reversal: a single download() call with rootFolder()/deezerCacheDir().
+         */
+        final DeezerDownloader.Listener transferListener = new DeezerDownloader.Listener() {
             @Override public void onProgress(final long done, final long total) {
                 host.runOnUi(new Runnable() {
                     @Override public void run() {
@@ -870,7 +881,14 @@ public final class DeezerScreen {
                     }
                 });
             }
-        });
+        };
+        if (saving) {
+            downloader.download(r, host.rootFolder(), ext, transferListener);
+        } else {
+            downloader.downloadToFile(
+                    r, DeezerBackgroundQueue.cacheFileFor(host.deezerCacheDir(), r, ext),
+                    transferListener);
+        }
     }
 
     private void afterDownloadComplete(DeezerResult r) {
