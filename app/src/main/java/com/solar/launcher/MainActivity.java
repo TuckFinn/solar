@@ -3623,6 +3623,37 @@ public class MainActivity extends Activity {
                 waitForAppThemeBootstrapThenRefreshUi();
             }
         }, "ThemeUiRefresh").start();
+        // 2026-09-17 — A second home for the metadata prune, because its first
+        // one is almost never reached. applyScreenChange purges only when
+        // leaving STATE_PLAYER with an empty queue, and you leave the player
+        // because you were playing, so hasAnyQueue() is true at exactly that
+        // moment. On 2Y1 it had not run in days: 480 of 534 preferences were
+        // metadata for cached files that no longer existed, 89% of a file
+        // SharedPreferences rewrites in full on every commit.
+        //
+        // Only the prune moves here, deliberately, not purgeStreamTempFiles.
+        // That one deletes audio, keeping whatever playback.musicPlaylist()
+        // names, and at cold start the persisted queue may not be loaded yet —
+        // an empty keep list would delete the very tracks the restored queue is
+        // about to play. pruneMissing cannot do that. It reads the cache
+        // directory itself, removes preferences only for files already absent,
+        // and never touches anything outside that directory, so saved music on
+        // an unmounted sdcard is out of its reach.
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    int gone = DeezerMetadata.pruneMissing(
+                            MainActivity.this,
+                            DeezerCache.dir(streamAppCacheRoot()));
+                    if (gone > 0) {
+                        android.util.Log.i("SolarDeezerMeta", "pruned " + gone
+                                + " key(s) for cached files that are gone");
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }, "DeezerMetaPrune").start();
     }
 
     /**
