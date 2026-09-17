@@ -972,6 +972,16 @@ public class MainActivity extends Activity {
     private int reachGrowingSeekMs = 0;
     private File reachQueuePartialFile = null;
     private static final long REACH_GROWING_EXTEND_MS = 3500;
+    /**
+     * How long a re-prepare may hold the in-flight guard after MediaPlayer has
+     * reported an error, before we assume it really did fail.
+     *
+     * 2026-09-17 — Generous on purpose. Preparing a finished 7 MB file off
+     * /data takes about 200 ms; the race this is guarding against is 110 ms
+     * wide. The only cost of waiting is that a genuinely dead prepare blocks
+     * the next one for this long, and that path already retries on a timer.
+     */
+    private static final long REACH_GROWING_PREPARE_GRACE_MS = 4000;
     private static final long REACH_GROWING_MIN_GROW_BYTES = 4096;
     private static final long SOULSEEK_ACTION_REFRESH_MS = 7000;
     private final List<String> soulseekActionSuggestionPool = new ArrayList<String>();
@@ -3152,7 +3162,21 @@ public class MainActivity extends Activity {
                             tvPlayerTimeTotal.setText(formatTime(displayDur));
                         }
                         int edgeMs = reachGrowingDecodeEdgeMs();
-                        if (edgeMs > 0 && current >= edgeMs - REACH_GROWING_EXTEND_MS) {
+                        // 2026-09-17 — ...and only while extending is still a
+                        // thing that could happen. This runs on the progress
+                        // tick, roughly every 100 ms, so once the position is
+                        // within EXTEND_MS of the decode edge it used to call
+                        // through on every single tick — about thirty-five
+                        // times across the closing seconds of a track, each one
+                        // building a log object and reaching the same "no
+                        // growth since last prepare" early return. Once the
+                        // download has finished and the final re-prepare is
+                        // done the decode edge is the whole file and there is
+                        // nothing left to ask for.
+                        boolean canStillExtend = reachDownloadInProgress()
+                                || !reachGrowingFinalReprepareDone;
+                        if (edgeMs > 0 && canStillExtend
+                                && current >= edgeMs - REACH_GROWING_EXTEND_MS) {
                             // #region agent log
                             if (com.solar.launcher.debug.DebugGate.ON) {
                             try {
@@ -56533,12 +56557,32 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                 @Override
                 public boolean onError(MediaPlayer mp, int what, int extra) {
-                    // Only if this is still the attempt we started. The same
-                    // MediaPlayer is reused across re-prepares, so an error
-                    // belonging to the pre-reset state would otherwise open the
-                    // gate for a second, position-less re-prepare.
+                    // 2026-09-17 — An error here does not mean the prepare is
+                    // over. MediaPlayer reports (-38, 0) partway through a
+                    // re-prepare that then succeeds about 200 ms later, and
+                    // clearing the guard on it let the second of the two
+                    // download-complete callers tear the player down all over
+                    // again — two resets, two prepareAsync decodes of a 4-7 MB
+                    // file and two seeks per track, on a device with 500 MB of
+                    // RAM. It was also how the track lost its position before
+                    // d73050d.
+                    //
+                    // So hold the guard and let onPrepared release it. If the
+                    // attempt really has died, onPrepared never comes, and this
+                    // timer is what stops the guard being held for ever.
                     if (prepareGen == reachGrowingPrepareGen) {
-                        reachGrowingReprepareInFlight = false;
+                        if (reachGrowingReprepareInFlight) {
+                            progressHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (prepareGen == reachGrowingPrepareGen) {
+                                        reachGrowingReprepareInFlight = false;
+                                    }
+                                }
+                            }, REACH_GROWING_PREPARE_GRACE_MS);
+                        } else {
+                            reachGrowingReprepareInFlight = false;
+                        }
                     }
                     if (reachPartialPlaybackStarted && reachDownloadInProgress()) {
                         progressHandler.postDelayed(reachGrowingEdgePoll, 400);
