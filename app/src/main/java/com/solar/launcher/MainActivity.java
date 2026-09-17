@@ -56432,7 +56432,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         return 0;
     }
 
-    private void startReachFromGrowingFile(File growingFile, int seekMs) {
+    private void startReachFromGrowingFile(File growingFile, final int seekMs) {
         try {
             progressHandler.removeCallbacks(reachGrowingEdgePoll);
             reachGrowingReprepareInFlight = true;
@@ -56458,6 +56458,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
+                    // A track cannot finish while we are still preparing it.
+                    // This is the player we are in the middle of replacing,
+                    // and letting it run drives nextTrack off a position it
+                    // invented from a duration it no longer knows.
+                    if (reachGrowingReprepareInFlight) return;
                     if (reachGrowingCacheFile != null && reachGrowingCacheFile.isFile()) {
                         if (reachDownloadInProgress()) {
                             // #region agent log
@@ -56517,7 +56522,21 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     if (dur > 0) tvPlayerTimeTotal.setText(formatTime(dur));
                     updateReachGrowingDurationUi();
                     updateMusicTrackCountUi();
-                    int growingSeek = reachGrowingSeekMs;
+                    // 2026-09-17 — Seek where THIS attempt asked to, not
+                    // wherever the shared field has drifted to since.
+                    //
+                    // reachGrowingSeekMs is written by anything that fancies a
+                    // re-prepare, including reachOnCompletion, which fires on
+                    // the old player while the new one is still preparing and
+                    // falls back to getDuration()-500 when it cannot read a
+                    // position. On 2Y1 that turned a re-prepare asking for
+                    // 16158 ms into a prepare that seeked to 250484 of a
+                    // 250984 ms track: sixteen seconds in, the song jumped to
+                    // its last half second and the queue advanced. The second,
+                    // redundant re-prepare used to overwrite the bad value
+                    // before onPrepared read it, so this only became visible
+                    // once that redundant call was correctly blocked.
+                    int growingSeek = seekMs;
                     reachGrowingSeekMs = 0;
                     if (growingSeek > 0) {
                         mp.seekTo(growingSeek);
