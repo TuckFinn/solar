@@ -298,6 +298,18 @@ public final class DiscoveryScreen {
         if (t == null) return false;
         Toast.makeText(host.context(), host.string(R.string.discovery_keeping, t.title),
                 Toast.LENGTH_SHORT).show();
+        // 2026-09-17 — Put the artist in this device's Get Music history now,
+        // rather than waiting for nookman to hand it back.
+        //
+        // nookTunes queues the name and y1sync applies it on a timer, which
+        // means up to fifteen minutes, and only to whichever player
+        // Y1_ADB_HOSTS points at — on 2026-09-17 that was the other Y1, so a
+        // heart made here would have shown up in the test device's history and
+        // never in this one's. The artist is already in hand; writing it
+        // locally is immediate, needs no network, and cannot land on the wrong
+        // device. remember() de-duplicates and caps the list itself, so the
+        // server's copy arriving later is harmless.
+        com.solar.launcher.GetMusicSearchHistory.remember(host.prefs(), t.artist);
         // Still asynchronous — nookTunes may have to fetch the lossless
         // original, far longer than a button press should block for — but no
         // longer forgotten. The press is acknowledged by the caller; this
