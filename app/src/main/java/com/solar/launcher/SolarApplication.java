@@ -122,7 +122,9 @@ public class SolarApplication extends Application {
         } catch (Throwable ignored) {}
         // 2026-07-16 — Auto internet clock (rooted): brief Wi‑Fi wake if needed, restore radio.
         // Geo soft-defaults (TZ / locale / podcast / YouTube region) run on online after wake.
-        if (!isOverlayProcess()) {
+        // 2026-09-16 — isMain, not "not :overlay". Both of these persist to SOLAR_SETTINGS,
+        // and :watchdog passed the old test, so it ran them too. Reversal: !isOverlayProcess().
+        if (SolarProcess.isMain(this)) {
             try {
                 SolarAutoTime.onProcessStart(this);
             } catch (Throwable ignored) {}
@@ -357,6 +359,22 @@ public class SolarApplication extends Application {
         }
         // #endregion
         HearingSafetyVolume.probeAbsoluteMaxAsync(this);
+        /*
+         * 2026-09-16 — Bootstrap belongs to the launcher process alone.
+         *
+         * The intent was always that: :overlay returns above with a short list of its
+         * own work. But the test for "am I a helper" was name.endsWith(":overlay"),
+         * and :watchdog is not that, so it fell through and ran the whole thing --
+         * theme load, config overlay, saved-theme sync, each of which commits
+         * SOLAR_SETTINGS. Prefs are a per-process cached map and a commit rewrites the
+         * whole file, so a helper that started while the file was mid-rewrite could
+         * write back the little it had managed to read. That is the settings wipe: 452
+         * keys to 30, and the 30 were this path's keys -- theme, home menu, clock, geo.
+         *
+         * Nothing below is work a watchdog needs; the launcher does all of it.
+         * Reversal: drop the guard.
+         */
+        if (!SolarProcess.isMain(this)) return;
         // 2026-07-05 — Heavy I/O off main thread so home menu paints first on cold start.
         new Thread(new Runnable() {
             @Override
