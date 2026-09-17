@@ -573,6 +573,7 @@
     <string name="discovery_finding">Finding %1$s\u2026</string>
     <string name="discovery_not_found">Could not find %1$s</string>
     <string name="discovery_keeping">Keeping %1$s…</string>
+    <string name="discovery_keep_failed">Could not keep %1$s</string>
     <string name="home_menu_themes">Themes</string>
     <string name="home_menu_more">More</string>
     <string name="more_menu_empty">No shortcuts in More</string>

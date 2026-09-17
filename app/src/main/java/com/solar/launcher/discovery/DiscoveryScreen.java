@@ -298,11 +298,18 @@ public final class DiscoveryScreen {
         if (t == null) return false;
         Toast.makeText(host.context(), host.string(R.string.discovery_keeping, t.title),
                 Toast.LENGTH_SHORT).show();
-        // Fire and forget: nookTunes may have to fetch the lossless original,
-        // which takes far longer than a button press should block for.
+        // Still asynchronous — nookTunes may have to fetch the lossless
+        // original, far longer than a button press should block for — but no
+        // longer forgotten. The press is acknowledged by the caller; this
+        // reports what the server actually said, whenever it says it.
         host.runOnBg(new Runnable() {
             @Override public void run() {
-                DiscoveryClient.heart(baseUrl(), t.key);
+                final boolean ok = DiscoveryClient.heart(baseUrl(), t.key);
+                host.runOnUi(new Runnable() {
+                    @Override public void run() {
+                        host.heartFeedback(ok, t.title);
+                    }
+                });
             }
         });
         return true;

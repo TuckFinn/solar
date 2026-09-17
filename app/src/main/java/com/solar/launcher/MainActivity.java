@@ -1334,7 +1334,12 @@ public class MainActivity extends Activity {
             globalPpLongFlowHandled = true;
             clearFlowHoldThrobber();
             hideNpLiveHoldHint();
-            heartVibrate(120L);
+            // 2026-09-17 — No buzz here. The "Keeping …" toast acknowledges the
+            // press; the buzz now comes from Host.heartFeedback when nookTunes
+            // has actually answered, so feeling one means the track is kept
+            // rather than merely asked for. Buzzing twice would make the
+            // acknowledgement and the result indistinguishable, which is the
+            // problem being fixed.
             return;
         }
         if (cur == null || cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
@@ -18345,6 +18350,19 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return getString(res, arg1, arg2);
         }
         @Override public void runOnUi(Runnable r) { runOnUiThread(r); }
+        @Override public void heartFeedback(boolean ok, String title) {
+            // Short tick once the server has it; a long buzz and a toast when
+            // it did not, which is the only way the failure is visible at all
+            // — DiscoveryClient.heart() swallows its own exception.
+            if (ok) {
+                heartVibrate(120L);
+            } else {
+                heartVibrate(600L);
+                Toast.makeText(MainActivity.this,
+                        getString(R.string.discovery_keep_failed, title),
+                        Toast.LENGTH_LONG).show();
+            }
+        }
         @Override public void runOnBg(Runnable r) { new Thread(r, "DeezerBg").start(); }
         @Override public boolean getMusicEmbedded() {
             return getMusicEmbeddedInDeezer && currentScreenState == STATE_SOULSEEK;

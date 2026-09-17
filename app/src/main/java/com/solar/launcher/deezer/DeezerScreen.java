@@ -98,6 +98,13 @@ public final class DeezerScreen {
         String string(int res, Object arg);
         String string(int res, Object arg1, Object arg2);
         void runOnUi(Runnable r);
+        /**
+         * 2026-09-17 — Report what the keep actually did. The buzz used to
+         * fire when the request was handed to a background thread, so "asked"
+         * and "landed" felt identical; on 2Y1 one took 61 seconds to reach
+         * nookman and would have felt the same had it never arrived.
+         */
+        void heartFeedback(boolean ok, String title);
         void runOnBg(Runnable r);
         boolean getMusicEmbedded();
         void onGetMusicBackToResults();
