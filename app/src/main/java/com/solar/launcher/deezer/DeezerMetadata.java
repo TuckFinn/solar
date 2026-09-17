@@ -107,6 +107,79 @@ public final class DeezerMetadata {
         return DeezerCoverArt.bestCoverUrl(prefs.getString(KEY_COVER_URL + path, ""));
     }
 
+    /**
+     * Forget metadata for cached files that are no longer on disk.
+     *
+     * 2026-09-16 — this cache had no eviction of any kind. Four keys are
+     * written per track, named after the file's absolute path, and nothing
+     * ever removed them: DeezerCache.purgeUnreferenced deletes the audio and
+     * leaves the metadata behind. On 2Y1 that was 480 of the 533 keys in
+     * SOLAR_SETTINGS.xml, 89% of the file, and 82 of the 120 cached paths
+     * named files that no longer exist at all -- most of them stranded when
+     * the cache started naming files by Deezer id (40d9a73) rather than by
+     * title. SharedPreferences rewrites the entire file on every commit, so
+     * every future metadata write was copying 64 KB of dead entries, and a
+     * settings wipe had that much more to destroy.
+     *
+     * Only paths directly inside cacheDir are considered. Metadata for saved
+     * music must never be pruned this way: it lives on the sdcard, which can
+     * be unmounted, and "the file is not there" would then mean "forget
+     * everything the user saved".
+     *
+     * @return how many keys were dropped.
+     */
+    public static int pruneMissing(Context ctx, File cacheDir) {
+        if (ctx == null || cacheDir == null) return 0;
+        java.util.Set<String> present = new java.util.HashSet<String>();
+        File[] files = cacheDir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f != null) present.add(f.getAbsolutePath());
+            }
+        }
+        SharedPreferences prefs = prefs(ctx);
+        java.util.List<String> drop;
+        try {
+            drop = staleKeys(prefs.getAll().keySet(), cacheDir.getAbsolutePath(), present);
+        } catch (Exception e) {
+            return 0;
+        }
+        if (drop.isEmpty()) return 0;
+        SharedPreferences.Editor ed = prefs.edit();
+        for (String key : drop) ed.remove(key);
+        ed.commit();
+        return drop.size();
+    }
+
+    /**
+     * Which of {@code allKeys} are metadata for a file directly inside
+     * {@code cacheDir} that is not in {@code present}. Pure, so the decision
+     * can be tested without a device.
+     */
+    static java.util.List<String> staleKeys(java.util.Set<String> allKeys,
+            String cacheDir, java.util.Set<String> present) {
+        java.util.List<String> out = new java.util.ArrayList<String>();
+        if (allKeys == null || cacheDir == null || present == null) return out;
+        String prefix = cacheDir.endsWith(File.separator)
+                ? cacheDir : cacheDir + File.separator;
+        String[] keyPrefixes = {KEY_TITLE, KEY_ARTIST, KEY_ALBUM, KEY_COVER_URL};
+        for (String key : allKeys) {
+            if (key == null) continue;
+            for (String kp : keyPrefixes) {
+                if (!key.startsWith(kp)) continue;
+                String path = key.substring(kp.length());
+                // Directly inside the cache directory, not in a subdirectory
+                // of it: a nested path is not something purgeUnreferenced
+                // manages, so leave it alone.
+                if (!path.startsWith(prefix)) break;
+                if (path.indexOf(File.separatorChar, prefix.length()) != -1) break;
+                if (!present.contains(path)) out.add(key);
+                break;
+            }
+        }
+        return out;
+    }
+
     /** Drop prefs overlay after tags are embedded in the audio file. */
     public static void clearOverlay(Context ctx, String absolutePath) {
         if (ctx == null || absolutePath == null) return;
@@ -146,6 +219,10 @@ public final class DeezerMetadata {
     }
 
     private static SharedPreferences prefs(Context ctx) {
-        return ctx.getSharedPreferences(DeezerAccount.PREFS_NAME, Context.MODE_PRIVATE);
+        // 2026-09-16 — through PrefsWriteAudit like every other SOLAR_SETTINGS
+        // caller. Going to ctx directly returns the same underlying instance
+        // but not the wrapper, so four writes per cached track were invisible
+        // to the audit that exists to name whoever rewrites this file.
+        return com.solar.launcher.PrefsWriteAudit.get(ctx, DeezerAccount.PREFS_NAME);
     }
 }

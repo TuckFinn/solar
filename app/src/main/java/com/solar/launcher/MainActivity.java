@@ -55103,6 +55103,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             keep.add(deezerScreen.growingFile());
         }
         DeezerCache.purgeUnreferenced(streamAppCacheRoot(), keep);
+        // The audio is gone; its four metadata keys should go with it. Without
+        // this they accumulate for ever -- see DeezerMetadata.pruneMissing.
+        DeezerMetadata.pruneMissing(this, DeezerCache.dir(streamAppCacheRoot()));
         // 2026-07-16 — YouTube Play temps die with the queue (Save still uses Music/YouTube).
         com.solar.launcher.youtube.YouTubePlayCache.purgeUnreferenced(streamAppCacheRoot(), keep);
         StreamTempCache.purgePodcastStream(streamAppCacheRoot(),
