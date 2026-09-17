@@ -1,34 +1,42 @@
 package com.solar.launcher;
 
 import android.content.Context;
-import android.content.Intent;
 
 /**
- * 2026-07-05 — Keeps {@link SolarRescueHoldService} alive for cross-app rescue countdown HUD.
- * Layman: babysits the little “return to Solar” timer so it survives app crashes.
- * Technical: idempotent START_STICKY keepalive from boot, daemon, and hold-arm writers.
+ * 2026-09-16 — Stopped calling {@link SolarRescueHoldService}.
+ *
+ * Was: idempotent START_STICKY keepalive for the in-app rescue countdown HUD, from
+ * boot, the daemon, and every hold-arm writer.
+ *
+ * The service is not declared in AndroidManifest.xml and never has been --
+ * {@code git log -S SolarRescueHoldService} on the manifest comes back empty -- so
+ * every one of those startService calls failed. ActivityManager answered "not
+ * found" a hundred and eighty times in thirty-five minutes, about one every twelve
+ * seconds, for the life of the app, and this class swallowed the exception so
+ * nothing ever said so.
+ *
+ * Declaring it was the other option and the worse one: it would revive a fallback
+ * HUD nobody has been without, and put an eighth process on a device that has been
+ * down to seventeen megabytes free. The countdown is already drawn by the rooted
+ * ROM path, solar-rescue-hud-watch.sh into {@link SolarRescueHudMain}.
+ *
+ * The methods stay, so the six call sites still read as intent and reversing this
+ * is one file rather than seven. {@link SolarRescueHoldState} is untouched: the
+ * sysprops it manages are what the ROM HUD reads.
+ *
+ * Reversal: restore the two startService bodies and add to AndroidManifest.xml
+ *   &lt;service android:name=".SolarRescueHoldService" android:exported="false"
+ *            android:process=":hold" /&gt;
  */
 public final class SolarRescueHoldHost {
 
     private SolarRescueHoldHost() {}
 
-    /** Boot + app start — service polls sys.solar.rescue.hold_deadline until RAM exhaustion. */
+    /** No-op: the service this started is not declared, so it only ever failed. */
     public static void ensureStarted(Context context) {
-        if (context == null) return;
-        Intent intent = new Intent(context, SolarRescueHoldService.class);
-        intent.setAction(OverlayTriggers.ACTION_RESCUE_HOLD_KEEPALIVE);
-        try {
-            context.getApplicationContext().startService(intent);
-        } catch (Exception ignored) {}
     }
 
-    /** Hold armed — nudge :hold process to poll immediately (no waiting for watchdog). */
+    /** No-op: see {@link #ensureStarted}. */
     public static void ping(Context context) {
-        ensureStarted(context);
-        Intent intent = new Intent(context, SolarRescueHoldService.class);
-        intent.setAction(OverlayTriggers.ACTION_RESCUE_HOLD_TICK);
-        try {
-            context.getApplicationContext().startService(intent);
-        } catch (Exception ignored) {}
     }
 }
