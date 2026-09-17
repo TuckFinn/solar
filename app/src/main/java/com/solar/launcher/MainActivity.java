@@ -950,6 +950,23 @@ public class MainActivity extends Activity {
     private long reachGrowingTotalBytes = 0;
     private volatile boolean reachPartialPlaybackStarted = false;
     private volatile boolean reachGrowingReprepareInFlight = false;
+    /**
+     * Which re-prepare of the growing file is current.
+     *
+     * 2026-09-17 — startReachFromGrowingFile reuses one MediaPlayer through
+     * reset(), so a callback armed before the reset still fires afterwards and
+     * used to clear reachGrowingReprepareInFlight for a prepare it knew
+     * nothing about. Each attempt now carries a generation and stale callbacks
+     * are ignored.
+     */
+    private volatile int reachGrowingPrepareGen = 0;
+    /**
+     * Last position we actually saw while this growing file was playing.
+     *
+     * A forced re-prepare reads getCurrentPosition(), and a player that is
+     * mid-prepare answers 0. Seeking to that restarts the song.
+     */
+    private volatile int reachGrowingLastPositionMs = 0;
     /** One full-file reprepare when MediaPlayer ends before the download finished decoding. */
     private boolean reachGrowingFinalReprepareDone = false;
     private int reachGrowingSeekMs = 0;
@@ -56267,6 +56284,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 durationMs = mediaPlayer.getDuration();
             }
         } catch (Exception ignored) {}
+        if (positionMs > 0) reachGrowingLastPositionMs = positionMs;
         long growth = fileLen - reachGrowingPreparedBytes;
         // ponytail: at 100% re-prepare once so MediaPlayer decodes the finalized file.
         if (!reachDownloadInProgress()) {
@@ -56336,6 +56354,17 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 return;
             }
         }
+        // 2026-09-17 — Two callers force a re-prepare when a download finishes:
+        // the stream-complete handler and onDeezerStreamDownloadComplete. On
+        // 2Y1 they fired 110 ms apart, and the second read getCurrentPosition()
+        // from a player still preparing for the first, got 0, and sent "No Time
+        // For This" back to the beginning twenty-one seconds in. A position of
+        // zero on a track we have been hearing is not a position, it is a
+        // player that cannot answer yet, so fall back to the last one we saw.
+        if (positionMs <= 0 && reachGrowingLastPositionMs > 0
+                && reachPartialPlaybackStarted) {
+            positionMs = reachGrowingLastPositionMs;
+        }
         reachGrowingSeekMs = positionMs;
         // #region agent log
         if (com.solar.launcher.debug.DebugGate.ON) {
@@ -56344,6 +56373,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             d.put("fileLen", fileLen);
             d.put("prepared", reachGrowingPreparedBytes);
             d.put("seekMs", positionMs);
+            d.put("lastKnownMs", reachGrowingLastPositionMs);
             d.put("force", force);
             d.put("deezer", isDeezerStreamDownloadInProgress());
             DebugAgentLog.log(this, "MainActivity.maybeExtendReachGrowingPlayback",
@@ -56382,6 +56412,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         try {
             progressHandler.removeCallbacks(reachGrowingEdgePoll);
             reachGrowingReprepareInFlight = true;
+            final int prepareGen = ++reachGrowingPrepareGen;
             reachGrowingSeekMs = seekMs;
             reachGrowingPreparedBytes = growingFile.length();
             if (seekMs <= 0) reachGrowingFinalReprepareDone = false;
@@ -56452,6 +56483,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
+                    if (prepareGen != reachGrowingPrepareGen) return;
                     reachGrowingReprepareInFlight = false;
                     int dur = mp.getDuration();
                     if (reachPartialPlaybackStarted) {
@@ -56501,7 +56533,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                 @Override
                 public boolean onError(MediaPlayer mp, int what, int extra) {
-                    reachGrowingReprepareInFlight = false;
+                    // Only if this is still the attempt we started. The same
+                    // MediaPlayer is reused across re-prepares, so an error
+                    // belonging to the pre-reset state would otherwise open the
+                    // gate for a second, position-less re-prepare.
+                    if (prepareGen == reachGrowingPrepareGen) {
+                        reachGrowingReprepareInFlight = false;
+                    }
                     if (reachPartialPlaybackStarted && reachDownloadInProgress()) {
                         progressHandler.postDelayed(reachGrowingEdgePoll, 400);
                         return true;
