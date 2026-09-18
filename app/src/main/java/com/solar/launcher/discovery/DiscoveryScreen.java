@@ -77,6 +77,9 @@ public final class DiscoveryScreen {
     static final int KEEP_BEHIND = 3;
     /** Every Deezer id Discovery has queued this session -- all it may empty. */
     private final java.util.Set<Long> discoveryIds = new java.util.HashSet<Long>();
+    /** The playlist the run draws from, as it was when the song was picked. */
+    private final List<DiscoveryClient.Track> runPlaylist = new ArrayList<DiscoveryClient.Track>();
+    private final java.util.Random random = new java.util.Random();
 
     /** Bumped on every play, so a superseded run stops resolving. */
     private volatile int queueGeneration;
@@ -259,12 +262,11 @@ public final class DiscoveryScreen {
      */
     private void beginRun(DiscoveryClient.Track from, long fromId) {
         final int generation = ++queueGeneration;
+        runPlaylist.clear();
+        runPlaylist.addAll(tracks);
         runPending.clear();
-        boolean after = false;
-        for (DiscoveryClient.Track t : tracks) {
-            if (after) runPending.add(t);
-            if (t == from) after = true;
-        }
+        runPending.addAll(pendingOrder(runPlaylist, from,
+                java.util.Collections.singleton(from), shuffleOn(), random));
         runQueued.clear();
         runTracks.clear();
         runQueued.add(Long.valueOf(fromId));
@@ -275,6 +277,63 @@ public final class DiscoveryScreen {
         runResolving = false;
         playingDeezerId = fromId;
         topUp(generation);
+    }
+
+    private boolean shuffleOn() {
+        return host.prefs() != null && host.prefs().getBoolean("shuffle", false);
+    }
+
+    /**
+     * 2026-09-18 — What a run plays after {@code current}, following Solar's
+     * shuffle: in order, the playlist's songs after it; shuffled, every song
+     * of the playlist, before it as well as after, in random order. Songs in
+     * {@code queued} are left out either way -- they are playing or played.
+     */
+    static <T> List<T> pendingOrder(List<T> playlist, T current, java.util.Set<T> queued,
+            boolean shuffle, java.util.Random random) {
+        List<T> out = new ArrayList<T>();
+        boolean after = false;
+        for (T t : playlist) {
+            if (t == current) {
+                after = true;
+                continue;
+            }
+            if ((shuffle || after) && !queued.contains(t)) out.add(t);
+        }
+        if (shuffle) java.util.Collections.shuffle(out, random);
+        return out;
+    }
+
+    /**
+     * Solar's shuffle was switched. While a run song is playing the run takes
+     * it: what it has not played is reordered, and the few songs queued ahead
+     * are replaced from the new order.
+     *
+     * Solar's own reshuffle permutes every song in the queue, which suits an
+     * album and not a run -- played songs (their audio possibly emptied) land
+     * ahead of the head, and the run's last song, the one it queues behind,
+     * can land behind it, which ends the run.
+     *
+     * @return true when the run handled it and Solar should not reshuffle
+     */
+    public boolean handleShuffleChanged(boolean on) {
+        int at = runQueued.indexOf(Long.valueOf(playingDeezerId));
+        DiscoveryClient.Track current = runTracks.get(Long.valueOf(playingDeezerId));
+        if (at < 0 || current == null || runPlaylist.isEmpty()) return false;
+        final int generation = ++queueGeneration;   // abandon any search in flight
+        runResolving = false;
+        java.util.Set<Long> ahead = new java.util.HashSet<Long>();
+        while (runQueued.size() > at + 1) {
+            Long id = runQueued.remove(runQueued.size() - 1);
+            runTracks.remove(id);
+            ahead.add(id);
+        }
+        if (!ahead.isEmpty()) host.queueDeezerTracks(new ArrayList<DeezerResult>(), ahead);
+        runPending.clear();
+        runPending.addAll(pendingOrder(runPlaylist, current,
+                new java.util.HashSet<DiscoveryClient.Track>(runTracks.values()), on, random));
+        topUp(generation);
+        return true;
     }
 
     /**

@@ -31153,7 +31153,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     try {
                         prefs.edit().putBoolean("shuffle", isShuffleMode).commit();
                     } catch (Exception ignored) {}
-                    playback.reshuffleMusic(isShuffleMode);
+                    // A Discovery run reorders its own songs; see handleShuffleChanged.
+                    if (discoveryScreen == null
+                            || !discoveryScreen.handleShuffleChanged(isShuffleMode)) {
+                        playback.reshuffleMusic(isShuffleMode);
+                    }
                     updatePlayerStatusIndicators();
                     refreshContextQueueTierIfOpen();
                 }
@@ -35504,7 +35508,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     prefs.edit().putBoolean("shuffle", isShuffleMode).commit();
                 } catch (Exception e) {
                 }
-                if (!playback.musicPlaylist().isEmpty()) {
+                if (discoveryScreen != null && discoveryScreen.handleShuffleChanged(isShuffleMode)) {
+                    // A Discovery run reorders its own songs; see handleShuffleChanged.
+                } else if (!playback.musicPlaylist().isEmpty()) {
                     playback.reshuffleMusic(isShuffleMode);
                 }
                 refreshContextQueueTierIfOpen();
