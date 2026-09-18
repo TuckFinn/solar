@@ -68,6 +68,16 @@ public final class DiscoveryScreen {
      */
     static final int QUEUE_AHEAD = 3;
 
+    /**
+     * 2026-09-18 — Played songs kept whole behind the one playing. Older ones
+     * keep their place in the queue but give up their audio (~9 MB each), so
+     * an afternoon of a 100-song playlist does not fill /data; Previous past
+     * them waits for a download instead.
+     */
+    static final int KEEP_BEHIND = 3;
+    /** Every Deezer id Discovery has queued this session -- all it may empty. */
+    private final java.util.Set<Long> discoveryIds = new java.util.HashSet<Long>();
+
     /** Bumped on every play, so a superseded run stops resolving. */
     private volatile int queueGeneration;
     /**
@@ -259,6 +269,7 @@ public final class DiscoveryScreen {
         runTracks.clear();
         runQueued.add(Long.valueOf(fromId));
         runTracks.put(Long.valueOf(fromId), from);
+        discoveryIds.add(Long.valueOf(fromId));
         runReplace = queuedIds;
         queuedIds = new java.util.HashSet<Long>();
         runResolving = false;
@@ -274,6 +285,7 @@ public final class DiscoveryScreen {
      */
     public void onDeezerTrackPlaying(long deezerTrackId) {
         playingDeezerId = deezerTrackId;
+        if (!discoveryIds.isEmpty()) host.releaseDeezerAudioBehind(KEEP_BEHIND, discoveryIds);
         DiscoveryClient.Track t = runTracks.get(Long.valueOf(deezerTrackId));
         if (t == null) return;
         lastPlayed = t;
@@ -332,6 +344,7 @@ public final class DiscoveryScreen {
                             runQueued.add(id);
                             runTracks.put(id, rows.get(i));
                             queuedIds.add(id);
+                            discoveryIds.add(id);
                         }
                         // Still short when songs failed to resolve, or when
                         // playback moved on while this was searching.

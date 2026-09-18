@@ -42,7 +42,17 @@ public final class DeezerBackgroundQueue {
         enqueue(queueJobs);
     }
 
-    /** Append jobs and start worker if idle — does not cancel in-flight downloads. */
+    /**
+     * Append jobs and start the worker if idle — does not cancel in-flight downloads.
+     *
+     * 2026-09-18 — A job leaves the list once it is taken, and the lock is held
+     * only to add or take one. runQueue used to be synchronized itself, so it
+     * held the lock for the whole download loop: an enqueue from the UI thread
+     * while a song was downloading blocked the UI until every download had
+     * finished, which Discovery topping up a song at a time does routinely. And
+     * nothing was ever removed, so each new worker walked every job ever added
+     * from the start again, re-fetching any whose file had since been emptied.
+     */
     public synchronized void enqueue(List<Job> queueJobs) {
         if (queueJobs == null || queueJobs.isEmpty()) return;
         jobs.addAll(queueJobs);
@@ -58,20 +68,37 @@ public final class DeezerBackgroundQueue {
 
     public synchronized void cancel() {
         cancel.set(true);
+        jobs.clear();
         if (worker != null && worker.isAlive()) worker.interrupt();
         worker = null;
     }
 
-    private synchronized void runQueue() {
+    /**
+     * The next job, or null when there is none -- in which case the worker is
+     * retired under the same lock, so an enqueue racing it starts a fresh one
+     * rather than handing work to a thread that is on its way out.
+     */
+    private synchronized Job takeNext() {
+        if (jobs.isEmpty()) {
+            if (worker == Thread.currentThread()) worker = null;
+            return null;
+        }
+        return jobs.remove(0);
+    }
+
+    private void runQueue() {
         String ext = "mp3";
         try {
             DeezerClient probe = new DeezerClient(prefs);
             if (!probe.isSessionValid()) probe.initSession();
             ext = probe.fileExtension();
         } catch (Exception ignored) {}
-        for (int i = 0; i < jobs.size(); i++) {
-            if (cancel.get()) return;
-            final Job j = jobs.get(i);
+        while (!cancel.get()) {
+            final Job j = takeNext();
+            if (j == null) {
+                if (listener != null) listener.onAlbumComplete();
+                return;
+            }
             // Placeholders are created empty, and a failed download deletes its file,
             // so bytes here mean a finished download -- possibly the one playing right
             // now. Fetching it again would truncate it under the player.
@@ -102,10 +129,6 @@ public final class DeezerBackgroundQueue {
                     listener.onTrackComplete(j);
                 }
             }
-        }
-        if (!cancel.get() && listener != null) listener.onAlbumComplete();
-        synchronized (this) {
-            if (!cancel.get()) worker = null;
         }
     }
 

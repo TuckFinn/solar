@@ -18352,6 +18352,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             dropQueuedDeezerBelowCurrent(replaceDeezerIds);
             startDeezerAlbumBackgroundQueue(tracks);
         }
+        @Override public void releaseDeezerAudioBehind(int keep, java.util.Set<Long> ids) {
+            MainActivity.this.releaseDeezerAudioBehind(keep, ids);
+        }
         @Override public boolean queueDeezerTracksAfter(java.util.List<DeezerResult> tracks,
                 long afterDeezerId) {
             int at = queuedDeezerIndexFromPlayHead(afterDeezerId);
@@ -33993,6 +33996,110 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         deezerScreen.startTransfer(deezerBatchTransfer.get(index), deezerBatchTransferAction);
     }
 
+    /** The queued Deezer song on screen waiting for its download to land, if any. */
+    private File deezerAwaitingFile;
+
+    /**
+     * 2026-09-18 — A queued Deezer song with no audio yet waits for it.
+     *
+     * prepareMusicTrack removes a stream row under 1 KB and skips on. That is
+     * right for a Soulseek partial that will never grow and wrong for a Deezer
+     * song: skip twice quickly onto one still downloading and it vanished from
+     * the queue, and a played song whose audio was released to save space would
+     * vanish the same way when Previous reached it. Wait instead, starting the
+     * download if nothing is fetching it, and play it when it lands.
+     */
+    private boolean awaitDeezerDownload(PlayQueue.QueueItem item, File file) {
+        if (item == null || file == null || item.deezerTrackId <= 0) return false;
+        String path = file.getAbsolutePath();
+        Integer pct = deezerQueueProgressByPath.get(path);
+        boolean fetching = pct != null && pct.intValue() >= 0 && pct.intValue() < 100;
+        if (!fetching) {
+            try {
+                File dir = file.getParentFile();
+                if (dir != null && !dir.isDirectory()) dir.mkdirs();
+                if (!file.exists() && !file.createNewFile()) return false;
+            } catch (java.io.IOException e) {
+                return false;
+            }
+            deezerQueueProgressByPath.put(path, 0);
+            ensureDeezerBackgroundQueue();
+            java.util.List<DeezerBackgroundQueue.Job> one =
+                    new java.util.ArrayList<DeezerBackgroundQueue.Job>();
+            one.add(new DeezerBackgroundQueue.Job(deezerResultFor(item), file));
+            deezerBackgroundQueue.enqueue(one);
+            android.util.Log.i("SolarDiscovery", "fetching again: " + item.deezerMeta);
+        }
+        deezerAwaitingFile = file;
+        String t = item.streamMeta();
+        tvPlayerTitle.setText(t != null && !t.isEmpty() ? t : file.getName());
+        tvPlayerArtist.setText(getString(R.string.reach_loading_track));
+        clearNowPlayingAlbumLine();
+        setPlayerDefaultAlbumArt();
+        return true;
+    }
+
+    /** Enough to download a queued song again: its id, and the names and cover it was saved with. */
+    private DeezerResult deezerResultFor(PlayQueue.QueueItem item) {
+        String meta = item.deezerMeta != null ? item.deezerMeta.trim() : "";
+        String artist = "";
+        String title = meta;
+        int dash = meta.indexOf(" - ");
+        if (dash > 0) {
+            artist = meta.substring(0, dash).trim();
+            title = meta.substring(dash + 3).trim();
+        }
+        String path = item.file != null ? item.file.getAbsolutePath() : null;
+        return new DeezerResult(item.deezerTrackId,
+                DeezerMetadata.title(prefs, path, title),
+                DeezerMetadata.artist(prefs, path, artist),
+                DeezerMetadata.album(prefs, path, ""),
+                0L, 0, "", DeezerMetadata.coverUrl(prefs, path));
+    }
+
+    /**
+     * 2026-09-18 — Empty the cache files of Discovery songs more than
+     * {@code keep} behind the play head. Their queue rows stay, so Previous
+     * still reaches them and awaitDeezerDownload fetches them again.
+     */
+    private void releaseDeezerAudioBehind(int keep, java.util.Set<Long> ids) {
+        PlayQueue q = playback.unifiedQueue();
+        if (q == null || q.size() == 0) return;
+        java.util.List<PlayQueue.QueueItem> items = q.items();
+        long[] byIndex = new long[items.size()];
+        for (int i = 0; i < byIndex.length; i++) {
+            PlayQueue.QueueItem it = items.get(i);
+            byIndex[i] = it != null && it.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                    ? it.deezerTrackId : 0L;
+        }
+        long freed = 0;
+        int n = 0;
+        for (Integer at : com.solar.launcher.deezer.DeezerQueueTrim.releasable(
+                byIndex, q.index(), keep, ids)) {
+            File f = items.get(at.intValue()).file;
+            if (f == null || f.length() <= 0 || f.equals(deezerActiveGrowingFile)) continue;
+            if (deezerScreen != null && f.equals(deezerScreen.growingFile())) continue;
+            long len = f.length();
+            try {
+                java.io.RandomAccessFile raf = new java.io.RandomAccessFile(f, "rw");
+                try {
+                    raf.setLength(0);
+                } finally {
+                    raf.close();
+                }
+                deezerQueueProgressByPath.remove(f.getAbsolutePath());
+                freed += len;
+                n++;
+            } catch (java.io.IOException e) {
+                android.util.Log.w("SolarDiscovery", "could not release " + f.getName(), e);
+            }
+        }
+        if (n > 0) {
+            android.util.Log.i("SolarDiscovery", "released " + n + " played song(s), "
+                    + (freed / 1024) + " KB");
+        }
+    }
+
     /** Index of the queued Deezer track with this id, from the play head down; -1 if none. */
     private int queuedDeezerIndexFromPlayHead(long deezerId) {
         PlayQueue q = playback.unifiedQueue();
@@ -34145,6 +34252,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             @Override public void run() {
                                 refreshStreamProgressUi();
                                 persistPlaybackQueue();
+                                // The song on screen was waiting for exactly this.
+                                if (job.dest.equals(deezerAwaitingFile)) {
+                                    deezerAwaitingFile = null;
+                                    PlayQueue.QueueItem cur = playback.currentItem();
+                                    if (cur != null && job.dest.equals(cur.file)) {
+                                        prepareMusicTrack(playback.musicIndex());
+                                    }
+                                }
                             }
                         });
                     }
@@ -34155,6 +34270,19 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         deezerQueueProgressByPath.remove(job.dest.getAbsolutePath());
                         android.util.Log.w("SolarDeezer", "bg queue track failed: "
                                 + job.track.displayTitle() + ": " + error);
+                        runOnUiThread(new Runnable() {
+                            @Override public void run() {
+                                if (!job.dest.equals(deezerAwaitingFile)) return;
+                                deezerAwaitingFile = null;
+                                PlayQueue.QueueItem cur = playback.currentItem();
+                                if (cur == null || !job.dest.equals(cur.file)) return;
+                                // Could not get it back: what used to happen straight
+                                // away -- drop the row and move on.
+                                playback.removeQueueItemAt(playback.unifiedQueue().index());
+                                persistPlaybackQueue();
+                                nextTrack();
+                            }
+                        });
                     }
 
                     @Override public void onAlbumComplete() {
@@ -58730,6 +58858,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             boolean isStreamItem = curItem != null
                     && (curItem.kind == PlayQueue.ItemKind.REACH_STREAM
                     || curItem.kind == PlayQueue.ItemKind.DEEZER_STREAM);
+            if (curItem != null && curItem.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                    && awaitDeezerDownload(curItem, track)) {
+                return;
+            }
             if (isStreamItem && deferStreamTrackNotReady()) {
                 String waitTitle = curItem.streamMeta();
                 if (waitTitle == null || waitTitle.isEmpty()) waitTitle = track.getName();

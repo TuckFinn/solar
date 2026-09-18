@@ -88,8 +88,8 @@ android {
         applicationId "com.solar.launcher"
         minSdk 17
         targetSdk 35
-        versionCode 3531600
-        versionName "nightly-20260918-1200"
+        versionCode 3531646
+        versionName "nightly-20260918-1246"
         // SOLAR_DISABLE_OTA=1 builds a launcher that never offers/installs upstream OTA
         // updates — for forks and test devices that must keep the build they were given.
         // Unset (the default) keeps upstream behaviour.

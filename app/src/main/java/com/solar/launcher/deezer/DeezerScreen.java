@@ -96,6 +96,12 @@ public final class DeezerScreen {
          */
         boolean queueDeezerTracksAfter(java.util.List<DeezerResult> tracks,
                 long afterDeezerId);
+        /**
+         * Empty the cached audio of queued songs with these ids that sit more
+         * than {@code keep} behind the play head. Their queue rows stay; going
+         * back to one downloads it again.
+         */
+        void releaseDeezerAudioBehind(int keep, java.util.Set<Long> ids);
         void replaceDeezerInQueue(File oldF, File newF, String meta);
         void launchDeezerSearchFromSuggestion(String q, boolean openKeyboard);
         void launchReachSearchFromSuggestion(String q, boolean openKeyboard);
