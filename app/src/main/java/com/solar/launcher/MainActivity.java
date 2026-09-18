@@ -1342,6 +1342,16 @@ public class MainActivity extends Activity {
             // problem being fixed.
             return;
         }
+        // 2026-09-18 — A song from the device's own storage: into this player's
+        // Hearts playlist at once, then to nookTunes as a favourite. The hold
+        // used to fall through the checks below and do nothing at all.
+        if (cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE && cur.file != null) {
+            globalPpLongFlowHandled = true;
+            clearFlowHoldThrobber();
+            hideNpLiveHoldHint();
+            heartLocalFile(cur.file);
+            return;
+        }
         if (cur == null || cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
                 || cur.navidromeSongId == null || cur.navidromeSongId.isEmpty()) {
             return;
@@ -1366,6 +1376,82 @@ public class MainActivity extends Activity {
             }
         });
     }
+    /**
+     * The Play/Pause hold on a song from the device's own storage: it becomes a
+     * favourite, which puts it in the Hearts playlist and tells nookTunes. The
+     * buzz says whether the playlist write worked; the artist goes into Get
+     * Music history like any heart.
+     */
+    private void heartLocalFile(final File file) {
+        String path = file.getAbsolutePath();
+        MusicLibraryStore.getInstance(this).setFavorite(path, true);
+        favoritePaths.add(path);
+        onLocalFavoritesChanged(java.util.Collections.singletonList(file), true, true);
+    }
+
+    /**
+     * 2026-09-18 — A local favourite is a heart. Keep the Hearts playlist and
+     * nookTunes in step with Solar's favourites, whichever way they were set.
+     * Off the UI thread: a playlist write, and one request per song.
+     */
+    private void onLocalFavoritesChanged(final java.util.List<File> files, final boolean on,
+            final boolean feedback) {
+        if (files == null || files.isEmpty()) return;
+        final File musicRoot = rootFolder;
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        final java.util.List<String[]> tags = new java.util.ArrayList<String[]>();
+        for (File f : files) {
+            SongItem si = findSongItem(f);
+            String n = f.getName();
+            int dot = n.lastIndexOf('.');
+            tags.add(new String[] {
+                    si != null && si.artist != null ? si.artist.trim() : "",
+                    si != null && si.title != null && !si.title.trim().isEmpty()
+                            ? si.title.trim() : (dot > 0 ? n.substring(0, dot) : n),
+                    si != null && si.album != null ? si.album.trim() : "" });
+        }
+        new Thread(new Runnable() {
+            @Override public void run() {
+                boolean ok = true;
+                for (File f : files) {
+                    try {
+                        boolean changed = on ? HeartsPlaylist.add(musicRoot, f)
+                                : HeartsPlaylist.remove(musicRoot, f);
+                        android.util.Log.i("SolarHeart", (on ? "heart " : "unheart ")
+                                + f.getName() + (changed ? "" : " (no change)"));
+                    } catch (java.io.IOException e) {
+                        ok = false;
+                        android.util.Log.w("SolarHeart", "hearts playlist write failed", e);
+                    }
+                }
+                final boolean fOk = ok;
+                final String firstArtist = tags.get(0)[0];
+                final String firstTitle = tags.get(0)[1];
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        if (on && fOk && !firstArtist.isEmpty()) {
+                            GetMusicSearchHistory.remember(prefs, firstArtist);
+                        }
+                        if (!feedback) return;
+                        heartVibrate(fOk ? 120L : 600L);
+                        Toast.makeText(MainActivity.this, fOk
+                                ? getString(R.string.navidrome_hearted, firstTitle)
+                                : getString(R.string.navidrome_heart_failed),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+                if (base.trim().isEmpty()) return;
+                for (String[] t : tags) {
+                    if (t[0].isEmpty()) continue;
+                    boolean told = com.solar.launcher.discovery.DiscoveryClient.heartLocal(
+                            base, t[0], t[1], t[2], on);
+                    android.util.Log.i("SolarHeart", "nookTunes " + (told ? "has" : "did not get")
+                            + (on ? " the heart for " : " the unheart for ") + t[0] + " - " + t[1]);
+                }
+            }
+        }, "HeartLocal").start();
+    }
+
     /** Heart feedback needs a longer buzz than vibrateCached()'s 25 ms cap. */
     private void heartVibrate(long ms) {
         if (!isVibrationEnabled) return;
@@ -47166,13 +47252,16 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     private void toggleAlbumFavorites(java.util.List<File> tracks, boolean favorite) {
         if (tracks == null) return;
+        java.util.List<File> changed = new java.util.ArrayList<File>();
         for (File f : tracks) {
             if (f == null) continue;
             String path = f.getAbsolutePath();
+            if (favoritePaths.contains(path) != favorite) changed.add(f);
             MusicLibraryStore.getInstance(this).setFavorite(path, favorite);
             if (favorite) favoritePaths.add(path);
             else favoritePaths.remove(path);
         }
+        onLocalFavoritesChanged(changed, favorite, false);
         if (currentBrowserMode == BROWSER_FAVORITES) buildVirtualSongsForFavorites();
     }
 
@@ -47183,6 +47272,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         MusicLibraryStore.getInstance(this).setFavorite(path, on);
         if (on) favoritePaths.add(path);
         else favoritePaths.remove(path);
+        onLocalFavoritesChanged(java.util.Collections.singletonList(audio), on, false);
         // Favorites browse needs row drop; elsewhere LED/check only. 2026-07-19
         if (currentBrowserMode == BROWSER_FAVORITES) {
             buildVirtualSongsForFavorites();

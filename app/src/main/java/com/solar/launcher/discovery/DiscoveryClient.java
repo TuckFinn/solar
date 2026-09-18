@@ -142,6 +142,23 @@ public final class DiscoveryClient {
         }
     }
 
+    /**
+     * 2026-09-18 — A song on the device's own storage became a favourite (or
+     * stopped being one): nookTunes favourites it like any heart -- history,
+     * and the other player's copy when its library has the song -- or takes
+     * the favourite back. Solar has already updated Hearts.m3u.
+     */
+    public static boolean heartLocal(String base, String artist, String title, String album,
+            boolean on) {
+        try {
+            getJson(url(base, "/api/y1/heart-local?artist=" + enc(artist)
+                    + "&title=" + enc(title) + "&album=" + enc(album) + "&on=" + (on ? "1" : "0")));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static String enc(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8");
