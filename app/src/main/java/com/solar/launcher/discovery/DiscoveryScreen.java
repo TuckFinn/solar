@@ -55,13 +55,38 @@ public final class DiscoveryScreen {
      */
     private long lastPlayedDeezerId;
     private DeezerSearch search;
-    /** Bumped on every play, so a superseded queue-ahead stops resolving. */
+
+    /**
+     * 2026-09-18 — Songs kept queued behind the one playing.
+     *
+     * The whole rest of a playlist used to go in at once: every country and
+     * seed row searched one after another before anything was queued, then
+     * every song downloaded. Fine at 20 songs; at 100 it is minutes before the
+     * second song is queued and ~900 MB written into the stream cache, which
+     * has no cap and lives on the Y1's 1 GB /data. Three covers a slow search or
+     * a slow download and keeps the cache to a few songs.
+     */
+    static final int QUEUE_AHEAD = 3;
+
+    /** Bumped on every play, so a superseded run stops resolving. */
     private volatile int queueGeneration;
     /**
-     * What the last queue-ahead put in. Handed back on the next one so those
-     * tracks are dropped rather than left stacked below it.
+     * Every id the current run queued behind its first song. Handed to the next
+     * run so those are dropped rather than left stacked below it.
      */
-    private volatile java.util.Set<Long> queuedIds = new java.util.HashSet<Long>();
+    private java.util.Set<Long> queuedIds = new java.util.HashSet<Long>();
+    // The run: the songs after the one picked, fed into the queue a few at a
+    // time as it plays. UI thread only.
+    private final List<DiscoveryClient.Track> runPending = new ArrayList<DiscoveryClient.Track>();
+    /** Deezer ids the run has queued, in order, starting with the picked song. */
+    private final List<Long> runQueued = new ArrayList<Long>();
+    private final java.util.Map<Long, DiscoveryClient.Track> runTracks =
+            new java.util.HashMap<Long, DiscoveryClient.Track>();
+    /** The previous run's ids, dropped with this run's first delivery. */
+    private java.util.Set<Long> runReplace;
+    private boolean runResolving;
+    /** What MainActivity last said is playing. */
+    private long playingDeezerId;
 
     public DiscoveryScreen(DeezerScreen.Host host, DeezerScreen deezer) {
         this.host = host;
@@ -209,62 +234,108 @@ public final class DiscoveryScreen {
         lastPlayed = t;
         lastPlayedDeezerId = r.id;
         deezer.startTransfer(r, DeezerScreen.ACTION_PLAY);
-        queueRestOfPlaylist(t);
+        beginRun(t, r.id);
     }
 
     /**
-     * Queue what follows in the same playlist, so it keeps going.
+     * Start a run from {@code from}: the rest of the playlist follows it,
+     * a few songs at a time.
      *
      * A play on its own is one song: when it ended the player fell back to
      * whatever queue was already loaded, which meant picking a Classical track
-     * dropped you back into the Navidrome stream from before. The rest of the
-     * window goes in behind it as placeholders and downloads in sequence --
-     * the same path a Deezer album takes.
-     *
-     * Resolving a country or seed row costs a search each, so this runs off
-     * the UI thread and simply skips anything it cannot vouch for rather than
-     * queueing the wrong song.
+     * dropped you back into the Navidrome stream from before. So what follows
+     * goes in behind it as placeholders and downloads in sequence -- the same
+     * path a Deezer album takes -- but only {@link #QUEUE_AHEAD} at a time.
      */
-    private void queueRestOfPlaylist(DiscoveryClient.Track from) {
-        final List<DiscoveryClient.Track> rest = new ArrayList<DiscoveryClient.Track>();
+    private void beginRun(DiscoveryClient.Track from, long fromId) {
+        final int generation = ++queueGeneration;
+        runPending.clear();
         boolean after = false;
         for (DiscoveryClient.Track t : tracks) {
-            if (after) rest.add(t);
+            if (after) runPending.add(t);
             if (t == from) after = true;
         }
-        if (rest.isEmpty()) return;
-        final int generation = ++queueGeneration;
+        runQueued.clear();
+        runTracks.clear();
+        runQueued.add(Long.valueOf(fromId));
+        runTracks.put(Long.valueOf(fromId), from);
+        runReplace = queuedIds;
+        queuedIds = new java.util.HashSet<Long>();
+        runResolving = false;
+        playingDeezerId = fromId;
+        topUp(generation);
+    }
+
+    /**
+     * MainActivity says this Deezer id started playing. When it is one of the
+     * run's, the heart follows it -- it used to know only the song first
+     * picked, so a hold on the next one fell through to the Navidrome heart --
+     * and the queue is topped up behind it.
+     */
+    public void onDeezerTrackPlaying(long deezerTrackId) {
+        playingDeezerId = deezerTrackId;
+        DiscoveryClient.Track t = runTracks.get(Long.valueOf(deezerTrackId));
+        if (t == null) return;
+        lastPlayed = t;
+        lastPlayedDeezerId = deezerTrackId;
+        topUp(queueGeneration);
+    }
+
+    /**
+     * How many more to queue so {@link #QUEUE_AHEAD} sit behind the song
+     * playing. {@code playingAt} is its place in the run, -1 when what is
+     * playing is not the run's: then nothing, and the queue is left alone.
+     */
+    static int songsWanted(int queued, int playingAt) {
+        if (playingAt < 0) return 0;
+        return Math.max(0, QUEUE_AHEAD - (queued - 1 - playingAt));
+    }
+
+    private void topUp(final int generation) {
+        if (runResolving || generation != queueGeneration) return;
+        int want = songsWanted(runQueued.size(), runQueued.indexOf(Long.valueOf(playingDeezerId)));
+        if (runPending.isEmpty() || want == 0) {
+            dropPreviousRun();
+            return;
+        }
+        final List<DiscoveryClient.Track> batch = new ArrayList<DiscoveryClient.Track>();
+        while (batch.size() < want && !runPending.isEmpty()) batch.add(runPending.remove(0));
+        final java.util.Set<Long> have = new java.util.HashSet<Long>(runQueued);
+        runResolving = true;
+        // Resolving a country or seed row costs a search each, so this runs off
+        // the UI thread and skips anything it cannot vouch for rather than
+        // queueing the wrong song.
         host.runOnBg(new Runnable() {
             @Override public void run() {
-                List<DeezerResult> out = new ArrayList<DeezerResult>();
-                for (DiscoveryClient.Track t : rest) {
-                    // A newer pick supersedes this one; stop resolving for a
-                    // queue nobody is waiting on any more.
+                final List<DeezerResult> found = new ArrayList<DeezerResult>();
+                final List<DiscoveryClient.Track> rows = new ArrayList<DiscoveryClient.Track>();
+                for (DiscoveryClient.Track t : batch) {
+                    // A newer pick supersedes this run; stop searching for it.
                     if (generation != queueGeneration) return;
-                    if (t.deezerId > 0) {
-                        out.add(new DeezerResult(t.deezerId, t.title, t.artist, t.album,
-                                0L, t.durationSec, "", t.cover));
-                        continue;
-                    }
-                    try {
-                        DeezerResult hit = DiscoveryMatch.best(
-                                search().searchTracks(t.searchQuery()), t.artist, t.title);
-                        if (hit != null) out.add(hit);
-                    } catch (Exception ignored) {
-                        // One unreachable search should not cost the rest.
-                    }
+                    DeezerResult r = resolve(t);
+                    if (r == null || !have.add(Long.valueOf(r.id))) continue;
+                    found.add(r);
+                    rows.add(t);
                 }
-                if (out.isEmpty() || generation != queueGeneration) return;
-                final List<DeezerResult> queued = out;
-                final java.util.Set<Long> previous = queuedIds;
-                java.util.Set<Long> now = new java.util.HashSet<Long>();
-                for (DeezerResult r : queued) now.add(Long.valueOf(r.id));
-                queuedIds = now;
                 host.runOnUi(new Runnable() {
                     @Override public void run() {
-                        if (generation == queueGeneration) {
-                            host.queueDeezerTracks(queued, previous);
+                        runResolving = false;
+                        if (generation != queueGeneration) return;
+                        if (!found.isEmpty() && !deliver(found)) {
+                            // The run's last song has left the queue: the
+                            // listener moved on, and this is not theirs to extend.
+                            runPending.clear();
+                            return;
                         }
+                        for (int i = 0; i < found.size(); i++) {
+                            Long id = Long.valueOf(found.get(i).id);
+                            runQueued.add(id);
+                            runTracks.put(id, rows.get(i));
+                            queuedIds.add(id);
+                        }
+                        // Still short when songs failed to resolve, or when
+                        // playback moved on while this was searching.
+                        topUp(generation);
                     }
                 });
             }
@@ -272,7 +343,47 @@ public final class DiscoveryScreen {
     }
 
     /**
-     * Keep the playing song, but only if it is the one Discovery started.
+     * Put resolved songs in the queue. The first delivery of a run goes in
+     * behind the play head and drops the previous run's tail, as the whole
+     * playlist used to; the rest go directly behind the run's last song, so
+     * the order holds wherever the play head is.
+     */
+    private boolean deliver(List<DeezerResult> found) {
+        if (runReplace != null) {
+            java.util.Set<Long> replace = runReplace;
+            runReplace = null;
+            host.queueDeezerTracks(found, replace);
+            return true;
+        }
+        long anchor = runQueued.get(runQueued.size() - 1).longValue();
+        return host.queueDeezerTracksAfter(found, anchor);
+    }
+
+    /** A run with nothing to add still drops the previous run's tail. */
+    private void dropPreviousRun() {
+        if (runReplace == null) return;
+        java.util.Set<Long> replace = runReplace;
+        runReplace = null;
+        if (!replace.isEmpty()) host.queueDeezerTracks(new ArrayList<DeezerResult>(), replace);
+    }
+
+    /** A row as something Deezer can play: its own id, or a search it can vouch for. */
+    private DeezerResult resolve(DiscoveryClient.Track t) {
+        if (t.deezerId > 0) {
+            return new DeezerResult(t.deezerId, t.title, t.artist, t.album,
+                    0L, t.durationSec, "", t.cover);
+        }
+        try {
+            return DiscoveryMatch.best(search().searchTracks(t.searchQuery()), t.artist, t.title);
+        } catch (Exception ignored) {
+            // One unreachable search should not cost the rest.
+            return null;
+        }
+    }
+
+    /**
+     * Keep the playing song, but only if it is one Discovery queued: the song
+     * picked or any the run has played since.
      *
      * The id comes from the queue item itself, so this cannot heart the wrong
      * song once the listener has moved on to something Discovery did not pick.

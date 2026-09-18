@@ -85,6 +85,17 @@ public final class DeezerScreen {
          */
         void queueDeezerTracks(java.util.List<DeezerResult> tracks,
                 java.util.Set<Long> replaceDeezerIds);
+        /**
+         * Queue more of a run directly behind the queued track with
+         * {@code afterDeezerId}, downloading them in the background. Quiet: no
+         * toast, since this is the queue topping itself up as it plays.
+         *
+         * @return false when that track is no longer at or after the play
+         *         head -- the listener has moved on, and whatever is queued now
+         *         is not this run's to extend.
+         */
+        boolean queueDeezerTracksAfter(java.util.List<DeezerResult> tracks,
+                long afterDeezerId);
         void replaceDeezerInQueue(File oldF, File newF, String meta);
         void launchDeezerSearchFromSuggestion(String q, boolean openKeyboard);
         void launchReachSearchFromSuggestion(String q, boolean openKeyboard);

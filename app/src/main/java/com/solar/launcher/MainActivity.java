@@ -2951,10 +2951,39 @@ public class MainActivity extends Activity {
     };
 
     private Handler progressHandler = new Handler();
+
+    /** Last Deezer id handed to Discovery, so it hears about each song once. */
+    private long discoveryNotifiedDeezerId;
+
+    /**
+     * 2026-09-18 — Tell Discovery which song is playing when it changes. It
+     * keeps only a few songs queued ahead and tops the queue up from this, and
+     * its heart follows the song actually playing instead of the one first
+     * picked. A comparison per tick; nothing else unless the song changed.
+     */
+    private void notifyDiscoveryOfPlayingTrack() {
+        if (discoveryScreen == null) return;
+        // Never let this cost the progress tick: it runs first in the tick's
+        // try, and an exception would skip everything else the tick does.
+        try {
+            PlayQueue.QueueItem cur = playback.currentItem();
+            long id = cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                    ? cur.deezerTrackId : 0L;
+            if (id == discoveryNotifiedDeezerId) return;
+            discoveryNotifiedDeezerId = id;
+            if (id > 0) discoveryScreen.onDeezerTrackPlaying(id);
+        } catch (Exception e) {
+            android.util.Log.w("SolarDiscovery", "now-playing notify failed", e);
+        }
+    }
     private Runnable updateProgressTask = new Runnable() {
         @Override
         public void run() {
             try {
+                // Before any early return below: this is the one place that
+                // sees every change of song, however it happened (next,
+                // completion, gapless promote, a jump from the queue overlay).
+                notifyDiscoveryOfPlayingTrack();
                 // 2026-07-19 — Stem/Mix jam owns CPU — pause NP progress redraws.
                 if (StemOrMixSession.isActive()) {
                     progressHandler.postDelayed(this, 2000);
@@ -18322,6 +18351,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 java.util.Set<Long> replaceDeezerIds) {
             dropQueuedDeezerBelowCurrent(replaceDeezerIds);
             startDeezerAlbumBackgroundQueue(tracks);
+        }
+        @Override public boolean queueDeezerTracksAfter(java.util.List<DeezerResult> tracks,
+                long afterDeezerId) {
+            int at = queuedDeezerIndexFromPlayHead(afterDeezerId);
+            if (at < 0) return false;
+            startDeezerBackgroundQueue(tracks, at, false);
+            return true;
         }
         @Override public void replaceDeezerInQueue(File oldF, File newF, String meta) {
             playback.replaceDeezerFileInQueue(oldF, newF, meta);
@@ -33957,6 +33993,20 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         deezerScreen.startTransfer(deezerBatchTransfer.get(index), deezerBatchTransferAction);
     }
 
+    /** Index of the queued Deezer track with this id, from the play head down; -1 if none. */
+    private int queuedDeezerIndexFromPlayHead(long deezerId) {
+        PlayQueue q = playback.unifiedQueue();
+        if (q == null || deezerId <= 0) return -1;
+        for (int i = Math.max(0, q.index()); i < q.size(); i++) {
+            PlayQueue.QueueItem it = q.items().get(i);
+            if (it != null && it.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                    && it.deezerTrackId == deezerId) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /**
      * Drop tracks a previous Discovery playlist queued, below the play head.
      *
@@ -33988,10 +34038,27 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     /** Queue every album track immediately; download sequentially in the background. */
     private void startDeezerAlbumBackgroundQueue(final List<DeezerResult> tracks) {
+        startDeezerBackgroundQueue(tracks, -1, true);
+    }
+
+    /**
+     * Queue tracks behind queue index {@code afterIndex} (-1: the play head) and
+     * download them in order in the background.
+     *
+     * 2026-09-18 — {@code announce} false is Discovery topping its queue up a
+     * song at a time as it plays: no toast, and no jumping the Get Music screen
+     * back to its results, since the listener may be anywhere by then.
+     */
+    private void startDeezerBackgroundQueue(final List<DeezerResult> tracks, int afterIndex,
+            boolean announce) {
         if (tracks == null || tracks.isEmpty()) return;
-        deezerBatchTransfer = null;
-        deezerBatchTransferIndex = -1;
-        deezerBatchTransferAction = 0;
+        if (announce) {
+            // An album queue supersedes a batch transfer; a Discovery top-up is
+            // not the listener's doing and must not cancel one mid-album.
+            deezerBatchTransfer = null;
+            deezerBatchTransferIndex = -1;
+            deezerBatchTransferAction = 0;
+        }
         final File cacheDir = DeezerCache.dir(streamAppCacheRoot());
         String ext = "mp3";
         try {
@@ -34010,7 +34077,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (r == null) continue;
             try {
                 File dest = DeezerBackgroundQueue.reservePlaceholder(cacheDir, r, ext);
-                playback.queueDeezerAfterCurrent(dest, r.displayTitle(), r.id);
+                if (afterIndex < 0) {
+                    playback.queueDeezerAfterCurrent(dest, r.displayTitle(), r.id);
+                } else {
+                    playback.queueDeezerAfter(afterIndex, dest, r.displayTitle(), r.id);
+                }
                 // A reused cache file is already whole; starting it at 0 would show
                 // "[0%] Loading..." over a track that is ready to play.
                 deezerQueueProgressByPath.put(dest.getAbsolutePath(),
@@ -34021,13 +34092,16 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
         }
         if (jobs.isEmpty()) {
-            Toast.makeText(this, getString(R.string.deezer_error_unknown), Toast.LENGTH_SHORT).show();
+            if (announce) {
+                Toast.makeText(this, getString(R.string.deezer_error_unknown), Toast.LENGTH_SHORT).show();
+            }
             return;
         }
         persistPlaybackQueue();
         refreshStreamProgressUi();
         ensureDeezerBackgroundQueue();
         deezerBackgroundQueue.enqueue(jobs);
+        if (!announce) return;
         Toast.makeText(this, getString(R.string.deezer_album_queued), Toast.LENGTH_SHORT).show();
         // #region agent log
         if (com.solar.launcher.debug.DebugGate.ON) {

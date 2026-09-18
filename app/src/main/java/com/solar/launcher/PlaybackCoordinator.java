@@ -625,9 +625,13 @@ public final class PlaybackCoordinator {
     }
 
     public int queueDeezerAfterCurrent(File temp, String meta, long trackId) {
+        return queueDeezerAfter(queue.isEmpty() ? -1 : queue.index(), temp, meta, trackId);
+    }
+
+    /** Insert after queue index {@code after}; the play head stays where it is. */
+    public int queueDeezerAfter(int after, File temp, String meta, long trackId) {
         if (temp == null || !temp.isFile()) return -1;
         int playHead = queue.index();
-        int after = queue.isEmpty() ? -1 : playHead;
         int insertAt = queue.insertAfter(after, PlayQueue.QueueItem.deezer(temp, meta, trackId));
         if (insertAt < 0) return -1;
         if (!musicOriginal.contains(temp)) musicOriginal.add(temp);
