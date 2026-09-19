@@ -100,8 +100,17 @@ public final class PlexScreenHost {
         switch (uiMode) {
             case UI_ROOT:
                 return false;
-            case UI_ARTISTS:
             case UI_ALBUMS:
+                // 2026-09-19 — An artist's albums go back to the artists, not the root:
+                // Back goes up one level. The flat Albums list has no artist.
+                if (selectedArtist != null) {
+                    selectedArtist = null;
+                    loadArtists();
+                } else {
+                    showRoot();
+                }
+                return true;
+            case UI_ARTISTS:
             case UI_PLAYLISTS:
             case UI_TRACKS:
             case UI_SEARCH:
@@ -112,6 +121,10 @@ public final class PlexScreenHost {
                     loadPlaylists();
                 } else if (selectedArtist != null) {
                     openAlbums(selectedArtist);
+                } else if (selectedAlbum != null) {
+                    // 2026-09-19 — As Navidrome: an album from the flat Albums list
+                    // goes back to that list, not the root.
+                    loadAlbums();
                 } else {
                     showRoot();
                 }

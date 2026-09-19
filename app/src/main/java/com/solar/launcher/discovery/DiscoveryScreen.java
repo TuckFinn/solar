@@ -44,6 +44,24 @@ public final class DiscoveryScreen {
             new ArrayList<DiscoveryClient.Playlist>();
     private final List<DiscoveryClient.Track> tracks = new ArrayList<DiscoveryClient.Track>();
     private DiscoveryClient.Playlist openPlaylist;
+    /**
+     * 2026-09-19 — The row the next render focuses, or -1 for the first. Back
+     * sets it so the list comes back on the row that was left: the playlist
+     * just closed, or the song that was started from it.
+     */
+    private int focusIndex = -1;
+    /**
+     * 2026-09-19 — The first row render() put on screen. When the list shows another
+     * first row, Deezer's download panel (progress, retrying, failed) has replaced it
+     * while a picked song is fetched, and Back shows the songs again rather than
+     * leaving the playlist.
+     */
+    private View renderedFirstRow;
+    /**
+     * 2026-09-19 — The song picked from the list, which Back from Now Playing lands on.
+     * Not lastPlayed: that follows the run as it plays on, for the heart.
+     */
+    private DiscoveryClient.Track pickedTrack;
     private boolean loading;
     private String error;
     /** The last song started from here, so a heart knows what to keep. */
@@ -120,6 +138,7 @@ public final class DiscoveryScreen {
     public void open() {
         uiMode = UI_PLAYLISTS;
         openPlaylist = null;
+        focusIndex = -1;
         if (playlists.isEmpty() && !loading) {
             fetchPlaylists();
         } else {
@@ -127,15 +146,70 @@ public final class DiscoveryScreen {
         }
     }
 
-    /** @return true when back was consumed here rather than leaving the screen. */
+    /**
+     * 2026-09-19 — Back into Discovery, from Now Playing: the list that was
+     * left, on the song started from it. This used to be open(), which starts
+     * over at the playlists, so Back from a song lost the playlist it came from.
+     */
+    public void reopen() {
+        if (uiMode != UI_TRACKS || openPlaylist == null) {
+            if (playlists.isEmpty() && !loading) {
+                open();
+                return;
+            }
+            render();
+            return;
+        }
+        int i = indexOfTrack(pickedTrack);
+        focusIndex = i >= 0 ? i + 1 : -1; // row 0 is "Back to playlists"
+        render();
+    }
+
+    /**
+     * @return true when back was consumed here rather than leaving the screen.
+     * 2026-09-19 — Lands on the playlist that was open. Was: the first row.
+     */
     public boolean handleBackPress() {
+        if (uiMode == UI_TRACKS && !listShown()) {
+            // Off Deezer's download panel, back to the songs, on the one picked. The
+            // download carries on; it opens Now Playing when the song is ready.
+            reopen();
+            return true;
+        }
         if (uiMode == UI_TRACKS) {
+            focusIndex = indexOfPlaylist(openPlaylist);
             uiMode = UI_PLAYLISTS;
             openPlaylist = null;
+            // A track fetch still running belongs to the list being left; its
+            // result is dropped, so it must not keep the screen on "Loading".
+            loading = false;
             render();
             return true;
         }
         return false;
+    }
+
+    private int indexOfPlaylist(DiscoveryClient.Playlist p) {
+        if (p == null) return -1;
+        for (int i = 0; i < playlists.size(); i++) {
+            DiscoveryClient.Playlist q = playlists.get(i);
+            if (q == p || (q.id != null && q.id.equals(p.id))) return i;
+        }
+        return -1;
+    }
+
+    private int indexOfTrack(DiscoveryClient.Track t) {
+        if (t == null) return -1;
+        for (int i = 0; i < tracks.size(); i++) {
+            DiscoveryClient.Track u = tracks.get(i);
+            if (u == t) return i;
+        }
+        for (int i = 0; i < tracks.size(); i++) {
+            DiscoveryClient.Track u = tracks.get(i);
+            if (t.deezerId > 0 ? u.deezerId == t.deezerId
+                    : u.displayTitle().equals(t.displayTitle())) return i;
+        }
+        return -1;
     }
 
     private void fetchPlaylists() {
@@ -189,6 +263,8 @@ public final class DiscoveryScreen {
                 final String fErr = err;
                 host.runOnUi(new Runnable() {
                     @Override public void run() {
+                        // Back (or another playlist) came first: not ours to show.
+                        if (openPlaylist != p || uiMode != UI_TRACKS) return;
                         loading = false;
                         error = fErr;
                         tracks.clear();
@@ -246,6 +322,7 @@ public final class DiscoveryScreen {
     private void start(DiscoveryClient.Track t, DeezerResult r) {
         lastPlayed = t;
         lastPlayedDeezerId = r.id;
+        pickedTrack = t;
         deezer.startTransfer(r, DeezerScreen.ACTION_PLAY);
         beginRun(t, r.id);
     }
@@ -512,6 +589,9 @@ public final class DiscoveryScreen {
 
     private void render() {
         if (host.isNowPlayingScreen()) return;
+        // 2026-09-19 — A late fetch must not draw over the screen the user went to;
+        // open()/reopen() render again on the way back.
+        if (!host.isDiscoveryScreen()) return;
         host.prepareBrowserChrome();
         host.applyReachBrowseLayoutMode();
         String title = uiMode == UI_TRACKS && openPlaylist != null
@@ -524,11 +604,13 @@ public final class DiscoveryScreen {
 
         if (loading) {
             container.addView(host.createListButton(host.string(R.string.discovery_loading)));
+            renderedFirstRow = container.getChildAt(0);
             return;
         }
         if (error != null) {
             container.addView(host.createListButton(
                     host.string(R.string.discovery_error, error)));
+            renderedFirstRow = container.getChildAt(0);
             return;
         }
         if (uiMode == UI_TRACKS) {
@@ -536,25 +618,35 @@ public final class DiscoveryScreen {
         } else {
             renderPlaylists(container);
         }
-        focusFirstRow(container);
+        renderedFirstRow = container.getChildCount() > 0 ? container.getChildAt(0) : null;
+        int at = focusIndex;
+        focusIndex = -1;
+        focusRow(container, at >= 0 && at < container.getChildCount() ? at : 0);
+    }
+
+    /** True while the list on screen is the one render() drew. */
+    private boolean listShown() {
+        LinearLayout c = host.containerBrowserItems();
+        return c != null && c.getChildCount() > 0 && c.getChildAt(0) == renderedFirstRow;
     }
 
     /**
-     * Give the first row focus after rebuilding the list.
+     * Give a row focus after rebuilding the list: the first, or the one Back
+     * left (the scroll view brings it into sight).
      *
      * render() replaces every child, which destroys whatever had focus, and a
      * list with nothing focused swallows the wheel: the centre key reaches
      * MainActivity's global handler and there is no row for it to activate.
      * Posting it runs after layout, when the view can actually take focus.
      */
-    private void focusFirstRow(final LinearLayout container) {
+    private void focusRow(final LinearLayout container, int index) {
         if (container.getChildCount() == 0) return;
-        final View first = container.getChildAt(0);
-        first.post(new Runnable() {
+        final View row = container.getChildAt(index);
+        row.post(new Runnable() {
             @Override public void run() {
-                first.setFocusable(true);
-                first.setFocusableInTouchMode(true);
-                first.requestFocus();
+                row.setFocusable(true);
+                row.setFocusableInTouchMode(true);
+                row.requestFocus();
             }
         });
     }

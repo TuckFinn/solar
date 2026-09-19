@@ -325,6 +325,8 @@ public class MainActivity extends Activity {
     private int libraryBrowseSettingsMenuFocusIndex;
     private int deviceSettingsMenuFocusIndex;
     private int playbackSettingsMenuFocusIndex;
+    /** 2026-09-19 — Appearance had none, so Back from it landed on the row after it (Flow). */
+    private int appearanceSettingsMenuFocusIndex;
     private int connectionsSettingsMenuFocusIndex;
     private XposedModulesSettingsAdapter xposedModulesSettingsAdapter;
     private int librarySettingsMenuFocusIndex;
@@ -715,6 +717,39 @@ public class MainActivity extends Activity {
     private static final int HOME_MENU_TAG_ARROW = 0x7f0a0002;
     private int focusedHomeMenuIndex = 0;
     private int homeMenuBuildGen = 0;
+    /** 2026-09-19 — The row each list was left from; Back lands on it. */
+    private final BackFocusMemory backFocus = new BackFocusMemory();
+    private static final String BACK_LEVEL_HOME = "home";
+    /**
+     * 2026-09-19 — Home was entered by going back and still owes the row it was left from.
+     * Hiding the screen being left hands Android focus to the first focusable view, the
+     * top home row, whose focus listener then set focusedHomeMenuIndex to 0: every Back
+     * to Home landed on Now Playing. Cleared once the transition has finished.
+     */
+    private boolean homeReturnRowPending;
+    /**
+     * 2026-09-19 — A Back press is putting its list back on the row it was left from
+     * (see beginBackFocusRestore). Any other key ends it.
+     */
+    private boolean backFocusFrozen;
+    private int backFocusGen;
+    private long backFocusUntilMs;
+    /** Long enough for a server list (Navidrome artists) to come back on Wi-Fi. */
+    private static final long BACK_FOCUS_WINDOW_MS = 2500L;
+    private static final long BACK_FOCUS_STEP_MS = 100L;
+    /** 2026-09-19 — The last changeScreen came from Back (Now Playing → list, list → Home). */
+    private boolean screenChangeIsBack;
+    /**
+     * 2026-09-19 — Where Navidrome, Plex or Jellyfin were opened from: Home or the
+     * library menu. Back from their top list returns there. Was: always the library
+     * menu, so Home → Navidrome → Back landed in Library.
+     */
+    private int mediaServerReturnScreen = STATE_BROWSER;
+    /**
+     * 2026-09-19 — The screen opened from a More row, while it is up. More's rows open
+     * their screens the way Home's do, so Back from them went to Home and skipped More.
+     */
+    private int moreChildState = -1;
     /** 2026-07-06 — Cached preview bitmaps per menu entry; cleared on home menu rebuild. */
     private final java.util.HashMap<String, Bitmap> homeMenuPreviewBitmapCache =
             new java.util.HashMap<String, Bitmap>();
@@ -3353,6 +3388,18 @@ public class MainActivity extends Activity {
      * Layman: holding the side Power button shows the same little spinner as holding Back.
      * Reversal: unregister; spinner only in handleContextPowerHoldIntent after hold fires.
      */
+    /** 2026-09-18 — adb asks what the screen shows; see NavSnapshot. */
+    private final BroadcastReceiver navSnapshotReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            NavSnapshot.log(getWindow() != null ? getWindow().getDecorView() : null,
+                    tvStatusClock != null ? String.valueOf(tvStatusClock.getText()) : "",
+                    currentScreenState,
+                    themedContextMenu != null && themedContextMenu.isShowing(),
+                    intent != null ? intent.getStringExtra("nonce") : null);
+        }
+    };
+
     private final BroadcastReceiver contextHoldThrobberReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -3881,6 +3928,7 @@ public class MainActivity extends Activity {
         holdFilter.addAction(OverlayTriggers.ACTION_CONTEXT_HOLD_ARM);
         holdFilter.addAction(OverlayTriggers.ACTION_CONTEXT_HOLD_CANCEL);
         registerReceiver(contextHoldThrobberReceiver, holdFilter);
+        registerReceiver(navSnapshotReceiver, new IntentFilter(NavSnapshot.ACTION));
         // #region agent log
         if (com.solar.launcher.debug.DebugGate.ON) {
         try {
@@ -9595,6 +9643,7 @@ public class MainActivity extends Activity {
         }
         if (SettingsScreens.APPEARANCE.equals(settingsSubScreenKey)) {
             settingsParentKey = null;
+            lastSettingsFocusIndex = appearanceSettingsMenuFocusIndex;
             drillSettingsBack(new Runnable() {
                 @Override
                 public void run() {
@@ -12157,6 +12206,203 @@ public class MainActivity extends Activity {
         scrollHomeMenuToIndex(focusedHomeMenuIndex);
     }
 
+    /** 2026-09-19 — Note the home row being left, for Back to land on. */
+    private void rememberHomeReturnRow() {
+        View row = ActiveThemeEngine.isJjMode() && jjHomeOverlay != null
+                ? null : getHomeMenuRow(focusedHomeMenuIndex);
+        backFocus.remember(BACK_LEVEL_HOME,
+                row != null ? BackFocusMemory.labelOf(row) : null, focusedHomeMenuIndex);
+    }
+
+    /**
+     * 2026-09-19 — Put the highlight and Android focus back on the home row that was
+     * left. Focus has to move too: the row's focus listener owns focusedHomeMenuIndex,
+     * and a stray focus on the top row would reset it again.
+     */
+    private void restoreHomeReturnRow() {
+        if (!homeReturnRowPending) return;
+        BackFocusMemory.Row left = backFocus.recall(BACK_LEVEL_HOME);
+        if (left == null) return;
+        if (ActiveThemeEngine.isJjMode() && jjHomeOverlay != null) {
+            int n = jjHomeOverlay.getChildCount();
+            if (n == 0) return;
+            focusedHomeMenuIndex = Math.max(0, Math.min(left.index, n - 1));
+            View child = jjHomeOverlay.getChildAt(focusedHomeMenuIndex);
+            if (child != null) child.requestFocus();
+            return;
+        }
+        int idx = BackFocusMemory.resolve(BackFocusMemory.labelsOf(containerHomeMenuItems), left);
+        if (idx < 0) return;
+        View row = getHomeMenuRow(idx);
+        if (row != null && !row.isFocused()) row.requestFocus();
+        focusedHomeMenuIndex = idx;
+    }
+
+    /** 2026-09-19 — Top of Navidrome / Plex / Jellyfin: back to where it was opened from. */
+    private void leaveMediaServerScreen() {
+        if (mediaServerReturnScreen == STATE_MENU || mediaServerReturnScreen == STATE_MORE) {
+            changeScreen(mediaServerReturnScreen, true);
+            return;
+        }
+        changeScreen(STATE_BROWSER, true);
+        currentBrowserMode = BROWSER_ROOT;
+        buildFileBrowserUI();
+    }
+
+    /**
+     * 2026-09-19 — The list level focus is in, for Back to come back to: the screen
+     * plus the title it shows (the library's folders add their path, since every
+     * folder level shares one title). Home and Discovery keep their own row; the
+     * screens not listed here have no list or their own focus rules (Settings).
+     */
+    private String backFocusLevel() {
+        switch (currentScreenState) {
+            case STATE_BROWSER:
+            case STATE_MORE:
+            case STATE_APPS:
+            case STATE_PODCASTS:
+            case STATE_SOULSEEK:
+            case STATE_DEEZER:
+            case STATE_NAVIDROME:
+            case STATE_PLEX:
+            case STATE_JELLYFIN:
+                break;
+            default:
+                return null;
+        }
+        CharSequence t = tvStatusClock != null ? tvStatusClock.getText() : null;
+        StringBuilder key = new StringBuilder().append(currentScreenState).append('|')
+                .append(t != null ? t : "");
+        if (currentScreenState == STATE_BROWSER) {
+            key.append('|').append(currentBrowserMode);
+            if (currentBrowserMode == BROWSER_FOLDER && currentFolder != null) {
+                key.append('|').append(currentFolder.getAbsolutePath());
+            }
+        }
+        return key.toString();
+    }
+
+    /**
+     * Centre pressed: note the row it opens, under the level it belongs to. Taken at
+     * the press, not on every focus move: several lists move focus to their first
+     * row on their own right after a click (a rebuild, a now-playing refresh), and
+     * a focus listener recorded that instead of the row that was opened.
+     */
+    private void recordBackFocus(View f) {
+        if (backFocusFrozen || f == null) return;
+        if (ScreenTransition.isAnimating() || ListDrillTransition.isAnimating()) return;
+        String level = backFocusLevel();
+        if (level == null) return;
+        android.widget.ListView lv = listVirtualSongs;
+        if (lv != null && lv.getVisibility() == View.VISIBLE
+                && (f == lv || isViewDescendantOf(f, lv))) {
+            int pos = f != lv ? lv.getPositionForView(f) : -1;
+            if (pos < 0) pos = lv.getSelectedItemPosition();
+            if (pos < 0) return;
+            View row = lv.getChildAt(pos - lv.getFirstVisiblePosition());
+            backFocus.remember(level, BackFocusMemory.labelOf(row), pos);
+            logBackFocus("remember", level, backFocus.recall(level));
+            return;
+        }
+        if (containerBrowserItems != null && scrollViewBrowser != null
+                && scrollViewBrowser.getVisibility() == View.VISIBLE) {
+            int idx = BackFocusMemory.rowIndexOf(containerBrowserItems, f);
+            if (idx < 0) return;
+            backFocus.remember(level,
+                    BackFocusMemory.labelOf(containerBrowserItems.getChildAt(idx)), idx);
+            logBackFocus("remember", level, backFocus.recall(level));
+        }
+    }
+
+    /** One line per noted or restored row, under NavSnapshot's tag, for the navigation sim. */
+    private void logBackFocus(String what, String level, BackFocusMemory.Row row) {
+        android.util.Log.i(NavSnapshot.TAG, "backfocus " + what + " level=" + level
+                + (row != null ? " index=" + row.index + " label=" + row.label : " (none)"));
+    }
+
+    /**
+     * 2026-09-19 — After Back, put focus on the row the list was left from.
+     *
+     * Lists rebuild on Back, several of them late (a ListView binds after its first
+     * frame, a drill slide runs first, a server list loads), and each builder focuses
+     * its first row when it is done. So this keeps putting the remembered row back for
+     * a short window, which outlasts those late first-row focuses. Any key but Back
+     * ends it early.
+     */
+    private void beginBackFocusRestore() {
+        final int gen = ++backFocusGen;
+        backFocusFrozen = true;
+        backFocusUntilMs = android.os.SystemClock.uptimeMillis() + BACK_FOCUS_WINDOW_MS;
+        clockHandler.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (gen != backFocusGen) return;
+                String level = null;
+                BackFocusMemory.Row row = null;
+                if (!ScreenTransition.isAnimating() && !ListDrillTransition.isAnimating()) {
+                    level = backFocusLevel();
+                    row = level != null ? backFocus.recall(level) : null;
+                    if (row != null) focusBackRow(row);
+                }
+                if (android.os.SystemClock.uptimeMillis() >= backFocusUntilMs) {
+                    backFocusFrozen = false;
+                    if (level != null) logBackFocus("restored", level, row);
+                    return;
+                }
+                clockHandler.postDelayed(this, BACK_FOCUS_STEP_MS);
+            }
+        }, BACK_FOCUS_STEP_MS);
+    }
+
+    /** The wheel or a button moved: focus is the user's again. */
+    private void endBackFocusRestore() {
+        if (!backFocusFrozen) return;
+        backFocusGen++;
+        backFocusFrozen = false;
+    }
+
+    /** Focus {@code row} in the list on screen; a no-op once it is there. */
+    private void focusBackRow(BackFocusMemory.Row row) {
+        View focus = getCurrentFocus();
+        android.widget.ListView lv = listVirtualSongs;
+        if (lv != null && lv.getVisibility() == View.VISIBLE && lv.getAdapter() != null
+                && lv.getCount() > 0) {
+            int pos = Math.max(0, Math.min(row.index, lv.getCount() - 1));
+            // On screen, the row's name settles it: a list rebuilt with or without a
+            // header row shifts every position by one.
+            int first = lv.getFirstVisiblePosition();
+            java.util.List<String> shown = new java.util.ArrayList<String>();
+            for (int i = 0; i < lv.getChildCount(); i++) {
+                shown.add(BackFocusMemory.labelOf(lv.getChildAt(i)));
+            }
+            int named = BackFocusMemory.indexOfLabel(shown, row.label, pos - first);
+            if (named >= 0) pos = first + named;
+            if (focus != null && isViewDescendantOf(focus, lv)
+                    && lv.getPositionForView(focus) == pos
+                    && lv.getSelectedItemPosition() == pos) return;
+            View child = lv.getChildAt(pos - first);
+            if (lv.getSelectedItemPosition() != pos || child == null) {
+                // Selection is half the row highlight, so it moves too. Off screen, this
+                // scrolls to it and the next step focuses the laid-out row.
+                lv.setSelectionFromTop(pos, child != null ? child.getTop() : 0);
+            }
+            if (child != null && child.isFocusable() && !child.hasFocus()) child.requestFocus();
+            return;
+        }
+        if (containerBrowserItems == null || scrollViewBrowser == null
+                || scrollViewBrowser.getVisibility() != View.VISIBLE) return;
+        int idx = BackFocusMemory.resolve(BackFocusMemory.labelsOf(containerBrowserItems), row);
+        if (idx < 0) return;
+        View child = containerBrowserItems.getChildAt(idx);
+        if (child == null || child.getVisibility() != View.VISIBLE) return;
+        if (focus != null && (focus == child || isViewDescendantOf(focus, child))) return;
+        if (child.isFocusable()) {
+            child.requestFocus();
+        } else {
+            java.util.ArrayList<View> inner = child.getFocusables(View.FOCUS_DOWN);
+            if (!inner.isEmpty()) inner.get(0).requestFocus();
+        }
+    }
+
     /**
      * Index-driven home menu move — wheel keys must not rely on View focus on API 17.
      * {@code delta} may be multi-step (anim queue); applies index + highlight immediately.
@@ -13741,7 +13987,11 @@ public class MainActivity extends Activity {
                 return browserStatusTitle != null && isGetMusicUnifiedUi()
                         ? browserStatusTitle : getString(R.string.status_soulseek);
             case STATE_DEEZER: return getString(R.string.status_deezer);
-            case STATE_DISCOVERY: return getString(R.string.home_menu_discovery);
+            // 2026-09-19 — The open playlist's name, as DiscoveryScreen sets it. Was the
+            // constant "Discovery", so inside a playlist the title said Discovery again.
+            case STATE_DISCOVERY:
+                return browserStatusTitle != null && browserStatusTitle.length() > 0
+                        ? browserStatusTitle : getString(R.string.home_menu_discovery);
             case STATE_DEEZER_SETUP: return getString(R.string.status_deezer_setup);
             case STATE_APPS: return getString(R.string.status_apps);
             case STATE_MORE: return getString(R.string.path_more);
@@ -14692,6 +14942,12 @@ public class MainActivity extends Activity {
 
     private void changeScreen(int state, boolean isBack) {
         if (otaSystemReplaceInProgress) return;
+        screenChangeIsBack = isBack;
+        if (isBack && state == STATE_MENU && moreChildState >= 0
+                && currentScreenState == moreChildState) {
+            // 2026-09-19 — Opened from More: Back goes up to More, not past it to Home.
+            state = STATE_MORE;
+        }
         if (isUsbMassStorageUiLocked() && state != STATE_USB_STORAGE) {
             // 2026-07-20 — Solar blocks nav only for Solar-owned Turn on (not stock SystemUI UMS).
             // Layman: Android’s USB screen can show; Solar menus stay usable unless you enabled here.
@@ -14962,6 +15218,13 @@ public class MainActivity extends Activity {
             com.solar.launcher.ui.ScreenTransition.resetView(screenTransitionOutgoingRoot);
             screenTransitionOutgoingRoot = null;
         }
+        if (state == STATE_MENU && homeReturnRowPending) {
+            // Hiding the outgoing screen just moved focus to the top row again.
+            restoreHomeReturnRow();
+            requestFirstHomeMenuFocus();
+            updateHomeMenuPreview(focusedHomeMenuIndex);
+        }
+        homeReturnRowPending = false;
         View in = rootViewForScreenState(state);
         com.solar.launcher.ui.ScreenTransition.resetView(in);
         if (in != null) {
@@ -15090,6 +15353,18 @@ public class MainActivity extends Activity {
 
         int safeFocusIndex = lastSettingsFocusIndex;
         final int leavingScreen = currentScreenState;
+        if (leavingScreen == STATE_MENU && state != STATE_MENU) rememberHomeReturnRow();
+        if (state == STATE_MENU && leavingScreen != STATE_MENU) homeReturnRowPending = true;
+        if ((state == STATE_NAVIDROME || state == STATE_PLEX || state == STATE_JELLYFIN)
+                && (leavingScreen == STATE_MENU || leavingScreen == STATE_BROWSER
+                || leavingScreen == STATE_MORE)) {
+            mediaServerReturnScreen = leavingScreen;
+        }
+        if (leavingScreen == STATE_MORE && state != STATE_MORE && state != STATE_MENU) {
+            moreChildState = state;
+        } else if (state == STATE_MENU || state == STATE_MORE) {
+            moreChildState = -1;
+        }
         if (deferOutgoingHide) {
             View outgoing = rootViewForScreenState(leavingScreen);
             View incoming = rootViewForScreenState(state);
@@ -15393,11 +15668,13 @@ public class MainActivity extends Activity {
             // ponytail: animated Back — paint outgoing first; rebuild menu after slide, not before.
             if (shouldDeferHomeMenuRebuild(leavingScreen, deferOutgoingHide)) {
                 pendingDeferredHomeMenuRebuild = true;
+                restoreHomeReturnRow();
                 refreshHomeMenuRowStyles();
                 requestFirstHomeMenuFocus();
                 updateHomeMenuPreview(focusedHomeMenuIndex);
             } else {
                 buildHomeMenu();
+                restoreHomeReturnRow();
                 requestFirstHomeMenuFocus();
                 updateHomeMenuPreview(focusedHomeMenuIndex);
             }
@@ -15430,7 +15707,14 @@ public class MainActivity extends Activity {
                 if (deezerPlaylistView != null) openDeezerPlaylistBrowse(deezerPlaylistView);
                 else buildPlaylistsUI();
             } else if (currentBrowserMode == BROWSER_VIRTUAL_SONGS) {
-                buildVirtualSongs();
+                // 2026-09-19 — A playlist's songs come from the playlist, not a library
+                // filter: buildVirtualSongs() matches no song for "PLAYLIST", so Back from
+                // Now Playing to Hearts (or any playlist) showed an empty list.
+                if ("PLAYLIST".equals(virtualQueryType) && playlistViewEntry != null) {
+                    buildVirtualSongsFromPlaylist(playlistViewEntry);
+                } else {
+                    buildVirtualSongs();
+                }
             } else {
                 currentBrowserMode = BROWSER_ROOT;
                 buildFileBrowserUI();
@@ -15518,7 +15802,11 @@ public class MainActivity extends Activity {
             }
         } else if (state == STATE_DISCOVERY) {
             applyReachBrowseLayoutMode();
-            if (discoveryScreen != null) discoveryScreen.open();
+            // 2026-09-19 — Back from Now Playing returns to the list the song came from.
+            if (discoveryScreen != null) {
+                if (screenChangeIsBack) discoveryScreen.reopen();
+                else discoveryScreen.open();
+            }
         } else if (state == STATE_APPS) {
             buildAppsLauncherUI();
         } else if (state == STATE_MORE) {
@@ -16034,6 +16322,15 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (backFocusFrozen && event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getKeyCode() != KeyEvent.KEYCODE_BACK) {
+            endBackFocusRestore();
+        }
+        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getRepeatCount() == 0 && Y1InputKeys.isCenterKey(event.getKeyCode())) {
+            // 2026-09-19 — The row being entered is the one Back comes back to.
+            recordBackFocus(getCurrentFocus());
+        }
         // #region agent log
         if (com.solar.launcher.debug.DebugGate.ON && event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0
                 && Y1InputKeys.isWheelKey(event.getKeyCode())) {
@@ -18606,6 +18903,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         @Override public boolean isNowPlayingScreen() {
             return currentScreenState == STATE_PLAYER;
+        }
+        @Override public boolean deezerOwnsScreen() {
+            return currentScreenState == STATE_DEEZER || currentScreenState == STATE_DISCOVERY
+                    || (currentScreenState == STATE_SOULSEEK && getMusicEmbeddedInDeezer);
+        }
+        @Override public boolean isDiscoveryScreen() {
+            return currentScreenState == STATE_DISCOVERY;
         }
     };
 
@@ -23881,6 +24185,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     /** Unified hard escape to home — animates context menu out then root pop to menu. */
     private void navigateToHome() {
         suppressListClickUntil = System.currentTimeMillis() + CONTEXT_MENU_CLICK_SUPPRESS_MS;
+        moreChildState = -1; // Home means Home, even from a screen opened from More
         if (flowScreenHost != null) {
             flowScreenHost.clearNowPlayingBackReturn();
         }
@@ -34519,6 +34824,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         } catch (Exception ignored) {}
         }
         // #endregion
+        beginBackFocusRestore();
         // Stem/Mix: Back is a pad (Vocals) / noop — exit only via PREV+NEXT hold. 2026-07-19
         // Was: exitStemOrMixToHome on short Back. Reversal: restore home exit here.
         if (currentScreenState == STATE_STEM_PLAYER && stemPlayerHost != null) {
@@ -34664,23 +34970,17 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (currentScreenState == STATE_NAVIDROME) {
             if (navidromeScreenHost != null && navidromeScreenHost.handleBack()) return;
-            changeScreen(STATE_BROWSER, true);
-            currentBrowserMode = BROWSER_ROOT;
-            buildFileBrowserUI();
+            leaveMediaServerScreen();
             return;
         }
         if (currentScreenState == STATE_PLEX) {
             if (plexScreenHost != null && plexScreenHost.handleBack()) return;
-            changeScreen(STATE_BROWSER, true);
-            currentBrowserMode = BROWSER_ROOT;
-            buildFileBrowserUI();
+            leaveMediaServerScreen();
             return;
         }
         if (currentScreenState == STATE_JELLYFIN) {
             if (jellyfinScreenHost != null && jellyfinScreenHost.handleBack()) return;
-            changeScreen(STATE_BROWSER, true);
-            currentBrowserMode = BROWSER_ROOT;
-            buildFileBrowserUI();
+            leaveMediaServerScreen();
             return;
         }
         if (currentScreenState == STATE_BROWSER) {
@@ -34883,6 +35183,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         if (currentScreenState == STATE_DEEZER && deezerScreen != null) {
             deezerScreen.handleBackPress();
+            return;
+        }
+        // 2026-09-19 — Discovery had no short-Back branch at all: Back did nothing there
+        // (only the overlay's ← left it). Playlist → playlists → Home, one level a press.
+        if (currentScreenState == STATE_DISCOVERY) {
+            if (discoveryScreen != null && discoveryScreen.handleBackPress()) return;
+            changeScreen(STATE_MENU, true);
             return;
         }
         if (currentScreenState == STATE_APPS) {
@@ -35443,6 +35750,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         containerSettingsItems.addView(btnLibrary);
 
         LinearLayout btnAppearance = createSettingsRow(RowKeys.APPEARANCE, R.string.settings_appearance, true);
+        appearanceSettingsMenuFocusIndex = containerSettingsItems.getChildCount();
         btnAppearance.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -62891,6 +63199,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             // 2026-07-20 — Drop Power-hold throbber receiver with Activity.
             unregisterReceiver(contextHoldThrobberReceiver);
         } catch (Exception ignored) {}
+        try {
+            unregisterReceiver(navSnapshotReceiver);
+        } catch (Exception ignored) {}
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
         if (adapter != null && bluetoothA2dp != null) {
             adapter.closeProfileProxy(BluetoothProfile.A2DP, bluetoothA2dp);
@@ -65039,7 +65350,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // when isMusicActive||isPodcastActive (wipes session if FM fails to power).
     }
 
-    public void mediaExitToHomeMenu() { changeScreen(STATE_MENU); }
+    /**
+     * Leaving Videos / Photos / YouTube from their top list. 2026-09-19 — marked as Back,
+     * so opened from More it returns to More (and Home lands on the row it left).
+     */
+    public void mediaExitToHomeMenu() { changeScreen(STATE_MENU, true); }
 
     /**
      * 2026-07-15 — Music→YouTube Back returns to Music hub root.

@@ -140,6 +140,13 @@ public final class DeezerScreen {
         boolean isDeezerAlbumBatchTransfer();
         /** True while Now Playing is foreground — skip rebuilding browse/action chrome on top. */
         boolean isNowPlayingScreen();
+        /**
+         * True while the browse list on screen is one a Deezer download may draw on:
+         * Deezer, Get Music on Deezer, or Discovery (whose songs download through here).
+         */
+        boolean deezerOwnsScreen();
+        /** True while Discovery is the screen showing. */
+        boolean isDiscoveryScreen();
     }
 
     private final Host host;
@@ -919,6 +926,8 @@ public final class DeezerScreen {
         if (host.onDeezerBatchTransferStep(r)) return;
         // Partial play already moved to Now Playing — don't repaint action sheet underneath.
         if (host.isNowPlayingScreen()) return;
+        // 2026-09-19 — Nor over a screen the user has moved on to (see buildDownloadUi).
+        if (!host.deezerOwnsScreen()) return;
         // #region agent log
         if (com.solar.launcher.debug.DebugGate.ON) {
         try {
@@ -938,6 +947,9 @@ public final class DeezerScreen {
 
     private void buildDownloadUi(DeezerResult r, int action) {
         if (host.isNowPlayingScreen()) return;
+        // 2026-09-19 — An auto-retry fires seconds later, wherever the user is by then:
+        // it drew this panel over Navidrome's list. The download carries on regardless.
+        if (!host.deezerOwnsScreen()) return;
         uiMode = UI_DOWNLOAD;
         host.prepareBrowserChrome();
         host.applyReachBrowseLayoutMode();
@@ -984,6 +996,14 @@ public final class DeezerScreen {
     }
 
     private void buildDownloadFailureUi(final DeezerResult r, String reason) {
+        if (!host.deezerOwnsScreen()) {
+            // 2026-09-19 — A download that fails after the user has moved to another
+            // screen said so by replacing that screen's list with this failure panel:
+            // Navidrome showed "Download failed / Retry / Back".
+            Toast.makeText(host.context(), host.string(R.string.deezer_download_failed, reason),
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
         uiMode = UI_DOWNLOAD;
         LinearLayout container = host.containerBrowserItems();
         container.removeAllViews();
@@ -1065,6 +1085,9 @@ public final class DeezerScreen {
     }
 
     private void showRetryingUi(DeezerResult r) {
+        // 2026-09-19 — Runs when a download fails, wherever the user is by then; it put
+        // the song's title row over Navidrome's list. The retry is scheduled regardless.
+        if (host.isNowPlayingScreen() || !host.deezerOwnsScreen()) return;
         uiMode = UI_DOWNLOAD;
         host.prepareBrowserChrome();
         host.applyReachBrowseLayoutMode();
