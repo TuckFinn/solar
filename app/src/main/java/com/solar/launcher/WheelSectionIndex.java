@@ -6,16 +6,28 @@ import java.util.Locale;
 
 /** Immutable section boundaries for allocation-free wheel jumps. */
 public final class WheelSectionIndex {
-    public static final WheelSectionIndex EMPTY = new WheelSectionIndex(new int[0], new String[0], 0);
+    public static final WheelSectionIndex EMPTY = new WheelSectionIndex(new int[0], new String[0], 0, false);
 
     private final int[] starts;
     private final String[] letters;
     private final int itemCount;
+    private final boolean alphabetical;
 
-    private WheelSectionIndex(int[] starts, String[] letters, int itemCount) {
+    private WheelSectionIndex(int[] starts, String[] letters, int itemCount, boolean alphabetical) {
         this.starts = starts;
         this.letters = letters;
         this.itemCount = itemCount;
+        this.alphabetical = alphabetical;
+    }
+
+    /**
+     * 2026-09-19 — Whether the list is in letter order, so a letter jump means
+     * something. A sorted list has about one run per letter; a playlist in its
+     * own order changes letter nearly every row, and jumping "to the next
+     * letter" there moves one row.
+     */
+    public boolean isAlphabetical() {
+        return alphabetical;
     }
 
     public static WheelSectionIndex build(String[] labels) {
@@ -37,7 +49,14 @@ public final class WheelSectionIndex {
             starts[i] = positions.get(i);
             letters[i] = sections.get(i);
         }
-        return new WheelSectionIndex(starts, letters, labels.length);
+        // Letters step backwards at a section boundary in a shuffled list about
+        // half the time; in a sorted one almost never ("#" and stray titles aside).
+        int backwards = 0;
+        for (int i = 1; i < letters.length; i++) {
+            if (letters[i].compareTo(letters[i - 1]) < 0) backwards++;
+        }
+        boolean alphabetical = letters.length > 1 && backwards <= Math.max(1, (letters.length - 1) / 10);
+        return new WheelSectionIndex(starts, letters, labels.length, alphabetical);
     }
 
     public int jumpTarget(int position, int direction) {

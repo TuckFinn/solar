@@ -6632,7 +6632,7 @@ public class MainActivity extends Activity {
             syncDualLineSelectionChrome(listVirtualSongs, target);
         }
         boolean changed = !android.text.TextUtils.equals(oldLetter, newLetter);
-        if (changed) {
+        if (changed && wheelSectionIndex.isAlphabetical()) {
             showFastScrollLetter(newLetter);
         } else {
             suppressOverlayHapticUntilNanos =
@@ -6699,6 +6699,11 @@ public class MainActivity extends Activity {
      * 2026-07-18 — Frame-drop paint: selection always moves; preview/art deferred via ScrollIdleGate
      * (Rockbox FRAMEDROP). Reversal: restore unconditional preview refresh when n≤1.
      */
+    /** Lists shorter than this never switch modes: a few screens scroll fine row by row. */
+    private static final int SUSTAINED_SCROLL_MIN_ITEMS = 40;
+    /** Rows per click once a spin is sustained on a list that is not in letter order. */
+    private static final int SUSTAINED_SCROLL_PAGE_ROWS = 8;
+
     private boolean applyCoalescedListWheelSteps(int signedSteps) {
         if (listVirtualSongs == null || signedSteps == 0) return false;
         if (listVirtualSongs.getVisibility() != View.VISIBLE) return false;
@@ -6718,12 +6723,21 @@ public class MainActivity extends Activity {
         // Reversal: always listCount >= 5000.
         int hugeThreshold = (DeviceFeatures.isY1() || DeviceFeatures.isA5()) ? 1500 : 5000;
         boolean hugeLibrary = listCount >= hugeThreshold;
+        // 2026-09-19 — iPod-style: keep spinning ~1 s on a long list and each
+        // click jumps a letter (sorted lists) or a page (a playlist in its own
+        // order), until the finger pauses. Was: letters only past 1,500 rows or
+        // on a burst the Y1 wheel rarely reaches (Tucker: "super annoying to
+        // scroll through a long list").
+        boolean sustained = wheelResult.sustained && listCount >= SUSTAINED_SCROLL_MIN_ITEMS;
         boolean sectionOk = isFastScrollLetterEligible()
                 && (n >= ListWheelCoalescer.MAX_STEPS_PER_FLUSH
                 || (hugeLibrary && n >= 3)
-                || (hugeLibrary && wheelResult.sectionJump));
+                || (hugeLibrary && wheelResult.sectionJump)
+                || (sustained && wheelSectionIndex.isAlphabetical()));
         int target;
-        if (sectionOk) {
+        if (sustained && !sectionOk) {
+            target = current + direction * SUSTAINED_SCROLL_PAGE_ROWS;
+        } else if (sectionOk) {
             target = wheelSectionIndex.jumpTarget(current, direction);
             if (target < 0 || target == current) {
                 // Fall back: multi-row page hop (still one setSelection — O(1) layout).
@@ -62436,7 +62450,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     int listCount = listCountProbe;
                     boolean huge = listCount >= 5000;
                     int steps;
-                    if (wheelResult.sectionJump && isFastScrollLetterEligible()) {
+                    if ((wheelResult.sectionJump && isFastScrollLetterEligible())
+                            || (wheelResult.sustained && listCount >= SUSTAINED_SCROLL_MIN_ITEMS)) {
                         steps = direction * Math.max(3, wheelResult.rowSteps);
                     } else if (huge && wheelResult.rowSteps >= 3 && isFastScrollLetterEligible()) {
                         steps = direction * Math.max(3, wheelResult.rowSteps);

@@ -19,6 +19,15 @@ public class WheelSectionIndexTest {
         assertEquals(-1, idx.jumpTarget(4, 1));
     }
 
+    @Test public void tellsSortedListsFromPlaylistOrder() {
+        assertTrue(WheelSectionIndex.build(new String[] {
+                "Adele", "Aya Nakamura", "Beyoncé", "Björk", "Cher", "Dido", "Doja Cat", "Enya"}).isAlphabetical());
+        assertFalse(WheelSectionIndex.build(new String[] {
+                "Tems", "Adele", "Rosalía", "Björk", "Zuchu", "Cher", "Mitski", "Adele", "Dido", "Tems",
+                "Shakira", "Beyoncé"}).isAlphabetical());
+        assertFalse(WheelSectionIndex.EMPTY.isAlphabetical());
+    }
+
     @Test public void handlesLargeDataset() {
         String[] labels = new String[5000];
         for (int i = 0; i < labels.length; i++) labels[i] = (char) ('A' + i / 200) + " item";

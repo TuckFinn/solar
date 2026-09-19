@@ -5,6 +5,24 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class WheelPhysicsTest {
+    @Test public void steadySpinBecomesSustainedAndPauseOrReverseEndsIt() {
+        WheelPhysics p = new WheelPhysics();
+        WheelPhysics.Result r = new WheelPhysics.Result();
+        long t = 1_000_000_000L;
+        // A steady thumb: a notch every 150 ms (too slow for speed-based section mode).
+        for (int i = 0; i < 7; i++) p.tick(t += 150_000_000L, 1, r);
+        assertFalse(r.sustained);
+        for (int i = 0; i < 2; i++) p.tick(t += 150_000_000L, 1, r);
+        assertTrue("1.2 s of spinning should be sustained", r.sustained);
+        assertFalse("not by speed", r.sectionJump);
+        p.tick(t += WheelPhysics.SPIN_GAP_NANOS, 1, r);
+        assertFalse("a pause starts a new spin", r.sustained);
+        for (int i = 0; i < 9; i++) p.tick(t += 150_000_000L, 1, r);
+        assertTrue(r.sustained);
+        p.tick(t += 150_000_000L, -1, r);
+        assertFalse("reversing starts a new spin", r.sustained);
+    }
+
     @Test public void isolatedTicksMoveOneRow() {
         WheelPhysics p = new WheelPhysics();
         WheelPhysics.Result r = new WheelPhysics.Result();

@@ -22,6 +22,15 @@ public final class WheelPhysics {
      * 2026-07-17 — 3.05 with RESET=110ms + impulse 1.28: steady ~3.3 so letter-jump engages.
      */
     public static final float SECTION_THRESHOLD = 3.05f;
+    /**
+     * 2026-09-19 — iPod-style continuous scroll. A pause this long, or a
+     * reversal, ends a spin; spinning this long in one direction makes it
+     * {@link Result#sustained}, and long lists switch to letter (or page) jumps
+     * until the finger stops. Speed alone (SECTION_THRESHOLD) needs notches
+     * ~40 ms apart, which a steady thumb on the Y1 wheel rarely reaches.
+     */
+    public static final long SPIN_GAP_NANOS = 400_000_000L;
+    public static final long SUSTAIN_NANOS = 1_200_000_000L;
     /** Max rows per KEY notch before section mode (keep modest to limit backlog). */
     public static final int MAX_ROW_STEPS = 4;
     /**
@@ -44,6 +53,7 @@ public final class WheelPhysics {
     private float velocity;
     private long lastNanos;
     private int lastDirection;
+    private long spinStartNanos;
 
     public Result tick(long nowNanos, int direction, Result out) {
         if (out == null) out = new Result();
@@ -57,9 +67,15 @@ public final class WheelPhysics {
                 velocity *= decay(elapsed);
                 if (velocity < 0.08f) velocity = 0f;
             }
-            out.set(0, false, velocity);
+            out.set(0, false, velocity, false);
             return out;
         }
+        long gap = lastNanos == 0L ? Long.MAX_VALUE : Math.max(0L, nowNanos - lastNanos);
+        if (spinStartNanos == 0L || gap >= SPIN_GAP_NANOS
+                || (lastDirection != 0 && direction != lastDirection)) {
+            spinStartNanos = nowNanos;
+        }
+        boolean sustained = nowNanos - spinStartNanos >= SUSTAIN_NANOS;
         // Hard stop residual when finger reverses or paused
         if (elapsed >= RESET_NANOS || (lastDirection != 0 && direction != lastDirection)) {
             velocity = 0f;
@@ -72,7 +88,7 @@ public final class WheelPhysics {
         lastDirection = direction;
         boolean section = velocity >= SECTION_THRESHOLD;
         int steps = section ? 0 : Math.max(1, Math.min(MAX_ROW_STEPS, (int) velocity));
-        out.set(steps, section, velocity);
+        out.set(steps, section, velocity, sustained);
         return out;
     }
 
@@ -92,6 +108,7 @@ public final class WheelPhysics {
         velocity = 0f;
         lastNanos = 0L;
         lastDirection = 0;
+        spinStartNanos = 0L;
     }
 
     public float velocity() {
@@ -128,11 +145,14 @@ public final class WheelPhysics {
         public int rowSteps;
         public boolean sectionJump;
         public float velocity;
+        /** Spinning one way for SUSTAIN_NANOS without a SPIN_GAP_NANOS pause. */
+        public boolean sustained;
 
-        private void set(int steps, boolean section, float value) {
+        private void set(int steps, boolean section, float value, boolean held) {
             rowSteps = steps;
             sectionJump = section;
             velocity = value;
+            sustained = held;
         }
     }
 }
