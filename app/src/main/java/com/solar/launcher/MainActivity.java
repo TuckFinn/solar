@@ -34101,6 +34101,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     private boolean awaitDeezerDownload(PlayQueue.QueueItem item, File file) {
         if (item == null || file == null || item.deezerTrackId <= 0) return false;
+        silencePreviousForAwait();
         String path = file.getAbsolutePath();
         Integer pct = deezerQueueProgressByPath.get(path);
         boolean fetching = pct != null && pct.intValue() >= 0 && pct.intValue() < 100;
@@ -34127,6 +34128,34 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         clearNowPlayingAlbumLine();
         setPlayerDefaultAlbumArt();
         return true;
+    }
+
+    /**
+     * 2026-09-18 — Stop the song before this one while this one downloads.
+     *
+     * prepareMusicTrack resets the player well past the point where
+     * awaitDeezerDownload returns, so the previous song played on under a
+     * screen and a queue that had already moved to the next one. A heart goes
+     * to the queue's song, so it saved the song queued next instead of the
+     * one being heard (2Y1, Indonesia, 17:36). Same teardown as a normal
+     * change of song: the player, IJK, the transport, and any growing-file
+     * stream whose re-prepare could bring the old song back.
+     */
+    private void silencePreviousForAwait() {
+        try {
+            if (mediaPlayer != null) {
+                if (mediaPlayer.isPlaying()) mediaPlayer.stop();
+                mediaPlayer.reset();
+            }
+        } catch (Exception ignored) {}
+        releaseMusicIjkPlayer();
+        try {
+            com.solar.launcher.audio.SolarTransport.get().releaseOwnership();
+        } catch (Exception ignored) {}
+        finalizeReachStreamHandoff();
+        playerProgress.setProgress(0);
+        tvPlayerTimeCurrent.setText("00:00");
+        tvPlayerTimeTotal.setText("00:00");
     }
 
     /** Enough to download a queued song again: its id, and the names and cover it was saved with. */
@@ -56593,8 +56622,24 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
     }
 
+    /**
+     * 2026-09-18 — The growing-file stream is only ever the song at the play
+     * head. A song left while still downloading keeps reporting progress, and
+     * onDeezerDownloadProgress points reachGrowingCacheFile back at it; the
+     * next completion on the shared player then "extended" it and the old song
+     * came back over the one the queue had moved to (1Y1, Ska: Ken Parker
+     * resumed while the queue sat on Redemption Song).
+     */
+    private boolean growingIsCurrent() {
+        if (reachGrowingCacheFile == null) return false;
+        PlayQueue.QueueItem cur = playback.currentItem();
+        return cur != null && cur.file != null
+                && reachGrowingCacheFile.getAbsolutePath().equals(cur.file.getAbsolutePath());
+    }
+
     private void maybeExtendReachGrowingPlayback(final boolean force) {
         if (!playback.isMusicActive() || reachGrowingCacheFile == null || !reachGrowingCacheFile.isFile()) return;
+        if (!growingIsCurrent()) return;
         if (reachGrowingReprepareInFlight) {
             // #region agent log
             if (com.solar.launcher.debug.DebugGate.ON) {
@@ -56779,7 +56824,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     // and letting it run drives nextTrack off a position it
                     // invented from a duration it no longer knows.
                     if (reachGrowingReprepareInFlight) return;
-                    if (reachGrowingCacheFile != null && reachGrowingCacheFile.isFile()) {
+                    if (growingIsCurrent() && reachGrowingCacheFile.isFile()) {
                         if (reachDownloadInProgress()) {
                             // #region agent log
                             if (com.solar.launcher.debug.DebugGate.ON) {
@@ -58948,6 +58993,20 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         refreshAudiobookChaptersForTrack(track);
         lastAlbumArtBytes = null;
         currentAlbumColor = ThemeManager.getListButtonFocusedBg() | 0xFF000000;
+        // 2026-09-18 — A queued Deezer song the background queue is still
+        // fetching waits for all of it. Played as a finished file it stopped at
+        // the download's edge -- a song cut short -- and that completion was
+        // taken for the growing stream's, which brought back the song before.
+        PlayQueue.QueueItem dzItem = playback.currentItem();
+        if (dzItem != null && dzItem.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                && dzItem.deezerTrackId > 0 && dzItem.file != null
+                && dzItem.file.getAbsolutePath().equals(track.getAbsolutePath())) {
+            Integer dzPct = deezerQueueProgressByPath.get(track.getAbsolutePath());
+            if (dzPct != null && dzPct.intValue() >= 0 && dzPct.intValue() < 100
+                    && awaitDeezerDownload(dzItem, track)) {
+                return;
+            }
+        }
         // 🚀 [추가된 부분] 손상된 파일 방어막: 파일이 없거나 용량이 1KB(1024 bytes) 미만인 껍데기 파일일 경우
         if (!track.exists() || track.length() < 1024) {
             PlayQueue.QueueItem curItem = playback.currentItem();
