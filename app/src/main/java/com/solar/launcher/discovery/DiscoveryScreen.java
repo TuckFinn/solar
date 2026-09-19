@@ -281,8 +281,18 @@ public final class DiscoveryScreen {
         return search;
     }
 
+    /**
+     * 2026-09-19 — Which pick the listener is waiting on. A country row has to
+     * be searched for first, and that search outlived the tap: three picks in a
+     * row and each late result called start(), whose startTransfer cancels the
+     * download already running, so the song sat at 0% (Tucker, 1Y1). A newer
+     * pick now makes the older searches drop what they found.
+     */
+    private int pickGeneration;
+
     private void play(final DiscoveryClient.Track t) {
         if (!host.requireInternet(R.string.deezer_wifi_required)) return;
+        final int pick = ++pickGeneration;
         if (t.deezerId > 0) {
             start(t, new DeezerResult(t.deezerId, t.title, t.artist, t.album,
                     0L, t.durationSec, "", t.cover));
@@ -306,6 +316,7 @@ public final class DiscoveryScreen {
                 final DeezerResult found = hit;
                 host.runOnUi(new Runnable() {
                     @Override public void run() {
+                        if (pick != pickGeneration) return;   // a newer pick is playing
                         if (found == null) {
                             Toast.makeText(host.context(),
                                     host.string(R.string.discovery_not_found, t.displayTitle()),
