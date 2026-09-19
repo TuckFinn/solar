@@ -426,7 +426,21 @@ public final class DiscoveryScreen {
         if (t == null) return;
         lastPlayed = t;
         lastPlayedDeezerId = deezerTrackId;
+        reportPlayed(t);
         topUp(queueGeneration);
+    }
+
+    /** 2026-09-19 — Tell nookTunes this song was heard, for its daily rotation. */
+    private void reportPlayed(final DiscoveryClient.Track t) {
+        if (t.key == null || t.key.length() == 0 || !isConfigured()) return;
+        final String base = baseUrl();
+        host.runOnBg(new Runnable() {
+            @Override public void run() {
+                if (!DiscoveryClient.played(base, t.key)) {
+                    android.util.Log.w("SolarDiscovery", "could not report played " + t.key);
+                }
+            }
+        });
     }
 
     /**

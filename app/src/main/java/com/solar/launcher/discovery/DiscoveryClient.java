@@ -159,6 +159,20 @@ public final class DiscoveryClient {
         }
     }
 
+    /**
+     * 2026-09-19 — A Discovery song started playing here. The Y1 plays from its
+     * own Deezer download, so nookTunes never sees the stream; this is how its
+     * daily rotation learns which songs have been heard and moves them back.
+     */
+    public static boolean played(String base, String key) {
+        try {
+            getJson(url(base, "/api/discovery/played?key=" + enc(key)));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static String enc(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8");
