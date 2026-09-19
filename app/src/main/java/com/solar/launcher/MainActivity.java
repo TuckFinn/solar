@@ -2624,6 +2624,26 @@ public class MainActivity extends Activity {
      * 2026-07-15 — Also shuts FM session (mutual exclusivity with local/Deezer/etc.).
      * Reversal: remove call sites; YT audio + Deezer dual-play returns.
      */
+    /**
+     * 2026-09-19 — A list started now replaces a Deezer/Discovery song still
+     * downloading to "play when ready". Tucker picked a Discovery playlist,
+     * then a Navidrome one while the first was still loading, and got both at
+     * once: the Discovery song started when its bytes arrived. Drop that
+     * pending play, the growing-file state that re-prepares it, and the
+     * Discovery run that would keep queueing behind it -- unless the list is
+     * that Deezer song itself.
+     */
+    private void abandonPendingDeezerPlay(List<File> playlist) {
+        File growing = deezerActiveGrowingFile;
+        if (growing != null && playlist != null && playlist.contains(growing)) return;
+        boolean dropped = deezerScreen != null && deezerScreen.abandonPendingPlay();
+        if (dropped || growing != null) {
+            reachGrowingCacheFile = null;
+            deezerActiveGrowingFile = null;
+        }
+        if (dropped && discoveryScreen != null) discoveryScreen.abandonRun();
+    }
+
     private void stopCompetingAudioEngines() {
         // 2026-07-19 — Claim STREAM_MUSIC focus so FM/BT peers duck/pause.
         try {
@@ -59072,6 +59092,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     private void playTrackList(List<File> playlist, int startIndex, String activePlaylistName,
             String soloTitleOverride) {
+        abandonPendingDeezerPlay(playlist);
         this.soloNpTitleOverride = soloTitleOverride;
         // 2026-07-19 — Normal play clears solo DJ session; solo callers set origin/mode first.
         if (soloTitleOverride == null) {

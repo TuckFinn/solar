@@ -419,6 +419,12 @@ public final class DiscoveryScreen {
      * picked, so a hold on the next one fell through to the Navidrome heart --
      * and the queue is topped up behind it.
      */
+    /** The listener moved on to other music: stop filling this run's queue. */
+    public void abandonRun() {
+        queueGeneration++;
+        runPending.clear();
+    }
+
     public void onDeezerTrackPlaying(long deezerTrackId) {
         playingDeezerId = deezerTrackId;
         if (!discoveryIds.isEmpty()) host.releaseDeezerAudioBehind(KEEP_BEHIND, discoveryIds);

@@ -1126,6 +1126,21 @@ public final class DeezerScreen {
         searchInProgress = false;
     }
 
+    /**
+     * 2026-09-19 — The listener started something else while a "play when
+     * ready" download was still arriving. Left alone, the song started on top
+     * of what they chose once its bytes came in (a Discovery song under a
+     * Navidrome playlist on 2Y1). The download still finishes into the cache;
+     * it just no longer plays or rejoins the queue. Returns true if a pending
+     * play was dropped.
+     */
+    public boolean abandonPendingPlay() {
+        if (pendingAction != ACTION_PLAY) return false;
+        pendingAction = 0;
+        growingFile = null;
+        return true;
+    }
+
     /** Cancel downloads and clear UI state when leaving Deezer screen. */
     public void teardown() {
         cancelSearch();
