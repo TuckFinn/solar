@@ -6738,7 +6738,9 @@ public class MainActivity extends Activity {
         if (sustained && !sectionOk) {
             target = current + direction * SUSTAINED_SCROLL_PAGE_ROWS;
         } else if (sectionOk) {
-            target = wheelSectionIndex.jumpTarget(current, direction);
+            // 2026-09-19 — n letters, not one: the notches in this flush all
+            // count. One per flush made a hard spin slower than clicking.
+            target = wheelSectionIndex.jumpTarget(current, direction, n);
             if (target < 0 || target == current) {
                 // Fall back: multi-row page hop (still one setSelection — O(1) layout).
                 int hop = hugeLibrary
@@ -14021,6 +14023,18 @@ public class MainActivity extends Activity {
                 return browserStatusTitle != null && isGetMusicUnifiedUi()
                         ? browserStatusTitle : getString(R.string.status_soulseek);
             case STATE_DEEZER: return getString(R.string.status_deezer);
+            // 2026-09-19 — Where you are on a server, which NavidromeScreenHost has been
+            // setting all along: "Playlists", a playlist's name, an artist's. These
+            // screens fell through to default, so the bar read "Home" at every depth.
+            case STATE_NAVIDROME:
+                return browserStatusTitle != null && browserStatusTitle.length() > 0
+                        ? browserStatusTitle : getString(R.string.navidrome_menu);
+            case STATE_PLEX:
+                return browserStatusTitle != null && browserStatusTitle.length() > 0
+                        ? browserStatusTitle : getString(R.string.plex_menu);
+            case STATE_JELLYFIN:
+                return browserStatusTitle != null && browserStatusTitle.length() > 0
+                        ? browserStatusTitle : getString(R.string.jellyfin_menu);
             // 2026-09-19 — The open playlist's name, as DiscoveryScreen sets it. Was the
             // constant "Discovery", so inside a playlist the title said Discovery again.
             case STATE_DISCOVERY:

@@ -60,10 +60,33 @@ public final class WheelSectionIndex {
     }
 
     public int jumpTarget(int position, int direction) {
+        return jumpTarget(position, direction, 1);
+    }
+
+    /**
+     * 2026-09-19 — {@code sections} letters at once, so a hard spin travels
+     * further than a slow one. One letter per flush meant spinning a long list
+     * crawled: the wheel's notches were coalesced into a flush and the flush
+     * moved a single letter, slower than clicking row by row (Tucker, 1Y1).
+     * Past the last letter it stops on the last one rather than giving up, so
+     * the spin still lands somewhere.
+     */
+    public int jumpTarget(int position, int direction, int sections) {
         if (starts.length == 0 || position < 0 || position >= itemCount || direction == 0) return -1;
+        int step = Math.max(1, sections);
         int section = sectionForPosition(position);
-        int target = direction < 0 ? section - 1 : section + 1;
-        return target >= 0 && target < starts.length ? starts[target] : -1;
+        int target = section + (direction < 0 ? -step : step);
+        if (target >= starts.length) {
+            // Already in the last letter: nothing to jump to, so the caller
+            // hops rows instead and the spin can still reach the last item.
+            if (section >= starts.length - 1) return -1;
+            target = starts.length - 1;
+        }
+        if (target < 0) {
+            if (section <= 0 && position <= starts[0]) return -1;
+            target = 0;
+        }
+        return starts[target] != position ? starts[target] : -1;
     }
 
     public String letterAtPosition(int position) {

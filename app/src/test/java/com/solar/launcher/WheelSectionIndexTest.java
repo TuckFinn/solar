@@ -19,6 +19,16 @@ public class WheelSectionIndexTest {
         assertEquals(-1, idx.jumpTarget(4, 1));
     }
 
+    @Test public void aHarderSpinTravelsFurther() {
+        WheelSectionIndex idx = WheelSectionIndex.build(new String[] {
+                "Able", "Atom", "Beta", "Bravo", "Charlie", "Delta", "Echo"});
+        assertEquals(2, idx.jumpTarget(0, 1, 1));       // one letter
+        assertEquals(5, idx.jumpTarget(0, 1, 3));       // three at once
+        assertEquals(6, idx.jumpTarget(0, 1, 9));       // past the end: last letter
+        assertEquals(0, idx.jumpTarget(6, -1, 9));      // and back to the first
+        assertEquals(-1, idx.jumpTarget(6, 1, 4));      // already there: hop rows instead
+    }
+
     @Test public void tellsSortedListsFromPlaylistOrder() {
         assertTrue(WheelSectionIndex.build(new String[] {
                 "Adele", "Aya Nakamura", "Beyoncé", "Björk", "Cher", "Dido", "Doja Cat", "Enya"}).isAlphabetical());
