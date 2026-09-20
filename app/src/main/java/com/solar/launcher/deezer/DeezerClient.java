@@ -33,6 +33,16 @@ public final class DeezerClient {
     private String arl = "";
     /** ponytail: transient download fallback — does not mutate prefs ARL. */
     private String arlOverride = null;
+    /**
+     * 2026-09-19 — Deezer's session cookies. gw-light hands out a `sid` with
+     * the CSRF token (checkForm) that belongs to it; sending only `arl` on the
+     * next call let Deezer treat it as a new session and answer "Invalid CSRF
+     * token", so song.getData returned nothing, no media URL was ever asked
+     * for, and the download sat at 0% (1Y1, Discovery). Flaky rather than
+     * constant — it depends on which session Deezer hands back.
+     */
+    private final java.util.Map<String, String> cookies =
+            new java.util.concurrent.ConcurrentHashMap<String, String>();
     private String licenseToken = "";
     private String apiToken = "";
     private String soundFormat = "MP3_128";
@@ -72,11 +82,13 @@ public final class DeezerClient {
     /** Use bundled/demo ARL for this session only — cleared via {@link #clearArlOverride()}. */
     public void setArlOverride(String arl) {
         arlOverride = arl != null && arl.trim().length() >= 64 ? arl.trim() : null;
+        cookies.clear();                 // another account's session is not ours
         sessionValid = false;
     }
 
     public void clearArlOverride() {
         arlOverride = null;
+        cookies.clear();
         sessionValid = false;
     }
 
@@ -226,8 +238,33 @@ public final class DeezerClient {
         b.header("Accept", "*/*");
         b.header("Accept-Language", "en-US,en;q=0.9");
         b.header("Referer", "https://www.deezer.com/login");
-        b.header("Cookie", "arl=" + arl + "; comeback=1");
+        b.header("Cookie", cookieHeader());
         return b;
+    }
+
+    /** arl (ours) plus whatever Deezer set on this session. */
+    private String cookieHeader() {
+        StringBuilder sb = new StringBuilder("arl=").append(arl).append("; comeback=1");
+        for (java.util.Map.Entry<String, String> e : cookies.entrySet()) {
+            sb.append("; ").append(e.getKey()).append('=').append(e.getValue());
+        }
+        return sb.toString();
+    }
+
+    private void captureCookies(Response resp) {
+        for (String set : resp.headers("Set-Cookie")) {
+            int eq = set.indexOf('=');
+            if (eq <= 0) continue;
+            String name = set.substring(0, eq).trim();
+            int semi = set.indexOf(';', eq);
+            String value = set.substring(eq + 1, semi > eq ? semi : set.length()).trim();
+            if ("arl".equalsIgnoreCase(name)) continue;          // ours, set per request
+            if (value.isEmpty() || "deleted".equals(value)) {
+                cookies.remove(name);
+            } else {
+                cookies.put(name, value);
+            }
+        }
     }
 
     public byte[] getPublic(String url) throws IOException {
@@ -253,6 +290,7 @@ public final class DeezerClient {
         TlsHelper.ensureSecurityProvider();
         OkHttpClient client = TlsHelper.client();
         Response resp = client.newCall(req).execute();
+        captureCookies(resp);
         if (!resp.isSuccessful()) {
             int code = resp.code();
             resp.close();
