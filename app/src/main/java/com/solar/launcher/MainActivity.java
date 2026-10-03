@@ -45493,6 +45493,26 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // #endregion
     }
 
+    /**
+     * 2026-10-03 — Re-stamp Tier-0 from SQL DISTINCT when a libraryScanGen bump orphaned it.
+     * Layman: art-cache rebuild / browser teardown / scan cancel bump the generation without
+     * rebuilding artist/album names, so under SEGMENTED (empty customLibrary) Artists/Albums
+     * went blank until Solar restarted.
+     * Technical: only touches libraryRamCache; no customLibrary/segment side effects.
+     */
+    private void restampTier0IfOrphaned() {
+        if (libraryRamCache.generation() == libraryScanGen) return;
+        synchronized (customLibrary) {
+            if (!customLibrary.isEmpty()) return;
+        }
+        MusicLibraryStore store = MusicLibraryStore.getInstance(getApplicationContext());
+        int n = store.countTracks();
+        if (n <= 0) return;
+        libraryRamCache.rebuildFromDistinct(libraryScanGen, n,
+                store.listDistinctArtists(), store.listDistinctAlbums(),
+                store.listDistinctGenres(), store.listDistinctYears());
+    }
+
     /** Pre-scale album art to 240px JPEG on internal storage for fast Flow navigation. */
     private void buildAlbumArtCacheAfterScan(int gen) {
         if (libraryScanGen != gen) return;
@@ -47888,6 +47908,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     /** 2026-07-18 — Actual category list bind (runs after first frame). */
     private void buildVirtualCategoriesNow(final String type) {
+        restampTier0IfOrphaned();
         java.util.HashMap<String, String> albumByKey = new java.util.HashMap<>();
         java.util.HashSet<String> uniqueCategories = new java.util.HashSet<>();
         if (!"ARTIST".equals(type) && !"YEAR".equals(type) && !"GENRE".equals(type)) {
