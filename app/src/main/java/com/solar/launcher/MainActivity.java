@@ -51422,6 +51422,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             startHasStemsBrowseAsync();
             return;
         }
+        // 2026-10-03 — invalidateSongPathIndex (art-cache clear) resets the cache to FULL_RESIDENT;
+        // with an empty customLibrary the walk below then bound zero songs. Re-stamp first.
+        restampTier0IfOrphaned();
         // 2026-07-20 — SEGMENTED All / Artist / Album / Recent drills: page from SQLite.
         // Was: RECENT fell through to empty customLibrary walk. Reversal: exclude RECENT here.
         boolean drillSegmented = ("ALL".equals(virtualQueryType)
