@@ -1126,6 +1126,10 @@ public class MainActivity extends Activity {
     private boolean getMusicEmbeddedInDeezer = false;
     private int deezerActiveDownloadPercent = -1;
     private File deezerActiveGrowingFile = null;
+    /** Queued Deezer files already given their one 403 retry. */
+    private final java.util.Set<String> deezer403Retried = new java.util.HashSet<String>();
+    private static final long DEEZER_403_RETRY_MS = 30000;
+
     /** The background-queue song playing while it downloads, if any. */
     private File deezerBgGrowingFile = null;
     /** About six seconds of a 320 kbps song: enough to start it while the rest downloads. */
@@ -34525,6 +34529,46 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         progressHandler.postDelayed(reachGrowingEdgePoll, 150);
     }
 
+    /**
+     * 2026-10-12 — A song queued ahead that Deezer answered 403 is fetched once
+     * more, 30 s on. The 403s came a few seconds after a song change and were
+     * gone minutes later -- the same songs downloaded fine when reached (2Y1,
+     * Soul & Funk: Heart Heart, Baby Girls, Ever Changing Times) -- so a later
+     * try has the song ready instead of fetching it at the play head.
+     */
+    private void maybeRetryDeezer403(final DeezerBackgroundQueue.Job job, String error) {
+        if (error == null || !error.contains("HTTP 403") || job.dest == null) return;
+        final String path = job.dest.getAbsolutePath();
+        if (!deezer403Retried.add(path)) return;
+        progressHandler.postDelayed(new Runnable() {
+            @Override public void run() {
+                boolean queued = false;
+                for (PlayQueue.QueueItem q : playback.unifiedQueue().items()) {
+                    if (q != null && q.file != null && path.equals(q.file.getAbsolutePath())) {
+                        queued = true;
+                        break;
+                    }
+                }
+                if (!queued || job.dest.length() > 1024
+                        || deezerQueueProgressByPath.containsKey(path)) return;
+                try {
+                    File dir = job.dest.getParentFile();
+                    if (dir != null && !dir.isDirectory()) dir.mkdirs();
+                    if (!job.dest.exists()) job.dest.createNewFile();
+                } catch (java.io.IOException e) {
+                    return;
+                }
+                deezerQueueProgressByPath.put(path, 0);
+                ensureDeezerBackgroundQueue();
+                java.util.List<DeezerBackgroundQueue.Job> one =
+                        new java.util.ArrayList<DeezerBackgroundQueue.Job>();
+                one.add(new DeezerBackgroundQueue.Job(job.track, job.dest));
+                deezerBackgroundQueue.enqueue(one);
+                android.util.Log.i("SolarDiscovery", "403, trying again: " + job.track.displayTitle());
+            }
+        }, DEEZER_403_RETRY_MS);
+    }
+
     /** The awaited song has enough downloaded to start. */
     private void maybeStartAwaitedDeezerGrowing(File dest) {
         if (dest == null || !dest.equals(deezerAwaitingFile)) return;
@@ -34831,7 +34875,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                     progressHandler.removeCallbacks(reachGrowingEdgePoll);
                                     return;
                                 }
-                                if (!job.dest.equals(deezerAwaitingFile)) return;
+                                if (!job.dest.equals(deezerAwaitingFile)) {
+                                    maybeRetryDeezer403(job, error);
+                                    return;
+                                }
                                 deezerAwaitingFile = null;
                                 PlayQueue.QueueItem cur = playback.currentItem();
                                 if (cur == null || !job.dest.equals(cur.file)) return;
