@@ -34801,6 +34801,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 } else {
                                     android.util.Log.i("SolarDiscovery", "downloaded ahead: "
                                             + job.dest.getName() + " (" + (job.dest.length() / 1024) + " KB)");
+                                    // The song up next may have been left unarmed
+                                    // while it downloaded; arm it now it is whole.
+                                    if (playback.isMusicActive()) armTransportPrepareAhead();
                                 }
                             }
                         });
@@ -56844,6 +56847,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 && soulseekClient != null && soulseekClient.isTransferActive();
     }
 
+    /** A queued Deezer file with no audio yet, or one the background queue is still writing. */
+    private boolean deezerDownloadUnfinished(File f) {
+        if (f == null || !f.isFile() || f.length() < 1024) return true;
+        Integer pct = deezerQueueProgressByPath.get(f.getAbsolutePath());
+        return pct != null && pct.intValue() >= 0 && pct.intValue() < 100;
+    }
+
     /** The background queue is still writing the song the growing stream plays. */
     private boolean isDeezerBgGrowingDownloadActive() {
         File f = reachGrowingCacheFile;
@@ -67152,6 +67162,15 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if (items == null || next >= items.size()) return;
             PlayQueue.QueueItem item = items.get(next);
             if (item == null) return;
+            // 2026-10-11 — Not a Deezer song still downloading. Armed early, the
+            // player took the partial file's length for the song's and ended it
+            // at the download's edge (1Y1, Rock: Ministry stopped at 1:13 of
+            // 6:26 and Clocks began). It is armed when its download lands, or
+            // plays through the growing stream if reached first.
+            if (item.kind == PlayQueue.ItemKind.DEEZER_STREAM && deezerDownloadUnfinished(item.file)) {
+                com.solar.launcher.audio.SolarTransport.get().clearPreparedNext();
+                return;
+            }
             if (item.file != null && item.file.isFile()) {
                 boolean preferIjk = item.kind == PlayQueue.ItemKind.PODCAST_EPISODE
                         || prefersIjkLocalDecode(item.file);

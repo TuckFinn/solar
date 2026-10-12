@@ -284,6 +284,19 @@ public final class SolarTransport {
         });
     }
 
+    /**
+     * 2026-10-11 — Forget the warmed next slot: what follows is not ready to
+     * arm, and a slot armed for an earlier "next" must not be promoted in its place.
+     */
+    public void clearPreparedNext() {
+        audio.post(new Runnable() {
+            @Override
+            public void run() {
+                clearPreparedNextLocked();
+            }
+        });
+    }
+
     public void prepareNextUrl(final String url) {
         audio.post(new Runnable() {
             @Override
