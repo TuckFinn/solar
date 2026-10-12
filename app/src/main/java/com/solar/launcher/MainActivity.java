@@ -34548,6 +34548,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void silencePreviousForAwait() {
         try {
             if (mediaPlayer != null) {
+                // 2026-10-12 — Unhook the previous song's listeners first. A
+                // reset player reports (-38, 0); the growing stream's onError
+                // returns false for it, so MediaPlayer called its onCompletion,
+                // which ran nextTrack and skipped the song being waited for
+                // (2Y1, Soul & Funk: The Pride a second after Baby Girls).
+                mediaPlayer.setOnCompletionListener(null);
+                mediaPlayer.setOnErrorListener(null);
+                mediaPlayer.setOnPreparedListener(null);
                 if (mediaPlayer.isPlaying()) mediaPlayer.stop();
                 mediaPlayer.reset();
             }
@@ -60847,6 +60855,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
     }
     private void nextTrack() {
+        if (deezerAwaitingFile != null) {
+            // Who moves on from a song still downloading: a skip, or something
+            // that should not have (Heart Heart, 2Y1, 2026-10-12).
+            android.util.Log.w("SolarDiscovery", "moved on while waiting for "
+                    + deezerAwaitingFile.getName(), new Throwable("nextTrack caller"));
+        }
         lastTrackChangeTime = System.currentTimeMillis();
         saveAudiobookBookmarkIfNeeded();
         // #region agent log
