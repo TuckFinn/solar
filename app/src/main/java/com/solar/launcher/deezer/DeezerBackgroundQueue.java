@@ -78,6 +78,24 @@ public final class DeezerBackgroundQueue {
      * retired under the same lock, so an enqueue racing it starts a fresh one
      * rather than handing work to a thread that is on its way out.
      */
+    /**
+     * 2026-10-11 — Move the waiting job for {@code dest} to the front. The song
+     * on screen is waiting for it; skipped ahead onto a song the queue had not
+     * reached, it waited behind every song queued before it (1Y1, Classical).
+     *
+     * @return true when the job was waiting here
+     */
+    public synchronized boolean prioritize(File dest) {
+        if (dest == null) return false;
+        for (int i = 0; i < jobs.size(); i++) {
+            if (dest.equals(jobs.get(i).dest)) {
+                if (i > 0) jobs.add(0, jobs.remove(i));
+                return true;
+            }
+        }
+        return false;
+    }
+
     private synchronized Job takeNext() {
         if (jobs.isEmpty()) {
             if (worker == Thread.currentThread()) worker = null;

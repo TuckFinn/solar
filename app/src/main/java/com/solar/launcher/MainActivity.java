@@ -1126,6 +1126,10 @@ public class MainActivity extends Activity {
     private boolean getMusicEmbeddedInDeezer = false;
     private int deezerActiveDownloadPercent = -1;
     private File deezerActiveGrowingFile = null;
+    /** The background-queue song playing while it downloads, if any. */
+    private File deezerBgGrowingFile = null;
+    /** About six seconds of a 320 kbps song: enough to start it while the rest downloads. */
+    private static final long DEEZER_BG_PLAY_FROM_BYTES = 256 * 1024;
     private long deezerProgressDebugLastMs = 0;
     private int deezerProgressDebugLastPct = -1;
     private long deezerLastProgressUiMs = 0;
@@ -34474,13 +34478,60 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             deezerBackgroundQueue.enqueue(one);
             android.util.Log.i("SolarDiscovery", "fetching again: " + item.deezerMeta);
         }
+        // 2026-10-11 — Fetch this one next, and play it as soon as a few
+        // seconds are in. Waiting for all of it left a long classical piece on
+        // "Loading" for minutes at the Y1's ~150 KB/s (1Y1, Schubert, 21 MB).
+        if (deezerBackgroundQueue != null && deezerBackgroundQueue.prioritize(file)) {
+            android.util.Log.i("SolarDiscovery", "fetching next: " + item.deezerMeta);
+        }
+        if (file.length() >= DEEZER_BG_PLAY_FROM_BYTES) {
+            startDeezerBgGrowingPlayback(file);
+            return true;
+        }
         deezerAwaitingFile = file;
+        android.util.Log.i("SolarDiscovery", "waiting for: " + file.getName()
+                + " at " + (file.length() / 1024) + " KB");
         String t = item.streamMeta();
         tvPlayerTitle.setText(t != null && !t.isEmpty() ? t : file.getName());
         tvPlayerArtist.setText(getString(R.string.reach_loading_track));
         clearNowPlayingAlbumLine();
         setPlayerDefaultAlbumArt();
         return true;
+    }
+
+    /**
+     * 2026-10-11 — Play the queued song at the play head while the background
+     * queue downloads it, through the growing-file stream a picked Deezer song
+     * uses: it re-prepares as the file grows and once more when it is whole.
+     */
+    private void startDeezerBgGrowingPlayback(File file) {
+        deezerAwaitingFile = null;
+        deezerBgGrowingFile = file;
+        deezerActiveGrowingFile = file;
+        reachPartialPlaybackStarted = true;
+        reachGrowingCacheFile = file;
+        reachGrowingTotalBytes = 0;
+        reachGrowingPreparedBytes = file.length();
+        reachGrowingSeekMs = 0;
+        reachGrowingLastPositionMs = 0;
+        applyDeezerStreamMetadata(file, true);
+        playerProgress.setProgress(0);
+        tvPlayerTimeCurrent.setText("00:00");
+        tvPlayerTimeTotal.setText("00:00");
+        android.util.Log.i("SolarDiscovery", "playing while it downloads: " + file.getName()
+                + " at " + (file.length() / 1024) + " KB");
+        progressHandler.post(updateProgressTask);
+        startReachFromGrowingFile(file, 0);
+        progressHandler.postDelayed(reachGrowingEdgePoll, 150);
+    }
+
+    /** The awaited song has enough downloaded to start. */
+    private void maybeStartAwaitedDeezerGrowing(File dest) {
+        if (dest == null || !dest.equals(deezerAwaitingFile)) return;
+        if (dest.length() < DEEZER_BG_PLAY_FROM_BYTES) return;
+        PlayQueue.QueueItem cur = playback.currentItem();
+        if (cur == null || !dest.equals(cur.file)) return;
+        startDeezerBgGrowingPlayback(dest);
     }
 
     /**
@@ -34711,6 +34762,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         runOnUiThread(new Runnable() {
                             @Override public void run() {
                                 refreshStreamProgressUi();
+                                maybeStartAwaitedDeezerGrowing(job.dest);
                             }
                         });
                     }
@@ -34724,13 +34776,31 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             @Override public void run() {
                                 refreshStreamProgressUi();
                                 persistPlaybackQueue();
+                                // Playing while it downloaded: now whole, so the
+                                // stream re-prepares once to the full length.
+                                if (job.dest.equals(deezerBgGrowingFile)
+                                        && reachPartialPlaybackStarted && growingIsCurrent()) {
+                                    reachGrowingTotalBytes = job.dest.length();
+                                    updateReachGrowingDurationUi();
+                                    maybeExtendReachGrowingPlayback(true);
+                                    return;
+                                }
                                 // The song on screen was waiting for exactly this.
                                 if (job.dest.equals(deezerAwaitingFile)) {
                                     deezerAwaitingFile = null;
                                     PlayQueue.QueueItem cur = playback.currentItem();
                                     if (cur != null && job.dest.equals(cur.file)) {
+                                        android.util.Log.i("SolarDiscovery", "landed, playing: "
+                                                + job.dest.getName());
                                         prepareMusicTrack(playback.musicIndex());
+                                    } else {
+                                        android.util.Log.w("SolarDiscovery", "landed, but the play head moved: "
+                                                + job.dest.getName() + " vs "
+                                                + (cur != null && cur.file != null ? cur.file.getName() : "none"));
                                     }
+                                } else {
+                                    android.util.Log.i("SolarDiscovery", "downloaded ahead: "
+                                            + job.dest.getName() + " (" + (job.dest.length() / 1024) + " KB)");
                                 }
                             }
                         });
@@ -34744,6 +34814,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 + job.track.displayTitle() + ": " + error);
                         runOnUiThread(new Runnable() {
                             @Override public void run() {
+                                // Playing while it downloaded: it plays what
+                                // arrived, then the end-of-file path moves on.
+                                if (job.dest.equals(deezerBgGrowingFile) && growingIsCurrent()) {
+                                    progressHandler.removeCallbacks(reachGrowingEdgePoll);
+                                    return;
+                                }
                                 if (!job.dest.equals(deezerAwaitingFile)) return;
                                 deezerAwaitingFile = null;
                                 PlayQueue.QueueItem cur = playback.currentItem();
@@ -56759,12 +56835,21 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     }
 
     private boolean reachDownloadInProgress() {
-        return isSoulseekTransferInProgress() || isDeezerStreamDownloadInProgress();
+        return isSoulseekTransferInProgress() || isDeezerStreamDownloadInProgress()
+                || isDeezerBgGrowingDownloadActive();
     }
 
     private boolean isSoulseekTransferInProgress() {
         return soulseekActiveDownload != null
                 && soulseekClient != null && soulseekClient.isTransferActive();
+    }
+
+    /** The background queue is still writing the song the growing stream plays. */
+    private boolean isDeezerBgGrowingDownloadActive() {
+        File f = reachGrowingCacheFile;
+        if (f == null || !f.equals(deezerBgGrowingFile) || !growingIsCurrent()) return false;
+        Integer pct = deezerQueueProgressByPath.get(f.getAbsolutePath());
+        return pct != null && pct.intValue() >= 0 && pct.intValue() < 100;
     }
 
     private boolean isDeezerStreamDownloadInProgress() {
