@@ -35,6 +35,12 @@ public final class DiscoveryScreen {
 
     public static final int UI_PLAYLISTS = 0;
     public static final int UI_TRACKS = 1;
+    /**
+     * 2026-10-21 — Q18: the folders (Fresh, For You, Genres, Countries, Seeds)
+     * above the lists. Only when nookTunes sends them; an older one keeps the
+     * flat playlist tier as the top.
+     */
+    public static final int UI_FOLDERS = 2;
 
     private final DeezerScreen.Host host;
     private final DeezerScreen deezer;
@@ -44,6 +50,15 @@ public final class DiscoveryScreen {
             new ArrayList<DiscoveryClient.Playlist>();
     private final List<DiscoveryClient.Track> tracks = new ArrayList<DiscoveryClient.Track>();
     private DiscoveryClient.Playlist openPlaylist;
+    /** 2026-10-21 — Q18: the lists and their folders, as last fetched. */
+    private DiscoveryFolders catalog = DiscoveryFolders.EMPTY;
+    /** The folder open, or whose only list is open; null on the top tier. */
+    private String openFolder;
+    /**
+     * True when the open folder holds one list (Fresh) and its songs were
+     * opened directly, so Back from them skips the one-row list tier.
+     */
+    private boolean folderSkipped;
     /**
      * 2026-09-19 — The row the next render focuses, or -1 for the first. Back
      * sets it so the list comes back on the row that was left: the playlist
@@ -147,10 +162,12 @@ public final class DiscoveryScreen {
         return !baseUrl().trim().isEmpty();
     }
 
-    /** Entry point: show the playlist tier, fetching it if we have nothing. */
+    /** Entry point: show the top tier, fetching it if we have nothing. */
     public void open() {
-        uiMode = UI_PLAYLISTS;
+        uiMode = topTier();
         openPlaylist = null;
+        openFolder = null;
+        folderSkipped = false;
         focusIndex = -1;
         if (playlists.isEmpty() && !loading) {
             fetchPlaylists();
@@ -190,8 +207,17 @@ public final class DiscoveryScreen {
             return true;
         }
         if (uiMode == UI_TRACKS) {
-            focusIndex = indexOfPlaylist(openPlaylist);
-            uiMode = UI_PLAYLISTS;
+            if (folderSkipped) {
+                // 2026-10-21 — Q18: a one-list folder (Fresh) opened its songs
+                // directly, so Back goes to the folders, on that folder.
+                focusIndex = indexOfFolder(openFolder);
+                uiMode = UI_FOLDERS;
+                openFolder = null;
+                folderSkipped = false;
+            } else {
+                focusIndex = indexOfPlaylist(openPlaylist);
+                uiMode = UI_PLAYLISTS;
+            }
             openPlaylist = null;
             // A track fetch still running belongs to the list being left; its
             // result is dropped, so it must not keep the screen on "Loading".
@@ -199,11 +225,51 @@ public final class DiscoveryScreen {
             render();
             return true;
         }
+        if (uiMode == UI_PLAYLISTS && openFolder != null) {
+            // 2026-10-21 — Q18: out of a folder's lists, back on that folder.
+            focusIndex = indexOfFolder(openFolder);
+            uiMode = UI_FOLDERS;
+            openFolder = null;
+            render();
+            return true;
+        }
         return false;
+    }
+
+    /** 2026-10-21 — Q18: folders first when nookTunes sends them, else the flat lists. */
+    private int topTier() {
+        return catalog.hasFolders() ? UI_FOLDERS : UI_PLAYLISTS;
+    }
+
+    /** The lists the playlist tier shows: the open folder's, or all of them. */
+    private List<DiscoveryClient.Playlist> shownPlaylists() {
+        return openFolder != null ? catalog.inFolder(openFolder) : playlists;
+    }
+
+    private int indexOfFolder(String folder) {
+        return folder == null ? -1 : catalog.folders().indexOf(folder);
+    }
+
+    /**
+     * 2026-10-21 — Q18: a folder chosen. One list (Fresh) opens its songs
+     * directly; more show the folder's lists.
+     */
+    private void openFolder(String folder) {
+        List<DiscoveryClient.Playlist> in = catalog.inFolder(folder);
+        openFolder = folder;
+        if (in.size() == 1) {
+            folderSkipped = true;
+            fetchTracks(in.get(0));
+            return;
+        }
+        folderSkipped = false;
+        uiMode = UI_PLAYLISTS;
+        render();
     }
 
     private int indexOfPlaylist(DiscoveryClient.Playlist p) {
         if (p == null) return -1;
+        List<DiscoveryClient.Playlist> playlists = shownPlaylists();
         for (int i = 0; i < playlists.size(); i++) {
             DiscoveryClient.Playlist q = playlists.get(i);
             if (q == p || (q.id != null && q.id.equals(p.id))) return i;
@@ -231,25 +297,31 @@ public final class DiscoveryScreen {
         render();
         host.runOnBg(new Runnable() {
             @Override public void run() {
-                final List<DiscoveryClient.Playlist> got =
-                        new ArrayList<DiscoveryClient.Playlist>();
+                DiscoveryFolders got = DiscoveryFolders.EMPTY;
                 String err = null;
                 try {
                     // Everything nookTunes offers. It decides which seed-artist
                     // rows are worth showing and in what order -- it has the
                     // play history to rank them and this does not -- so the
                     // list is taken as given rather than filtered again here.
-                    got.addAll(DiscoveryClient.playlists(baseUrl()));
+                    got = DiscoveryClient.catalog(baseUrl());
                 } catch (Exception e) {
                     err = String.valueOf(e.getMessage());
                 }
                 final String fErr = err;
+                final DiscoveryFolders fGot = got;
                 host.runOnUi(new Runnable() {
                     @Override public void run() {
                         loading = false;
                         error = fErr;
+                        catalog = fGot;
                         playlists.clear();
-                        playlists.addAll(got);
+                        playlists.addAll(fGot.all());
+                        // 2026-10-21 — Q18: only open() fetches, so this is the
+                        // top tier: folders when they came, else the flat lists.
+                        uiMode = topTier();
+                        openFolder = null;
+                        folderSkipped = false;
                         render();
                     }
                 });
@@ -692,7 +764,9 @@ public final class DiscoveryScreen {
         host.prepareBrowserChrome();
         host.applyReachBrowseLayoutMode();
         String title = uiMode == UI_TRACKS && openPlaylist != null
-                ? openPlaylist.name : host.string(R.string.home_menu_discovery);
+                ? openPlaylist.name
+                : uiMode == UI_PLAYLISTS && openFolder != null
+                ? openFolder : host.string(R.string.home_menu_discovery);
         host.updateStatusBarTitle(title);
         if (host.tvBrowserPath() != null) host.tvBrowserPath().setText(title);
 
@@ -712,6 +786,8 @@ public final class DiscoveryScreen {
         }
         if (uiMode == UI_TRACKS) {
             renderTracks(container);
+        } else if (uiMode == UI_FOLDERS) {
+            renderFolders(container);
         } else {
             renderPlaylists(container);
         }
@@ -748,7 +824,26 @@ public final class DiscoveryScreen {
         });
     }
 
+    /**
+     * 2026-10-21 — Q18: one row per folder, its name and how many lists it
+     * holds, drawn and chosen like the playlist rows.
+     */
+    private void renderFolders(LinearLayout container) {
+        for (final String f : catalog.folders()) {
+            Button b = host.createListButton(
+                    DiscoveryFolders.folderLabel(f, catalog.inFolder(f).size()));
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    host.clickFeedback();
+                    openFolder(f);
+                }
+            });
+            container.addView(b);
+        }
+    }
+
     private void renderPlaylists(LinearLayout container) {
+        List<DiscoveryClient.Playlist> playlists = shownPlaylists();
         if (playlists.isEmpty()) {
             container.addView(host.createListButton(host.string(R.string.discovery_empty)));
             return;

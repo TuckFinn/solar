@@ -30,12 +30,19 @@ public final class DiscoveryClient {
         public final String name;
         public final String kind;
         public final int count;
+        /** 2026-10-21 — Q18: the folder it sits in; "" from an older nookTunes. */
+        public final String group;
 
         Playlist(String id, String name, String kind, int count) {
+            this(id, name, kind, count, "");
+        }
+
+        Playlist(String id, String name, String kind, int count, String group) {
             this.id = id;
             this.name = name;
             this.kind = kind;
             this.count = count;
+            this.group = group == null ? "" : group;
         }
 
         /**
@@ -87,20 +94,18 @@ public final class DiscoveryClient {
     private DiscoveryClient() {}
 
     public static List<Playlist> playlists(String base) throws Exception {
+        return catalog(base).all();
+    }
+
+    /**
+     * 2026-10-21 — Q18: the lists and the folders they sit in. Parsing is in
+     * {@link DiscoveryFolders}, which falls back to no folders for a
+     * nookTunes that sends none.
+     */
+    public static DiscoveryFolders catalog(String base) throws Exception {
         JSONObject doc = getJson(url(base, "/api/discovery/native/playlists"));
         flushPendingAsync(base);
-        JSONArray arr = doc.optJSONArray("playlists");
-        List<Playlist> out = new ArrayList<Playlist>();
-        if (arr == null) return out;
-        for (int i = 0; i < arr.length(); i++) {
-            JSONObject o = arr.optJSONObject(i);
-            if (o == null) continue;
-            String id = o.optString("id", "");
-            if (TextUtils.isEmpty(id)) continue;
-            out.add(new Playlist(id, o.optString("name", id), o.optString("kind", ""),
-                    o.optInt("count", 0)));
-        }
-        return out;
+        return DiscoveryFolders.parse(doc);
     }
 
     public static List<Track> tracks(String base, String playlistId) throws Exception {
