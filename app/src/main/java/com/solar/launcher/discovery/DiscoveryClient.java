@@ -175,6 +175,18 @@ public final class DiscoveryClient {
                 + "&outcome=" + enc(outcome));
     }
 
+    /**
+     * 2026-10-21 — Tucker (Q7): a song played long enough to count (the
+     * Last.fm rule ScrobbleManager applies) goes to nookTunes' listening
+     * history, so For Me and its stats learn from the Y1 and not only from
+     * Navidrome. Kept offline like the rest; ts is when it was played.
+     */
+    public static boolean listen(String base, String artist, String title, String album,
+                                 long tsSec, long durationSec) {
+        return report(base, "/api/y1/listen?artist=" + enc(artist) + "&title=" + enc(title)
+                + "&album=" + enc(album == null ? "" : album) + "&ts=" + tsSec + "&dur=" + durationSec);
+    }
+
     // ─── Reports that survive Wi-Fi being off ──────────────────────────────
     //
     // 2026-10-20 — Hearts and played pings were fire-and-forget: one made while

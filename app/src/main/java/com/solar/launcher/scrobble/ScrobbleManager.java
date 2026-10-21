@@ -195,6 +195,14 @@ public final class ScrobbleManager {
                 if (prefs.getBoolean(PREF_LISTENBRAINZ_ENABLED, false)) {
                     sendListenBrainzListen(prefs, title, artist, album, timestampSec, false);
                 }
+                // 2026-10-21 — the same listen to nookTunes, whether or not a
+                // scrobbler is set up (empty URL: nookTunes isn't configured)
+                String base = prefs.getString("navidrome_url", "");
+                if (base != null && base.trim().length() > 0) {
+                    com.solar.launcher.discovery.DiscoveryClient.init(ctx.getFilesDir());
+                    com.solar.launcher.discovery.DiscoveryClient.listen(base, artist, title, album,
+                            timestampSec, durationSec);
+                }
                 return null;
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
