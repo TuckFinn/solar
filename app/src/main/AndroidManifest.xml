@@ -131,6 +131,17 @@
                 <action android:name="android.hardware.usb.action.USB_STATE" />
             </intent-filter>
         </receiver>
+        <!-- 2026-10-21 — "Play on Y1" from nookTunes over adb. DUMP is held by the shell
+             user (adb shell, uid 2000) and passes for root; third-party apps cannot hold it
+             on API 17 (signature|system|development). See RemotePlayReceiver. -->
+        <receiver
+            android:name=".remote.RemotePlayReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.solar.launcher.action.PLAY_REMOTE" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".SolarRestartReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="com.solar.launcher.action.RESTART_SOLAR" />

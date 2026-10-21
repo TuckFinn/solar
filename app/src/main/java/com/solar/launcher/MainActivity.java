@@ -2887,6 +2887,7 @@ public class MainActivity extends Activity {
             deezerActiveGrowingFile = null;
         }
         if (dropped && discoveryScreen != null) discoveryScreen.abandonRun();
+        if (dropped) abandonRemotePlay();
     }
 
     private void stopCompetingAudioEngines() {
@@ -3358,6 +3359,10 @@ public class MainActivity extends Activity {
             if (id == discoveryNotifiedDeezerId) return;
             discoveryNotifiedDeezerId = id;
             if (id > 0) discoveryScreen.onDeezerTrackPlaying(id);
+            // 2026-10-21 — A nookTunes queue empties what it has played, as a Discovery run does.
+            if (id > 0 && !remotePlayIds.isEmpty()) {
+                releaseDeezerAudioBehind(REMOTE_PLAY_KEEP_BEHIND, remotePlayIds);
+            }
         } catch (Exception e) {
             android.util.Log.w("SolarDiscovery", "now-playing notify failed", e);
         }
@@ -19031,6 +19036,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         @Override public void changeToPlayer() { changeScreen(STATE_PLAYER); }
         @Override public void playDeezerPartial(File f, String meta, long trackId) {
             startDeezerPlayFromPartial(f, meta, trackId);
+            deliverRemotePlayRestIfReady();
         }
         @Override public void queueDeezerPartial(File f, String meta, long trackId) {
             playback.queueDeezerAfterCurrent(f, meta, trackId);
@@ -19396,6 +19402,170 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         changeScreen(STATE_WIFI_KEYBOARD);
     }
 
+    // ---- 2026-10-21 — "Play on Y1" from nookTunes (RemotePlayReceiver) ----
+
+    /** Played songs of a nookTunes queue kept whole behind the play head, as Discovery keeps 3. */
+    private static final int REMOTE_PLAY_KEEP_BEHIND = 3;
+    /** Let a cold start's onCreate/onResume work settle before a download starts. */
+    private static final long REMOTE_PLAY_RESUME_DELAY_MS = 400L;
+    /** Bumped per request, so a superseded one's searches drop what they found. */
+    private int remotePlayGeneration;
+    /** The Deezer id the request plays first; when its audio starts, the queue is replaced. */
+    private long remotePlayHeadId;
+    private boolean remotePlayHeadStarted;
+    /** The songs after it, resolved, waiting for the first to start; null when none wait. */
+    private List<DeezerResult> remotePlayRest;
+    /** Every id a nookTunes request queued, for releaseDeezerAudioBehind. */
+    private final java.util.Set<Long> remotePlayIds = new java.util.HashSet<Long>();
+    private boolean remotePlayScheduled;
+
+    private void scheduleRemotePlayIfPending(long delayMs) {
+        if (remotePlayScheduled) return;
+        remotePlayScheduled = true;
+        new Handler().postDelayed(new Runnable() {
+            @Override public void run() {
+                remotePlayScheduled = false;
+                if (deezerScreen == null) {
+                    // onCreate has not got as far as the Deezer screen; the next resume looks again.
+                    return;
+                }
+                java.util.List<com.solar.launcher.remote.RemotePlayRequest.Track> tracks =
+                        com.solar.launcher.remote.RemotePlayReceiver.takePending();
+                if (tracks != null && !tracks.isEmpty()) startRemotePlay(tracks);
+            }
+        }, delayMs);
+    }
+
+    /**
+     * Play what nookTunes sent: the first song through the same
+     * DeezerScreen.startTransfer(ACTION_PLAY) a Discovery row goes to, and once
+     * its audio starts, the queue becomes it followed by the rest (queued and
+     * downloaded in the background, the path a Discovery run fills its queue by).
+     * Songs without an id are searched for as Discovery searches a country row,
+     * and skipped when DiscoveryMatch cannot vouch for a hit.
+     */
+    private void startRemotePlay(
+            final java.util.List<com.solar.launcher.remote.RemotePlayRequest.Track> tracks) {
+        wakeDisplayIfSolarHomeAndAsleep();
+        if (!requireInternet(R.string.deezer_wifi_required)) return;
+        // A Discovery run in progress would keep queueing behind the song it picked.
+        if (discoveryScreen != null) discoveryScreen.abandonRun();
+        final int generation = ++remotePlayGeneration;
+        remotePlayHeadId = 0L;
+        remotePlayHeadStarted = false;
+        remotePlayRest = null;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                com.solar.launcher.deezer.DeezerSearch search = null;
+                DeezerResult head = null;
+                int i = 0;
+                for (; i < tracks.size() && head == null; i++) {
+                    if (generation != remotePlayGeneration) return;
+                    if (search == null && !tracks.get(i).hasDeezerId()) {
+                        search = new com.solar.launcher.deezer.DeezerSearch(new DeezerClient(prefs));
+                    }
+                    head = resolveRemotePlayTrack(tracks.get(i), search);
+                }
+                if (head == null) {
+                    runOnUiThread(new Runnable() {
+                        @Override public void run() {
+                            if (generation != remotePlayGeneration) return;
+                            Toast.makeText(MainActivity.this,
+                                    getString(R.string.discovery_not_found,
+                                            tracks.get(0).title),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    return;
+                }
+                final DeezerResult first = head;
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        if (generation != remotePlayGeneration) return;
+                        if (deezerScreen == null) deezerScreen = new DeezerScreen(deezerHost);
+                        remotePlayHeadId = first.id;
+                        remotePlayIds.add(Long.valueOf(first.id));
+                        deezerScreen.startTransfer(first, DeezerScreen.ACTION_PLAY);
+                    }
+                });
+                final ArrayList<DeezerResult> rest = new ArrayList<DeezerResult>();
+                java.util.Set<Long> seen = new java.util.HashSet<Long>();
+                seen.add(Long.valueOf(first.id));
+                for (; i < tracks.size(); i++) {
+                    if (generation != remotePlayGeneration) return;
+                    if (search == null && !tracks.get(i).hasDeezerId()) {
+                        search = new com.solar.launcher.deezer.DeezerSearch(new DeezerClient(prefs));
+                    }
+                    DeezerResult r = resolveRemotePlayTrack(tracks.get(i), search);
+                    // The queue holds one row per id; a repeat would download it twice.
+                    if (r != null && seen.add(Long.valueOf(r.id))) rest.add(r);
+                }
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        if (generation != remotePlayGeneration) return;
+                        remotePlayRest = rest;
+                        deliverRemotePlayRestIfReady();
+                    }
+                });
+            }
+        }, "SolarRemotePlay").start();
+    }
+
+    /** Its own id, or a Deezer search hit DiscoveryMatch vouches for; null to skip it. */
+    private static DeezerResult resolveRemotePlayTrack(
+            com.solar.launcher.remote.RemotePlayRequest.Track t,
+            com.solar.launcher.deezer.DeezerSearch search) {
+        if (t.hasDeezerId()) return t.toDeezerResult();
+        if (search == null || t.searchQuery().length() == 0) return null;
+        try {
+            return com.solar.launcher.discovery.DiscoveryMatch.best(
+                    search.searchTracks(t.searchQuery()), t.artist, t.title);
+        } catch (Exception e) {
+            android.util.Log.w("SolarRemotePlay", "search failed: " + t.searchQuery());
+            return null;
+        }
+    }
+
+    /**
+     * The request's first song is now the play head: drop everything else in the
+     * queue, so it plays alone until the rest go in behind it. Done here, once
+     * audio has arrived, rather than up front, so a song that fails to download
+     * leaves the old queue as it was.
+     */
+    private void trimQueueForRemotePlayHead(long trackId) {
+        if (remotePlayHeadId <= 0 || trackId != remotePlayHeadId || remotePlayHeadStarted) return;
+        remotePlayHeadStarted = true;
+        PlayQueue q = playback.unifiedQueue();
+        if (q == null) return;
+        int head = q.index();
+        for (int i = q.size() - 1; i >= 0; i--) {
+            if (i != head) playback.removeQueueItemAt(i);
+        }
+        // What the old queue was still downloading is no longer in it.
+        if (deezerBackgroundQueue != null) deezerBackgroundQueue.cancel();
+        android.util.Log.i("SolarRemotePlay", "queue replaced; playing " + trackId);
+    }
+
+    /** Queue the rest behind the first song once both are ready. */
+    private void deliverRemotePlayRestIfReady() {
+        if (!remotePlayHeadStarted || remotePlayRest == null) return;
+        List<DeezerResult> rest = remotePlayRest;
+        remotePlayRest = null;
+        if (rest.isEmpty()) return;
+        int at = queuedDeezerIndexFromPlayHead(remotePlayHeadId);
+        if (at < 0) return;   // the listener has already moved on
+        for (DeezerResult r : rest) remotePlayIds.add(Long.valueOf(r.id));
+        startDeezerBackgroundQueue(rest, at, false);
+    }
+
+    /** The first song's pending play was dropped for other music: forget the request. */
+    private void abandonRemotePlay() {
+        remotePlayGeneration++;
+        remotePlayHeadId = 0L;
+        remotePlayHeadStarted = false;
+        remotePlayRest = null;
+    }
+
     private void startDeezerPlayFromPartial(File partial, String meta, long trackId) {
         saveCurrentPodcastResume();
         stopPodcastDownloadFully();
@@ -19403,6 +19573,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         stopCompetingAudioEngines();
         clearReachStreamAlbumArt();
         playback.playDeezerAfterCurrent(partial, meta, trackId);
+        trimQueueForRemotePlayHead(trackId);
         reachPartialPlaybackStarted = true;
         reachGrowingCacheFile = partial;
         reachGrowingTotalBytes = 0;
@@ -63340,6 +63511,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // The reason this method matters: the launcher is single-instance, so this is the
         // only path an am start reaches once it is already running.
         scheduleAdbLogHomeMenuIfRequested(intent);
+        if (intent != null && intent.getBooleanExtra(
+                com.solar.launcher.remote.RemotePlayReceiver.EXTRA_LOOK, false)) {
+            intent.removeExtra(com.solar.launcher.remote.RemotePlayReceiver.EXTRA_LOOK);
+            scheduleRemotePlayIfPending(0L);
+        }
         if (intent != null && (OverlayTriggers.ACTION_OPEN_CONTEXT_MENU.equals(intent.getAction())
                 || intent.getBooleanExtra(OverlayTriggers.EXTRA_CONTEXT_POWER_HOLD, false))) {
             handleContextPowerHoldIntent();
@@ -63487,6 +63663,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (!launchExtrasHandled) {
             launchExtrasHandled = true;
             handleLaunchIntentExtras();
+        }
+        // 2026-10-21 — nookTunes "Play on Y1": a cold start, or a bring-to-front that
+        // skipped onNewIntent, still plays what RemotePlayReceiver left waiting.
+        if (com.solar.launcher.remote.RemotePlayReceiver.hasPending()) {
+            scheduleRemotePlayIfPending(REMOTE_PLAY_RESUME_DELAY_MS);
         }
         // ponytail: Y1 HOME + singleTop often skips onNewIntent when adb brings task to front.
         if (getIntent() != null

@@ -572,6 +572,7 @@
     <string name="discovery_no_source">No source for that song</string>
     <string name="discovery_finding">Finding %1$s\u2026</string>
     <string name="discovery_not_found">Could not find %1$s</string>
+    <string name="remote_play_toast">Playing from nookTunes</string>
     <string name="discovery_keeping">Keeping %1$s…</string>
     <string name="discovery_keep_failed">Could not keep %1$s</string>
     <!-- 2026-10-21 — Q9: the Play/Pause hold menu on the playing song. -->
