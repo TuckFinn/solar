@@ -119,9 +119,22 @@ public final class DiscoveryScreen {
     /** What MainActivity last said is playing. */
     private long playingDeezerId;
 
+    /**
+     * 2026-10-20 — A run song that gives way to the next after less than this,
+     * or less than {@link #SKIP_UNDER_FRACTION} of its length, was skipped.
+     */
+    static final long SKIP_UNDER_MS = 30000L;
+    static final double SKIP_UNDER_FRACTION = 0.35;
+    /** The run song playing now, and when it started, to judge once the next starts. */
+    private DiscoveryClient.Track outcomeTrack;
+    private long outcomeTrackId;
+    private long outcomeStartedAt;
+
     public DiscoveryScreen(DeezerScreen.Host host, DeezerScreen deezer) {
         this.host = host;
         this.deezer = deezer;
+        // Hearts and played pings made with Wi-Fi off wait in the files dir.
+        if (host.context() != null) DiscoveryClient.init(host.context().getFilesDir());
     }
 
     public int uiMode() { return uiMode; }
@@ -440,6 +453,7 @@ public final class DiscoveryScreen {
         playingDeezerId = deezerTrackId;
         if (!discoveryIds.isEmpty()) host.releaseDeezerAudioBehind(KEEP_BEHIND, discoveryIds);
         DiscoveryClient.Track t = runTracks.get(Long.valueOf(deezerTrackId));
+        judgePrevious(deezerTrackId, t);
         if (t == null) return;
         lastPlayed = t;
         lastPlayedDeezerId = deezerTrackId;
@@ -455,6 +469,43 @@ public final class DiscoveryScreen {
             @Override public void run() {
                 if (!DiscoveryClient.played(base, t.key)) {
                     android.util.Log.w("SolarDiscovery", "could not report played " + t.key);
+                }
+            }
+        });
+    }
+
+    /**
+     * 2026-10-20 — Another song started: say whether the run song before it was
+     * skipped or heard out, then start timing {@code now} (null when what plays
+     * now is not the run's). Timed by the wall clock from when it became the
+     * playing song, so a pause in the middle counts as listening.
+     */
+    private void judgePrevious(long nowId, DiscoveryClient.Track now) {
+        long at = android.os.SystemClock.elapsedRealtime();
+        if (outcomeTrack != null && nowId != outcomeTrackId) {
+            reportOutcome(outcomeTrack, outcome(at - outcomeStartedAt, outcomeTrack.durationSec));
+        }
+        outcomeTrack = now;
+        outcomeTrackId = nowId;
+        outcomeStartedAt = at;
+    }
+
+    /** Skip when under {@link #SKIP_UNDER_MS}, or under {@link #SKIP_UNDER_FRACTION} of a known length. */
+    static String outcome(long listenedMs, int durationSec) {
+        if (listenedMs < SKIP_UNDER_MS) return DiscoveryClient.OUTCOME_SKIP;
+        if (durationSec > 0 && listenedMs < durationSec * 1000L * SKIP_UNDER_FRACTION) {
+            return DiscoveryClient.OUTCOME_SKIP;
+        }
+        return DiscoveryClient.OUTCOME_FULL;
+    }
+
+    private void reportOutcome(final DiscoveryClient.Track t, final String outcome) {
+        if (t.key == null || t.key.length() == 0 || !isConfigured()) return;
+        final String base = baseUrl();
+        host.runOnBg(new Runnable() {
+            @Override public void run() {
+                if (!DiscoveryClient.playedOutcome(base, t.key, outcome)) {
+                    android.util.Log.w("SolarDiscovery", "could not report " + outcome + " " + t.key);
                 }
             }
         });
