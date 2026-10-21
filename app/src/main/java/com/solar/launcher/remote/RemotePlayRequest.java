@@ -31,6 +31,13 @@ public final class RemotePlayRequest {
     public static final String EXTRA_ALBUM = "album";
     public static final String EXTRA_DEEZER_ID = "deezer_id";
     public static final String EXTRA_QUEUE_JSON = "queue_json";
+    /**
+     * 2026-10-21 — the whole request as base64 of a JSON array of songs (the
+     * first plays now). The Y1's am wrapper splits arguments at spaces, so
+     * "--es artist 'Fleetwood Mac'" arrived as pkg=Mac; base64 has no spaces.
+     * When present it replaces the other extras.
+     */
+    public static final String EXTRA_PAYLOAD_B64 = "payload_b64";
 
     /**
      * Songs kept from one request, the first included. Every one is queued and
@@ -89,6 +96,22 @@ public final class RemotePlayRequest {
             add(out, t);
         }
         return out;
+    }
+
+    /** The songs in a payload_b64 extra; empty when it is missing or not valid. */
+    public static List<Track> fromPayload(String b64) {
+        if (b64 == null || b64.trim().length() == 0) return new ArrayList<Track>();
+        try {
+            byte[] raw = android.util.Base64.decode(b64.trim(), android.util.Base64.DEFAULT);
+            return fromExtras(null, null, null, null, new String(raw, "UTF-8"));
+        } catch (Exception | Error e) {
+            try {   // unit tests run without android.util
+                byte[] raw = java.util.Base64.getMimeDecoder().decode(b64.trim());
+                return fromExtras(null, null, null, null, new String(raw, "UTF-8"));
+            } catch (Exception e2) {
+                return new ArrayList<Track>();
+            }
+        }
     }
 
     /** queue_json's songs, in order; unplayable entries dropped. Never null. */

@@ -56,7 +56,9 @@ public final class RemotePlayReceiver extends BroadcastReceiver {
             Log.w(TAG, "no extras; nothing to play");
             return;
         }
-        List<RemotePlayRequest.Track> tracks = RemotePlayRequest.fromExtras(
+        List<RemotePlayRequest.Track> tracks = RemotePlayRequest.fromPayload(
+                x.getString(RemotePlayRequest.EXTRA_PAYLOAD_B64));
+        if (tracks.isEmpty()) tracks = RemotePlayRequest.fromExtras(
                 x.getString(RemotePlayRequest.EXTRA_TITLE),
                 x.getString(RemotePlayRequest.EXTRA_ARTIST),
                 x.getString(RemotePlayRequest.EXTRA_ALBUM),

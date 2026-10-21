@@ -123,4 +123,17 @@ public class RemotePlayRequestTest {
         assertEquals("", r.album);
         assertEquals("Fleetwood Mac - Dreams", r.displayTitle());
     }
+
+    @Test
+    public void payloadB64CarriesNamesWithSpaces() throws Exception {
+        String json = "[{\"title\":\"Dreams\",\"artist\":\"Fleetwood Mac\",\"album\":\"Rumours\",\"deezer_id\":\"63480987\"},"
+                + "{\"title\":\"Go Your Own Way\",\"artist\":\"Fleetwood Mac\",\"album\":\"Rumours\",\"deezer_id\":63480990}]";
+        String b64 = java.util.Base64.getEncoder().encodeToString(json.getBytes("UTF-8"));
+        java.util.List<RemotePlayRequest.Track> t = RemotePlayRequest.fromPayload(b64);
+        org.junit.Assert.assertEquals(2, t.size());
+        org.junit.Assert.assertEquals("Fleetwood Mac", t.get(0).artist);
+        org.junit.Assert.assertEquals(63480990L, t.get(1).deezerId);
+        org.junit.Assert.assertTrue(RemotePlayRequest.fromPayload("not base64 !!").isEmpty());
+        org.junit.Assert.assertTrue(RemotePlayRequest.fromPayload(null).isEmpty());
+    }
 }
