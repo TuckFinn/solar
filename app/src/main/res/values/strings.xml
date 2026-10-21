@@ -568,7 +568,7 @@
     <string name="discovery_loading">Loading…</string>
     <string name="discovery_error">Could not reach nookTunes: %1$s</string>
     <string name="discovery_empty">Nothing here yet</string>
-    <string name="discovery_back_playlists">← All genres</string>
+    <string name="discovery_back_playlists">← Back</string>
     <string name="discovery_no_source">No source for that song</string>
     <string name="discovery_finding">Finding %1$s\u2026</string>
     <string name="discovery_not_found">Could not find %1$s</string>
