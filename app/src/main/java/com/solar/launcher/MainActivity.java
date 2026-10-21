@@ -1364,34 +1364,203 @@ public class MainActivity extends Activity {
                 + " screen=" + currentScreenState);
         if (globalPpLongFlowHandled) return;
         final PlayQueue.QueueItem cur = playback.currentItem();
+        // 2026-10-21 — Tucker (Q9): the hold opens Heart / Heart album / Not for
+        // me instead of hearting at once. Heart is preselected, so hold then
+        // click center hearts exactly as the hold used to. Which songs the hold
+        // takes is unchanged: a Discovery song, a song from the device's own
+        // storage, or a Navidrome stream; anything else falls through to Flow.
+        //
         // A Discovery song plays from Deezer, so it arrives as a DEEZER_STREAM
-        // with no navidromeSongId and the Navidrome branch below would ignore
-        // it. Keep it through nookTunes instead, which fetches the lossless
-        // original: the archive is never built from the compressed copy that
-        // actually played. The id match means a stale pick cannot be hearted.
-        if (cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM
-                && discoveryScreen != null
-                && discoveryScreen.heartIfDeezerTrack(cur.deezerTrackId)) {
+        // with no navidromeSongId and the Navidrome branch would ignore it. It
+        // is kept through nookTunes instead, which fetches the lossless
+        // original. The id match means a stale pick cannot be hearted; the row
+        // is read now, so the menu acts on the song that was playing at the hold.
+        final com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack =
+                cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                        && discoveryScreen != null
+                        ? discoveryScreen.playingTrackFor(cur.deezerTrackId) : null;
+        final boolean localFile = cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE
+                && cur.file != null;
+        final boolean navidromeStream = cur != null
+                && cur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM
+                && cur.navidromeSongId != null && !cur.navidromeSongId.isEmpty();
+        if (discoveryTrack == null && !localFile && !navidromeStream) return;
+        globalPpLongFlowHandled = true; // consume the hold: no play/pause toggle on key-up
+        clearFlowHoldThrobber();
+        hideNpLiveHoldHint();
+        if (!showHeartHoldMenu(cur, discoveryTrack)) {
+            // No menu to draw (one is already up, or none was built): heart as before.
+            heartHeldSong(cur, discoveryTrack);
+        }
+    }
+
+    /** 2026-10-21 — Q9: the hold menu is up (tier "heart_menu"). */
+    private boolean heartMenuOpen = false;
+    /**
+     * The menu opens while Play/Pause is still held, and while a menu is up
+     * Play/Pause confirms like center. Its release would choose Heart at once,
+     * so the release (and the hold's repeats) of the press that opened it are
+     * swallowed.
+     */
+    private boolean heartMenuSwallowPpUp = false;
+
+    /**
+     * 2026-10-21 — Q9: the Play/Pause hold menu, drawn as Solar's own context
+     * modal with no quick bar, the way the USB Connection prompt is. Wheel moves,
+     * center confirms, Back closes without acting.
+     *
+     * @return false when it could not be shown.
+     */
+    private boolean showHeartHoldMenu(final PlayQueue.QueueItem cur,
+            final com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack) {
+        if (themedContextMenu == null || themedContextMenu.isShowing()) return false;
+        ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+        if (root == null) return false;
+        final String[] tags = heldSongTags(cur, discoveryTrack);
+        final String[] labels = new String[] {
+                getString(R.string.heart_menu_heart),
+                getString(R.string.heart_menu_heart_album),
+                getString(R.string.heart_menu_not_for_me) };
+        final String[] states = new String[] { null, null, null };
+        final boolean[] headers = new boolean[] { false, false, false };
+        final java.util.List<Runnable> actions = new java.util.ArrayList<Runnable>();
+        actions.add(new Runnable() {
+            @Override public void run() {
+                dismissThemedContextMenu(true, false, null);
+                heartHeldSong(cur, discoveryTrack);
+            }
+        });
+        actions.add(new Runnable() {
+            @Override public void run() {
+                dismissThemedContextMenu(true, false, null);
+                heartHeldSong(cur, discoveryTrack);
+                heartHeldAlbum(tags[0], tags[2]);
+            }
+        });
+        actions.add(new Runnable() {
+            @Override public void run() {
+                dismissThemedContextMenu(true, false, null);
+                notForMeHeldSong(cur, discoveryTrack != null ? discoveryTrack.key : null, tags[0]);
+            }
+        });
+
+        volumeHandler.removeCallbacks(hideVolumeContextTask);
+        contextMenuInVolumeSlider = false;
+        contextMenuVolumeOnly = false;
+        contextMenuVolumeReturnTier = null;
+        contextMenuInQueueTier = false;
+        contextMenuQuickOnly = false;
+        contextMenuBlockingHint = false;
+        try {
+            themedContextMenu.cancelPendingListDrill();
+        } catch (Throwable ignored) {}
+        int margin = (int) (10 * getResources().getDisplayMetrics().density);
+        int panelW = screenWidthPx > margin * 2 ? screenWidthPx - margin * 2 : y1ActiveRowWidthPx();
+        contextMenuTierStack.clear();
+        contextMenuTierStack.addLast(CONTEXT_NAV_ROOT);
+        pushContextMenuTier("heart_menu");
+        contextMenuLabels.clear();
+        contextMenuIconKeys.clear();
+        contextMenuStateTexts.clear();
+        contextMenuHeaders.clear();
+        contextMenuActions.clear();
+        contextMenuKeepOpen.clear();
+        for (int i = 0; i < labels.length; i++) {
+            contextMenuLabels.add(labels[i]);
+            contextMenuIconKeys.add(null);
+            contextMenuStateTexts.add(null);
+            contextMenuHeaders.add(Boolean.FALSE);
+            contextMenuActions.add(actions.get(i));
+            contextMenuKeepOpen.add(Boolean.FALSE);
+        }
+        heartMenuOpen = true;
+        heartMenuSwallowPpUp = true;
+        themedContextMenu.show(root, tags[1].isEmpty() ? null : tags[1], null, labels, null,
+                states, headers,
+                new ThemedContextMenu.Listener() {
+                    @Override
+                    public void onSelected(int index) {
+                        suppressListClickUntil = System.currentTimeMillis()
+                                + CONTEXT_MENU_CLICK_SUPPRESS_MS;
+                        if (index >= 0 && index < actions.size()) {
+                            Runnable a = actions.get(index);
+                            if (a != null) a.run();
+                        }
+                    }
+                },
+                y1RowHeightPx, panelW, true, false,
+                new ThemedContextMenu.QuickItem[0], null);
+        if (!themedContextMenu.isShowing()) {
+            heartMenuOpen = false;
+            heartMenuSwallowPpUp = false;
+            contextMenuTierStack.clear();
+            return false;
+        }
+        clearContextHoldThrobber();
+        themedContextMenu.setSubmenuTierOpen(true);
+        themedContextMenu.focusSubmenuList();   // first row: Heart
+        themedContextMenu.requestOverlayFocus();
+        contextMenuOpenedAtMs = System.currentTimeMillis();
+        clickFeedback();
+        android.util.Log.i("SolarHeart", "hold menu open for " + tags[0] + " - " + tags[1]
+                + (discoveryTrack != null ? " (discovery " + discoveryTrack.key + ")" : ""));
+        return true;
+    }
+
+    /**
+     * Artist, title and album of the held song: a Discovery song's from its
+     * track row, a local file's from its tags (as heartLocalFile sends them),
+     * a stream's from its queue item. Never null; blanks for what is unknown.
+     */
+    private String[] heldSongTags(PlayQueue.QueueItem cur,
+            com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack) {
+        String artist = "", title = "", album = "";
+        if (discoveryTrack != null) {
+            artist = discoveryTrack.artist;
+            title = discoveryTrack.title;
+            album = discoveryTrack.album;
+        } else if (cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE && cur.file != null) {
+            SongItem si = findSongItem(cur.file);
+            String n = cur.file.getName();
+            int dot = n.lastIndexOf('.');
+            artist = si != null ? si.artist : "";
+            title = si != null && si.title != null && !si.title.trim().isEmpty()
+                    ? si.title : (dot > 0 ? n.substring(0, dot) : n);
+            album = si != null ? si.album : "";
+        } else if (cur != null) {
+            artist = cur.navidromeArtist;
+            title = cur.navidromeTitle;
+            album = cur.navidromeAlbum;
+        }
+        return new String[] {
+                artist != null ? artist.trim() : "",
+                title != null ? title.trim() : "",
+                album != null ? album.trim() : "" };
+    }
+
+    /**
+     * Heart the held song, exactly as the Play/Pause hold did before the menu:
+     * a Discovery song through nookTunes, a local file into Hearts, a Navidrome
+     * stream starred on the server.
+     */
+    private void heartHeldSong(final PlayQueue.QueueItem cur,
+            com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack) {
+        if (discoveryTrack != null && discoveryScreen != null) {
             android.util.Log.i("SolarHeart", "discovery keep for deezer track "
                     + cur.deezerTrackId);
-            globalPpLongFlowHandled = true;
-            clearFlowHoldThrobber();
-            hideNpLiveHoldHint();
             // 2026-09-17 — No buzz here. The "Keeping …" toast acknowledges the
             // press; the buzz now comes from Host.heartFeedback when nookTunes
             // has actually answered, so feeling one means the track is kept
             // rather than merely asked for. Buzzing twice would make the
             // acknowledgement and the result indistinguishable, which is the
             // problem being fixed.
+            discoveryScreen.heartTrack(discoveryTrack);
             return;
         }
         // 2026-09-18 — A song from the device's own storage: into this player's
         // Hearts playlist at once, then to nookTunes as a favourite. The hold
         // used to fall through the checks below and do nothing at all.
         if (cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE && cur.file != null) {
-            globalPpLongFlowHandled = true;
-            clearFlowHoldThrobber();
-            hideNpLiveHoldHint();
             heartLocalFile(cur.file);
             return;
         }
@@ -1399,9 +1568,6 @@ public class MainActivity extends Activity {
                 || cur.navidromeSongId == null || cur.navidromeSongId.isEmpty()) {
             return;
         }
-        globalPpLongFlowHandled = true; // consume the hold: no play/pause toggle on key-up
-        clearFlowHoldThrobber();
-        hideNpLiveHoldHint();
         heartVibrate(120L);
         final String title = cur.navidromeTitle != null ? cur.navidromeTitle : "";
         com.solar.launcher.navidrome.NavidromeClient.getInstance().star(cur.navidromeSongId,
@@ -1418,6 +1584,77 @@ public class MainActivity extends Activity {
                         getString(R.string.navidrome_heart_failed), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /**
+     * 2026-10-21 — Q9 "Heart album": nookTunes favourites the album and
+     * downloads all of it lossless. Asked directly so the toast can say what
+     * it answered; unreachable, it waits in DiscoveryClient's offline queue.
+     */
+    private void heartHeldAlbum(final String artist, final String album) {
+        if (artist.isEmpty() || album.isEmpty()) {
+            Toast.makeText(this, getString(R.string.heart_menu_album_unknown),
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final com.solar.launcher.discovery.DiscoveryClient.AlbumAnswer a =
+                        com.solar.launcher.discovery.DiscoveryClient.heartAlbumNow(
+                                base, artist, album);
+                android.util.Log.i("SolarHeart", "heart album " + artist + " - " + album
+                        + ": ok=" + a.ok + " pending=" + a.pending + " queued=" + a.queued
+                        + (a.error != null ? " error=" + a.error : ""));
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        String msg = a.ok ? getString(R.string.heart_menu_album_ok)
+                                : a.pending ? getString(R.string.heart_menu_album_pending)
+                                : getString(R.string.heart_menu_album_failed,
+                                        a.error != null ? a.error : "");
+                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }, "HeartAlbum").start();
+    }
+
+    /**
+     * 2026-10-21 — Q9 "Not for me": a Discovery song by its key, anything else
+     * by its artist, then on to the next song -- unless the song already
+     * changed while the menu was up, which would skip one not chosen.
+     */
+    private void notForMeHeldSong(final PlayQueue.QueueItem cur, final String key,
+            final String artist) {
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        final boolean byKey = key != null && !key.isEmpty();
+        if (byKey || !artist.isEmpty()) {
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    final boolean sent = com.solar.launcher.discovery.DiscoveryClient.notForMe(
+                            base, key, artist);
+                    android.util.Log.i("SolarHeart", "not for me " + (byKey ? key : artist)
+                            + (sent ? " sent" : " kept for later"));
+                }
+            }, "NotForMe").start();
+        }
+        Toast.makeText(this, getString(R.string.heart_menu_not_for_me_done),
+                Toast.LENGTH_SHORT).show();
+        if (isSameSong(playback.currentItem(), cur)) nextTrack();
+    }
+
+    private static boolean isSameSong(PlayQueue.QueueItem a, PlayQueue.QueueItem b) {
+        if (a == null || b == null) return false;
+        if (a == b) return true;
+        if (a.kind != b.kind) return false;
+        if (a.kind == PlayQueue.ItemKind.DEEZER_STREAM) return a.deezerTrackId == b.deezerTrackId;
+        if (a.kind == PlayQueue.ItemKind.MUSIC_FILE) {
+            return a.file != null && b.file != null && a.file.equals(b.file);
+        }
+        if (a.kind == PlayQueue.ItemKind.NAVIDROME_STREAM) {
+            return a.navidromeSongId != null && a.navidromeSongId.equals(b.navidromeSongId);
+        }
+        return false;
     }
     /**
      * The Play/Pause hold on a song from the device's own storage: it becomes a
@@ -13543,6 +13780,8 @@ public class MainActivity extends Activity {
     private void refreshContextQuickBarIfShowing() {
         if (themedContextMenu == null || !themedContextMenu.isShowing()
                 || themedContextMenu.isVolumeOnlyMode()) return;
+        // 2026-10-21 — Q9: the heart menu has no quick bar; a track change must not add one.
+        if (heartMenuOpen) return;
         applyContextQuickBarChrome();
         themedContextMenu.replaceQuickBar(buildContextQuickBar());
     }
@@ -17038,6 +17277,17 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             // Center / wheel-OK confirm while modal owns focus (A5 mid→CENTER; Y1 85).
             if (isCenterKey(event.getKeyCode()) || isMediaPlayPauseKey(event.getKeyCode())) {
+                // 2026-10-21 — Q9: the Play/Pause hold that opened the heart menu is
+                // still down. Its repeats and release are not a confirm; a fresh press is.
+                if (heartMenuSwallowPpUp && isMediaPlayPauseKey(event.getKeyCode())) {
+                    boolean freshDown = event.getAction() == KeyEvent.ACTION_DOWN
+                            && event.getRepeatCount() == 0;
+                    if (!freshDown) {
+                        if (event.getAction() == KeyEvent.ACTION_UP) heartMenuSwallowPpUp = false;
+                        return true;
+                    }
+                    heartMenuSwallowPpUp = false;
+                }
                 if (event.getAction() == KeyEvent.ACTION_DOWN) return trackCenterKeyDown(event, true);
                 if (event.getAction() == KeyEvent.ACTION_UP) return handleCenterKeyUp(event, true);
                 return true;
@@ -23454,6 +23704,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         cancelPendingContextBluetoothRefresh();
         cancelWifiContextScanFollowUps();
         contextMenuTierStack.clear();
+        // 2026-10-21 — Q9: the heart menu is gone with the modal.
+        heartMenuOpen = false;
+        heartMenuSwallowPpUp = false;
         // Drop tip pending so Back elsewhere cannot finish a stale lesson. 2026-07-21
         ContextFeatureTip.clearPending();
         contextMenuInVolumeSlider = false;
@@ -29959,6 +30212,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         if (usbEnablePromptSession || isUsbEnablePromptTierActive()) {
             clickFeedback();
             dismissThemedContextMenu(true);
+            return;
+        }
+        // 2026-10-21 — Q9: Back closes the heart menu without acting.
+        if (heartMenuOpen) {
+            clickFeedback();
+            dismissContextMenuAnimated();
             return;
         }
         if (contextMenuVolumeOnly) {
@@ -62004,6 +62263,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         // 2026-07-16 — USB Connection: wheel stays on Turn on / Dismiss only (wrap; never quick-bar).
         if (usbEnable && Y1InputKeys.isWheelKey(keyCode)) {
+            themedContextMenu.moveListFocusOnly(Y1InputKeys.isWheelUp(keyCode) ? -1 : 1);
+            clickFeedback();
+            return true;
+        }
+        // 2026-10-21 — Q9: the heart menu's wheel stays on its three rows (no quick bar).
+        if (heartMenuOpen && Y1InputKeys.isWheelKey(keyCode)) {
             themedContextMenu.moveListFocusOnly(Y1InputKeys.isWheelUp(keyCode) ? -1 : 1);
             clickFeedback();
             return true;

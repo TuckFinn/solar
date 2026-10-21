@@ -187,6 +187,98 @@ public final class DiscoveryClient {
                 + "&album=" + enc(album == null ? "" : album) + "&ts=" + tsSec + "&dur=" + durationSec);
     }
 
+    // ─── The Play/Pause hold menu (Q9) ─────────────────────────────────────
+    //
+    // 2026-10-21 — Tucker: holding Play/Pause opens Heart / Heart album / Not
+    // for me. Both new calls are reports like the rest, so one made with the
+    // Wi-Fi asleep goes when it wakes.
+
+    /** What nookTunes said to a heart-album, when it answered. */
+    public static final class AlbumAnswer {
+        /** True when nookTunes took it; false with {@link #error} when it refused. */
+        public final boolean ok;
+        /** True when it could not be reached and the report waits to be sent. */
+        public final boolean pending;
+        public final String error;
+        public final int queued;
+
+        AlbumAnswer(boolean ok, boolean pending, String error, int queued) {
+            this.ok = ok;
+            this.pending = pending;
+            this.error = error;
+            this.queued = queued;
+        }
+    }
+
+    static String heartAlbumPath(String artist, String album) {
+        return "/api/albums/heart?artist=" + enc(artist == null ? "" : artist)
+                + "&album=" + enc(album == null ? "" : album);
+    }
+
+    /**
+     * A Discovery song goes by its key, which is exact; anything else by its
+     * artist, which is all nookTunes can sink for a library song.
+     */
+    static String notForMePath(String key, String artist) {
+        if (key != null && key.trim().length() > 0) {
+            return "/api/discovery/not-for-me?key=" + enc(key.trim());
+        }
+        return "/api/discovery/not-for-me?artist=" + enc(artist == null ? "" : artist.trim());
+    }
+
+    /**
+     * Heart the whole album: nookTunes marks it a favourite and downloads all
+     * of it lossless.
+     */
+    public static boolean heartAlbum(String base, String artist, String album) {
+        return report(base, heartAlbumPath(artist, album));
+    }
+
+    /**
+     * Heart the album and say what nookTunes answered, for the toast. When it
+     * cannot be reached the request is kept like any report and goes when the
+     * Wi-Fi is back; the answer then says {@link AlbumAnswer#pending}. Blocks:
+     * call it off the UI thread.
+     */
+    public static AlbumAnswer heartAlbumNow(String base, String artist, String album) {
+        if (base == null || base.trim().length() == 0) {
+            return new AlbumAnswer(false, false, "nookTunes is not set up", 0);
+        }
+        String path = heartAlbumPath(artist, album);
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(url(base, path)).openConnection();
+            c.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            c.setReadTimeout(READ_TIMEOUT_MS);
+            c.setRequestProperty("Accept", "application/json");
+            int code = c.getResponseCode();
+            InputStream in = code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream();
+            JSONObject doc = null;
+            try {
+                doc = in == null ? null : new JSONObject(readBody(in));
+            } catch (org.json.JSONException ignored) {}
+            boolean ok = code >= 200 && code < 300 && (doc == null || doc.optBoolean("ok", true));
+            if (ok) flushPendingAsync(base);
+            String error = doc != null ? doc.optString("error", "") : "";
+            if (!ok && error.length() == 0) error = "HTTP " + code;
+            return new AlbumAnswer(ok, false, ok ? null : error,
+                    doc != null ? doc.optInt("queued", 0) : 0);
+        } catch (java.io.IOException e) {
+            // Unreachable, as report() would find it: keep it for later.
+            keepPending(path);
+            return new AlbumAnswer(false, true, null, 0);
+        } catch (Exception e) {
+            return new AlbumAnswer(false, false, String.valueOf(e.getMessage()), 0);
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
+    /** "Not for me": the song leaves Discovery for good and its artist sinks. */
+    public static boolean notForMe(String base, String key, String artist) {
+        return report(base, notForMePath(key, artist));
+    }
+
     // ─── Reports that survive Wi-Fi being off ──────────────────────────────
     //
     // 2026-10-20 — Hearts and played pings were fire-and-forget: one made while
@@ -364,19 +456,22 @@ public final class DiscoveryClient {
             if (code < 200 || code >= 300) {
                 throw new IllegalStateException("HTTP " + code + " from " + spec);
             }
-            InputStream in = c.getInputStream();
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            byte[] chunk = new byte[8192];
-            int n;
-            while ((n = in.read(chunk)) > 0) {
-                buf.write(chunk, 0, n);
-                if (buf.size() > MAX_BODY_BYTES) {
-                    throw new IllegalStateException("Discovery response too large");
-                }
-            }
-            return new JSONObject(buf.toString("UTF-8"));
+            return new JSONObject(readBody(c.getInputStream()));
         } finally {
             c.disconnect();
         }
+    }
+
+    private static String readBody(InputStream in) throws java.io.IOException {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        byte[] chunk = new byte[8192];
+        int n;
+        while ((n = in.read(chunk)) > 0) {
+            buf.write(chunk, 0, n);
+            if (buf.size() > MAX_BODY_BYTES) {
+                throw new IllegalStateException("Discovery response too large");
+            }
+        }
+        return buf.toString("UTF-8");
     }
 }

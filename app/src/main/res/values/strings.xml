@@ -574,6 +574,15 @@
     <string name="discovery_not_found">Could not find %1$s</string>
     <string name="discovery_keeping">Keeping %1$s…</string>
     <string name="discovery_keep_failed">Could not keep %1$s</string>
+    <!-- 2026-10-21 — Q9: the Play/Pause hold menu on the playing song. -->
+    <string name="heart_menu_heart">Heart</string>
+    <string name="heart_menu_heart_album">Heart album</string>
+    <string name="heart_menu_not_for_me">Not for me</string>
+    <string name="heart_menu_album_ok">Album hearted · downloading</string>
+    <string name="heart_menu_album_pending">Will send when online</string>
+    <string name="heart_menu_album_failed">Album: %1$s</string>
+    <string name="heart_menu_album_unknown">No album to heart</string>
+    <string name="heart_menu_not_for_me_done">Won\'t come back</string>
     <string name="home_menu_themes">Themes</string>
     <string name="home_menu_more">More</string>
     <string name="more_menu_empty">No shortcuts in More</string>

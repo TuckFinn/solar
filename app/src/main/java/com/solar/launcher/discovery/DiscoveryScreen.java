@@ -620,11 +620,22 @@ public final class DiscoveryScreen {
      * song once the listener has moved on to something Discovery did not pick.
      */
     public boolean heartIfDeezerTrack(long deezerTrackId) {
+        DiscoveryClient.Track t = playingTrackFor(deezerTrackId);
+        return t != null && heartTrack(t);
+    }
+
+    /**
+     * 2026-10-21 — Q9: the Discovery row behind the playing Deezer id, by the
+     * same match {@link #heartIfDeezerTrack} makes, or null when Discovery did
+     * not queue it. The hold menu reads it once, when it opens, so the song it
+     * acts on is the one that was playing then.
+     */
+    public DiscoveryClient.Track playingTrackFor(long deezerTrackId) {
         if (lastPlayed == null || deezerTrackId <= 0
                 || lastPlayedDeezerId != deezerTrackId) {
-            return false;
+            return null;
         }
-        return heartLastPlayed();
+        return lastPlayed;
     }
 
     /**
@@ -636,7 +647,11 @@ public final class DiscoveryScreen {
      *         its usual heart.
      */
     public boolean heartLastPlayed() {
-        final DiscoveryClient.Track t = lastPlayed;
+        return heartTrack(lastPlayed);
+    }
+
+    /** Keep {@code t}, as {@link #heartLastPlayed} does; false when it is null. */
+    public boolean heartTrack(final DiscoveryClient.Track t) {
         if (t == null) return false;
         Toast.makeText(host.context(), host.string(R.string.discovery_keeping, t.title),
                 Toast.LENGTH_SHORT).show();
