@@ -165,4 +165,27 @@ public class PlaybackCoordinatorTest {
         if (pc.unifiedQueue().size() != 1) throw new AssertionError("FM is one station");
         if (!pc.hasAnyQueue()) throw new AssertionError("NP chip should see a queue");
     }
+
+    @Test
+    public void activateNavidrome_shuffleStartsAtTheTopAndPlaysEverySong() {
+        // 2026-10-22 — shuffling a 48-song playlist from its last song played 12:
+        // the start song kept its shuffled slot and play ran from there.
+        for (int run = 0; run < 25; run++) {
+            PlaybackCoordinator pc = new PlaybackCoordinator();
+            List<NavidromeSong> songs = new ArrayList<NavidromeSong>();
+            for (int i = 0; i < 48; i++) {
+                NavidromeSong s = new NavidromeSong();
+                s.id = "s" + i;
+                s.title = "Song " + i;
+                songs.add(s);
+            }
+            pc.activateNavidrome(songs, 47, true, "Hearts");
+            assertEquals(48, pc.unifiedQueue().size());
+            assertEquals(0, pc.musicIndex());
+            assertEquals("s47", pc.currentItem().navidromeSongId);
+            java.util.Set<String> ids = new java.util.HashSet<String>();
+            for (PlayQueue.QueueItem q : pc.unifiedQueue().items()) ids.add(q.navidromeSongId);
+            assertEquals(48, ids.size());
+        }
+    }
 }

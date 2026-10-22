@@ -287,6 +287,12 @@ public final class PlaybackCoordinator {
         musicInitiator = currentSong;
         if (shuffle) {
             java.util.Collections.shuffle(order);
+            // 2026-10-22 — Tucker: shuffling Hearts (48) played only 12. The song
+            // you start on was left wherever the shuffle put it (#37) and play ran
+            // from there to the end; it goes to the front so every song plays.
+            for (int si = 0; si < order.size(); si++) {
+                if (order.get(si).equals(currentSong)) { order.add(0, order.remove(si)); break; }
+            }
         }
         for (int i = 0; i < order.size(); i++) {
             items.add(PlayQueue.QueueItem.music(order.get(i)));
@@ -327,6 +333,12 @@ public final class PlaybackCoordinator {
         NavidromeSong currentSong = songs.get(clamped);
         if (shuffle) {
             java.util.Collections.shuffle(order);
+            // 2026-10-22 — Tucker: shuffling Hearts (48) played only 12. The song
+            // you start on was left wherever the shuffle put it (#37) and play ran
+            // from there to the end; it goes to the front so every song plays.
+            for (int si = 0; si < order.size(); si++) {
+                if (order.get(si).id != null && order.get(si).id.equals(currentSong.id)) { order.add(0, order.remove(si)); break; }
+            }
         }
         for (int i = 0; i < order.size(); i++) {
             NavidromeSong s = order.get(i);
@@ -367,6 +379,12 @@ public final class PlaybackCoordinator {
         PlexSong currentSong = songs.get(clamped);
         if (shuffle) {
             java.util.Collections.shuffle(order);
+            // 2026-10-22 — Tucker: shuffling Hearts (48) played only 12. The song
+            // you start on was left wherever the shuffle put it (#37) and play ran
+            // from there to the end; it goes to the front so every song plays.
+            for (int si = 0; si < order.size(); si++) {
+                if (order.get(si).id != null && order.get(si).id.equals(currentSong.id)) { order.add(0, order.remove(si)); break; }
+            }
         }
         for (int i = 0; i < order.size(); i++) {
             PlexSong s = order.get(i);
@@ -423,6 +441,12 @@ public final class PlaybackCoordinator {
         JellyfinSong currentSong = songs.get(clamped);
         if (shuffle) {
             java.util.Collections.shuffle(order);
+            // 2026-10-22 — Tucker: shuffling Hearts (48) played only 12. The song
+            // you start on was left wherever the shuffle put it (#37) and play ran
+            // from there to the end; it goes to the front so every song plays.
+            for (int si = 0; si < order.size(); si++) {
+                if (order.get(si).id != null && order.get(si).id.equals(currentSong.id)) { order.add(0, order.remove(si)); break; }
+            }
         }
         for (int i = 0; i < order.size(); i++) {
             JellyfinSong s = order.get(i);
@@ -457,6 +481,9 @@ public final class PlaybackCoordinator {
         if (shuffle) {
             ordered = new java.util.ArrayList<PlayQueue.QueueItem>(musicLike);
             java.util.Collections.shuffle(ordered);
+            // 2026-10-22 — the playing song first, so nothing lands behind it unplayed
+            int ci = current != null ? ordered.indexOf(current) : -1;
+            if (ci > 0) ordered.add(0, ordered.remove(ci));
         } else {
             ordered = restoreMusicQueueOrder(musicLike);
         }
