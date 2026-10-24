@@ -3187,6 +3187,56 @@ public class MainActivity extends Activity {
         return nowUptimeMs - lastSeekUptimeMs < windowMs;
     }
 
+    /**
+     * 2026-10-24 — Stuck-at-end rescue. A song's end is announced once; if any guard on the
+     * way (seek window, stale generation, a promote that found no warm deck) drops it, the
+     * queue sits on a finished song forever while we still claim to be playing (2Y1,
+     * BADDIES IN BELGICA, 2026-10-24). The progress tick watches for that and moves on.
+     */
+    private int stuckEndLastPosMs = -1;
+    private long stuckEndSinceUptimeMs = 0L;
+    static final long STUCK_END_MS = 5000L;
+    static final int STUCK_END_TAIL_MS = 1500;
+
+    /**
+     * Pure stuck-at-end math (unit-testable): the song is within the last
+     * {@link #STUCK_END_TAIL_MS} and the clock has not moved since {@code sinceUptimeMs}.
+     * Returns the new "since" (0 = not stuck) — the caller fires once now - since >= window.
+     */
+    static long stuckAtEndSinceForTest(int posMs, int durMs, int lastPosMs, long sinceUptimeMs,
+            long nowUptimeMs) {
+        boolean atEnd = durMs > 0 && posMs >= durMs - STUCK_END_TAIL_MS;
+        boolean still = lastPosMs >= 0 && Math.abs(posMs - lastPosMs) < 50;
+        if (!atEnd || !still) return 0L;
+        return sinceUptimeMs > 0 ? sinceUptimeMs : nowUptimeMs;
+    }
+
+    private void maybeRescueStuckTransportEnd(int posMs, int durMs) {
+        try {
+            com.solar.launcher.audio.SolarTransport tx = com.solar.launcher.audio.SolarTransport.get();
+            if (tx.isLayerMode() || !tx.ownsPlayback()) { stuckEndSinceUptimeMs = 0L; return; }
+            long now = SystemClock.uptimeMillis();
+            stuckEndSinceUptimeMs = stuckAtEndSinceForTest(posMs, durMs, stuckEndLastPosMs,
+                    stuckEndSinceUptimeMs, now);
+            stuckEndLastPosMs = posMs;
+            if (stuckEndSinceUptimeMs == 0L || now - stuckEndSinceUptimeMs < STUCK_END_MS) return;
+            stuckEndSinceUptimeMs = 0L;
+            stuckEndLastPosMs = -1;
+            android.util.Log.w("SolarTransport", "song sat at its end " + posMs + "/" + durMs
+                    + " ms; moving on");
+            if (repeatMode == 1) {
+                handleSolarTransportCompletion();
+                return;
+            }
+            // Cold start: a warm next deck may be the very thing that did not promote.
+            // releaseOwnership flips ownsPlayback at once, so nextTrack skips the promote.
+            tx.releaseOwnership();
+            nextTrack();
+        } catch (Exception e) {
+            android.util.Log.w("SolarTransport", "stuck-end rescue failed", e);
+        }
+    }
+
     private void seekActiveAudio(int ms) {
         // Every audio seek funnels through here (scrub commit, hold-seek, context-menu
         // jumps, queue resume) — arm the suppression so a spurious decoder completion
@@ -3505,6 +3555,7 @@ public class MainActivity extends Activity {
                     if (avrcpTrackInfoWriter != null) {
                         avrcpTrackInfoWriter.tickPlayingPosition(current);
                     }
+                    maybeRescueStuckTransportEnd(current, duration);
                     if (playback.isMusicActive() && lyricsHost != null
                             && npOverlay != null && npOverlay.isLyricsShowing()) {
                         lyricsHost.syncToPositionMs(current);
