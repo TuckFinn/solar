@@ -58,6 +58,15 @@ public final class DeezerDownloader {
             @Override
             public void run() {
                 try {
+                    String direct = DirectStreams.get(result.id);
+                    if (direct != null) {
+                        File dest = new File(destDir, result.filenameBase() + "." + ext);
+                        for (int n = 1; dest.exists(); n++) {
+                            dest = new File(destDir, result.filenameBase() + " (" + n + ")." + ext);
+                        }
+                        directDownload(direct, dest, listener);
+                        return;
+                    }
                     if (!client.isSessionValid()) client.initSession();
                     DeezerTrackData track = resolver.resolveTrack(result.id);
                     String cdnUrl = null;
@@ -112,6 +121,11 @@ public final class DeezerDownloader {
             @Override
             public void run() {
                 try {
+                    String direct = DirectStreams.get(result.id);
+                    if (direct != null) {
+                        directDownload(direct, dest, listener);
+                        return;
+                    }
                     if (!client.isSessionValid()) client.initSession();
                     DeezerTrackData track = resolver.resolveTrack(result.id);
                     String cdnUrl = null;
@@ -154,6 +168,37 @@ public final class DeezerDownloader {
             }
         }, "DeezerDownload");
         downloadThread.start();
+    }
+
+    /**
+     * 2026-10-25 — A nookTunes-served song (see {@link DirectStreams}): already a
+     * plain mp3, so no session, token or decryption. Same listener contract,
+     * with no DeezerTrackData (completion handlers fall back to the result).
+     */
+    private void directDownload(String url, final File dest, final Listener listener)
+            throws IOException {
+        if (dest.getParentFile() != null && !dest.getParentFile().exists()) {
+            dest.getParentFile().mkdirs();
+        }
+        if (dest.exists()) dest.delete();
+        final boolean[] partialFired = {false};
+        try {
+            com.solar.launcher.net.SolarHttp.downloadToFile(url, dest,
+                    new com.solar.launcher.net.SolarHttp.DownloadProgress() {
+                        @Override public void onProgress(long read, long total) {
+                            if (listener == null) return;
+                            if (shouldFirePartialReady(read, total, partialFired[0])) {
+                                partialFired[0] = true;
+                                listener.onPartialReady(dest, read);
+                            }
+                            listener.onProgress(read, total > 0 ? total : read);
+                        }
+                    }, 0L, null, cancel);
+        } catch (IOException e) {
+            if (dest.exists()) dest.delete();
+            throw e;
+        }
+        if (listener != null) listener.onComplete(dest, null);
     }
 
     private void streamDecrypt(String url, File dest, String sngId, Listener listener,

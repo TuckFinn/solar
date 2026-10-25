@@ -64,9 +64,17 @@ public final class DiscoveryClient {
         /** 0 when nookTunes has no Deezer id for this row. */
         public final long deezerId;
         public final int durationSec;
+        /** 2026-10-25 — nookTunes URL for a song Deezer lacks (Bandcamp), else "". */
+        public final String streamUrl;
 
         Track(String key, String artist, String title, String album, String cover,
                 long deezerId, int durationSec) {
+            this(key, artist, title, album, cover, deezerId, durationSec, "");
+        }
+
+        Track(String key, String artist, String title, String album, String cover,
+                long deezerId, int durationSec, String streamUrl) {
+            this.streamUrl = streamUrl != null ? streamUrl : "";
             this.key = key;
             this.artist = artist;
             this.title = title;
@@ -128,9 +136,11 @@ public final class DiscoveryClient {
                     did = Long.parseLong(o.optString("deezerId", "0").trim());
                 } catch (NumberFormatException ignored) {}
             }
+            String stream = o.isNull("stream") ? "" : o.optString("stream", "");
+            if (stream.startsWith("/")) stream = url(base, stream);
             out.add(new Track(key, o.optString("artist", ""), o.optString("title", ""),
                     o.optString("album", ""), o.optString("cover", ""), did,
-                    (int) (o.optLong("durationMs", 0L) / 1000L)));
+                    (int) (o.optLong("durationMs", 0L) / 1000L), stream));
         }
         return out;
     }

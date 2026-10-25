@@ -3408,7 +3408,7 @@ public class MainActivity extends Activity {
                     ? cur.deezerTrackId : 0L;
             if (id == discoveryNotifiedDeezerId) return;
             discoveryNotifiedDeezerId = id;
-            if (id > 0) discoveryScreen.onDeezerTrackPlaying(id);
+            if (id != 0) discoveryScreen.onDeezerTrackPlaying(id);   // < 0: a nookTunes-served song
             // 2026-10-21 — A nookTunes queue empties what it has played, as a Discovery run does.
             if (id > 0 && !remotePlayIds.isEmpty()) {
                 releaseDeezerAudioBehind(REMOTE_PLAY_KEEP_BEHIND, remotePlayIds);
@@ -34942,7 +34942,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      * download if nothing is fetching it, and play it when it lands.
      */
     private boolean awaitDeezerDownload(PlayQueue.QueueItem item, File file) {
-        if (item == null || file == null || item.deezerTrackId <= 0) return false;
+        if (item == null || file == null || item.deezerTrackId == 0) return false;
         silencePreviousForAwait();
         String path = file.getAbsolutePath();
         Integer pct = deezerQueueProgressByPath.get(path);
@@ -59987,7 +59987,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // taken for the growing stream's, which brought back the song before.
         PlayQueue.QueueItem dzItem = playback.currentItem();
         if (dzItem != null && dzItem.kind == PlayQueue.ItemKind.DEEZER_STREAM
-                && dzItem.deezerTrackId > 0 && dzItem.file != null
+                && dzItem.deezerTrackId != 0 && dzItem.file != null
                 && dzItem.file.getAbsolutePath().equals(track.getAbsolutePath())) {
             Integer dzPct = deezerQueueProgressByPath.get(track.getAbsolutePath());
             if (dzPct != null && dzPct.intValue() >= 0 && dzPct.intValue() < 100

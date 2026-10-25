@@ -383,6 +383,11 @@ public final class DiscoveryScreen {
                     0L, t.durationSec, "", t.cover));
             return;
         }
+        DeezerResult direct = directResult(t);
+        if (direct != null) {
+            start(t, direct);
+            return;
+        }
         // A country row knows only who and what, so find it first. Searching
         // blocks, and a wrong hit is worse than none, so this runs off the UI
         // thread and DiscoveryMatch refuses anything it cannot vouch for.
@@ -676,12 +681,25 @@ public final class DiscoveryScreen {
             return new DeezerResult(t.deezerId, t.title, t.artist, t.album,
                     0L, t.durationSec, "", t.cover);
         }
+        DeezerResult direct = directResult(t);
+        if (direct != null) return direct;
         try {
             return DiscoveryMatch.best(search().searchTracks(t.searchQuery()), t.artist, t.title);
         } catch (Exception ignored) {
             // One unreachable search should not cost the rest.
             return null;
         }
+    }
+
+    /**
+     * 2026-10-25 — A song Deezer lacks that nookTunes serves itself (Bandcamp
+     * Daily picks): a stand-in negative id the downloader maps to nookTunes.
+     */
+    private static DeezerResult directResult(DiscoveryClient.Track t) {
+        if (t.streamUrl.isEmpty()) return null;
+        long id = com.solar.launcher.deezer.DirectStreams.idForKey(t.key);
+        com.solar.launcher.deezer.DirectStreams.put(id, t.streamUrl);
+        return new DeezerResult(id, t.title, t.artist, t.album, 0L, t.durationSec, "", t.cover);
     }
 
     /**
@@ -703,7 +721,7 @@ public final class DiscoveryScreen {
      * acts on is the one that was playing then.
      */
     public DiscoveryClient.Track playingTrackFor(long deezerTrackId) {
-        if (lastPlayed == null || deezerTrackId <= 0
+        if (lastPlayed == null || deezerTrackId == 0
                 || lastPlayedDeezerId != deezerTrackId) {
             return null;
         }

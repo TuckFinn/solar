@@ -39,6 +39,23 @@ public final class DeezerDownloadRunner {
     public static String downloadWithFallback(SharedPreferences prefs, final DeezerResult result,
             final File dest, final String ext, final Progress progress) {
         if (result == null || dest == null) return "Invalid track";
+        String direct = DirectStreams.get(result.id);
+        if (direct != null) {
+            // 2026-10-25 — a nookTunes-served song: no ARL tiers, just the file.
+            try {
+                if (dest.exists()) dest.delete();
+                com.solar.launcher.net.SolarHttp.downloadToFile(direct, dest,
+                        progress == null ? null : new com.solar.launcher.net.SolarHttp.DownloadProgress() {
+                            @Override public void onProgress(long read, long total) {
+                                progress.onProgress(total > 0 ? (int) (read * 100 / total) : -1, read, total);
+                            }
+                        });
+                return dest.isFile() && dest.length() > 0 ? null : "Empty file";
+            } catch (Exception e) {
+                if (dest.exists()) dest.delete();
+                return e.getMessage() != null ? e.getMessage() : "Download failed";
+            }
+        }
         List<DeezerAccount.ArlFallbackTier> tiers = downloadTierOrder(prefs);
         if (tiers.isEmpty()) return "Deezer not available";
         String lastErr = "Download failed";
