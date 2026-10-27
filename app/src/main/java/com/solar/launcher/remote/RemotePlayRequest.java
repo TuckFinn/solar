@@ -38,6 +38,17 @@ public final class RemotePlayRequest {
      * When present it replaces the other extras.
      */
     public static final String EXTRA_PAYLOAD_B64 = "payload_b64";
+    /**
+     * 2026-10-27 — "now" (default: replace the queue), "next" (after the playing
+     * song) or "end" (after the last). Queue modes fall back to now when nothing
+     * is queued.
+     */
+    public static final String EXTRA_MODE = "mode";
+
+    /** The mode as one of now/next/end. */
+    public static String mode(String raw) {
+        return "next".equals(raw) || "end".equals(raw) ? raw : "now";
+    }
 
     /**
      * Songs kept from one request, the first included. Every one is queued and

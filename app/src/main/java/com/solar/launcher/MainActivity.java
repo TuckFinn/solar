@@ -19704,6 +19704,49 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }, "SolarRemotePlay").start();
     }
 
+    /**
+     * 2026-10-27 — Play next / Add to end from nookTunes (the Flipper): the songs go
+     * in behind the playing one, or after the last, and nothing else changes. With
+     * no queue to add to, they play now instead.
+     */
+    public void queueRemotePlay(
+            final java.util.List<com.solar.launcher.remote.RemotePlayRequest.Track> tracks,
+            final String mode) {
+        final PlayQueue q0 = playback.unifiedQueue();
+        if (q0 == null || q0.size() == 0) {
+            startRemotePlay(tracks);
+            return;
+        }
+        if (!requireInternet(R.string.deezer_wifi_required)) return;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                com.solar.launcher.deezer.DeezerSearch search = null;
+                final ArrayList<DeezerResult> found = new ArrayList<DeezerResult>();
+                java.util.Set<Long> seen = new java.util.HashSet<Long>();
+                for (com.solar.launcher.remote.RemotePlayRequest.Track t : tracks) {
+                    if (search == null && !t.hasDeezerId()) {
+                        search = new com.solar.launcher.deezer.DeezerSearch(new DeezerClient(prefs));
+                    }
+                    DeezerResult r = resolveRemotePlayTrack(t, search);
+                    if (r != null && seen.add(Long.valueOf(r.id))) found.add(r);
+                }
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        PlayQueue q = playback.unifiedQueue();
+                        if (found.isEmpty() || q == null) return;
+                        int after = "next".equals(mode) ? Math.max(0, q.index()) : q.size() - 1;
+                        for (DeezerResult r : found) remotePlayIds.add(Long.valueOf(r.id));
+                        startDeezerBackgroundQueue(found, after, false);
+                        android.util.Log.i("SolarRemotePlay", "queued " + found.size() + " (" + mode + ")");
+                        Toast.makeText(MainActivity.this, getString("next".equals(mode)
+                                ? R.string.remote_queue_next : R.string.remote_queue_end, found.size()),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }, "SolarRemoteQueue").start();
+    }
+
     /** Its own id, or a Deezer search hit DiscoveryMatch vouches for; null to skip it. */
     private static DeezerResult resolveRemotePlayTrack(
             com.solar.launcher.remote.RemotePlayRequest.Track t,
@@ -35301,7 +35344,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     /** Index of the queued Deezer track with this id, from the play head down; -1 if none. */
     private int queuedDeezerIndexFromPlayHead(long deezerId) {
         PlayQueue q = playback.unifiedQueue();
-        if (q == null || deezerId <= 0) return -1;
+        // != 0: a nookTunes-served (Bandcamp) song has a negative stand-in id, and a
+        // run anchored on one used to stop topping up. 2026-10-27
+        if (q == null || deezerId == 0) return -1;
         for (int i = Math.max(0, q.index()); i < q.size(); i++) {
             PlayQueue.QueueItem it = q.items().get(i);
             if (it != null && it.kind == PlayQueue.ItemKind.DEEZER_STREAM

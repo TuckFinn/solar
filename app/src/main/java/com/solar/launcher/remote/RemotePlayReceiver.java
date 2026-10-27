@@ -68,7 +68,20 @@ public final class RemotePlayReceiver extends BroadcastReceiver {
             Log.w(TAG, "no playable song in the request");
             return;
         }
-        Log.i(TAG, "request: " + tracks.size() + " song(s), first id=" + tracks.get(0).deezerId);
+        final String mode = RemotePlayRequest.mode(x.getString(RemotePlayRequest.EXTRA_MODE));
+        Log.i(TAG, "request (" + mode + "): " + tracks.size() + " song(s), first id=" + tracks.get(0).deezerId);
+        // Play next / Add to end change nothing on screen: hand them straight to a
+        // running Solar instead of bringing it forward. 2026-10-27
+        final MainActivity live = MainActivity.instance;
+        if (!"now".equals(mode) && live != null) {
+            final List<RemotePlayRequest.Track> queued = tracks;
+            live.runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    live.queueRemotePlay(queued, mode);
+                }
+            });
+            return;
+        }
         synchronized (RemotePlayReceiver.class) {
             pending = tracks;
             pendingAt = SystemClock.elapsedRealtime();
