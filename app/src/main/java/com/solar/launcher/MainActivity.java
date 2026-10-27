@@ -3195,6 +3195,7 @@ public class MainActivity extends Activity {
      */
     private int stuckEndLastPosMs = -1;
     private long stuckEndSinceUptimeMs = 0L;
+    private long stuckEndLastFileLen = -1L;
     static final long STUCK_END_MS = 5000L;
     static final int STUCK_END_TAIL_MS = 1500;
 
@@ -3215,6 +3216,15 @@ public class MainActivity extends Activity {
         try {
             com.solar.launcher.audio.SolarTransport tx = com.solar.launcher.audio.SolarTransport.get();
             if (tx.isLayerMode() || !tx.ownsPlayback()) { stuckEndSinceUptimeMs = 0L; return; }
+            // 2026-10-27 — A song still downloading is not at its end: the player
+            // measures a growing file's length from what has arrived, so it "ends"
+            // at the download's edge and waits there (1Y1: RAYE cut at 144 s of
+            // 224). That wait belongs to awaitDeezerDownload, not to this rescue.
+            if (currentSongStillArriving()) {
+                stuckEndSinceUptimeMs = 0L;
+                stuckEndLastPosMs = -1;
+                return;
+            }
             long now = SystemClock.uptimeMillis();
             stuckEndSinceUptimeMs = stuckAtEndSinceForTest(posMs, durMs, stuckEndLastPosMs,
                     stuckEndSinceUptimeMs, now);
@@ -3235,6 +3245,20 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             android.util.Log.w("SolarTransport", "stuck-end rescue failed", e);
         }
+    }
+
+    /** The playing song's file is still being written (download running, or it grew since the last tick). */
+    private boolean currentSongStillArriving() {
+        PlayQueue.QueueItem cur = playback.currentItem();
+        File f = cur != null ? cur.file : null;
+        if (f == null) return false;
+        long len = f.length();
+        boolean grew = stuckEndLastFileLen >= 0 && len != stuckEndLastFileLen;
+        stuckEndLastFileLen = len;
+        if (grew) return true;
+        Integer pct = deezerQueueProgressByPath.get(f.getAbsolutePath());
+        if (pct != null && pct.intValue() >= 0 && pct.intValue() < 100) return true;
+        return isStreamTrackStillBuffering(f);
     }
 
     private void seekActiveAudio(int ms) {
