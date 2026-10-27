@@ -19492,6 +19492,14 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             if ("next".equals(cmd)) nextTrack();
             else if ("prev".equals(cmd)) prevTrack();
             else if ("playpause".equals(cmd)) playOrPauseMusic();
+            // 2026-10-27 — Phase 3: pause only pauses (the sleep timer must never resume)
+            else if ("pause".equals(cmd)) { if (isActiveAudioPlaying()) playOrPauseMusic(); }
+            else if ("shuffle".equals(cmd)) toggleShuffleFromRemote();
+            else if ("repeat".equals(cmd)) {
+                repeatMode = (repeatMode + 1) % 3;
+                updatePlayerStatusIndicators();
+                try { prefs.edit().putInt("repeat_mode", repeatMode).commit(); } catch (Exception ignored) {}
+            }
             else if ("heart".equals(cmd) && cur != null) heartHeldSong(cur, dt);
             else if ("notforme".equals(cmd) && cur != null)
                 notForMeHeldSong(cur, dt != null ? dt.key : null, heldSongTags(cur, dt)[0]);
@@ -19508,6 +19516,18 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         remoteStatusLast = "";                      // report the result right away
         remoteStatusHandler.removeCallbacks(remoteStatusTick);
         remoteStatusHandler.postDelayed(remoteStatusTick, 600L);
+    }
+
+    /** The Settings shuffle row's toggle, for the remote. */
+    private void toggleShuffleFromRemote() {
+        isShuffleMode = !isShuffleMode;
+        updatePlayerStatusIndicators();
+        try { prefs.edit().putBoolean("shuffle", isShuffleMode).commit(); } catch (Exception ignored) {}
+        if (discoveryScreen != null && discoveryScreen.handleShuffleChanged(isShuffleMode)) {
+            // A Discovery run reorders its own songs; see handleShuffleChanged.
+        } else if (!playback.musicPlaylist().isEmpty()) {
+            playback.reshuffleMusic(isShuffleMode);
+        }
     }
 
     private final Handler remoteStatusHandler = new Handler();
@@ -19564,7 +19584,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             int scale = b.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100);
             if (lvl >= 0 && scale > 0) battery = lvl * 100 / scale;
         }
-        String sig = title + "|" + artist + "|" + list + "|" + playing + "|" + vol + "|" + battery;
+        String sig = title + "|" + artist + "|" + list + "|" + playing + "|" + vol + "|" + battery
+                + "|" + isShuffleMode + "|" + repeatMode;
         long now = SystemClock.uptimeMillis();
         if (!remoteStatusDueForTest(!sig.equals(remoteStatusLast), playing, now - remoteStatusSentAt)) return;
         remoteStatusLast = sig;
@@ -19573,7 +19594,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         o.put("title", title).put("artist", artist).put("album", album).put("list", list)
                 .put("playing", playing).put("pos_ms", activeAudioPositionMs())
                 .put("dur_ms", activeAudioDurationMs()).put("battery", battery)
-                .put("volume", vol).put("vol_max", volMax);
+                .put("volume", vol).put("vol_max", volMax)
+                .put("shuffle", isShuffleMode).put("repeat", repeatMode);
         new Thread(new Runnable() {
             @Override public void run() {
                 java.net.HttpURLConnection c = null;
