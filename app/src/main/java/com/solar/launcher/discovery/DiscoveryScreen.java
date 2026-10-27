@@ -150,6 +150,45 @@ public final class DiscoveryScreen {
         this.deezer = deezer;
         // Hearts and played pings made with Wi-Fi off wait in the files dir.
         if (host.context() != null) DiscoveryClient.init(host.context().getFilesDir());
+        // 2026-10-26 — the run's queued songs survive a restart, so the next pick
+        // still drops them (2Y1: Saturday's Acoustic tail sat behind Monday's Rock
+        // after an install restarted Solar and these ids were forgotten).
+        if (host.prefs() != null) {
+            queuedIds.addAll(decodeIds(host.prefs().getString(PREF_RUN_QUEUED, "")));
+            discoveryIds.addAll(queuedIds);
+        }
+    }
+
+    static final String PREF_RUN_QUEUED = "discovery_run_queued";
+
+    /** Save what the next pick must drop: this run's songs, plus the last run's until delivered. */
+    private void saveRunQueued() {
+        if (host.prefs() == null) return;
+        java.util.Set<Long> all = new java.util.HashSet<Long>(queuedIds);
+        if (runReplace != null) all.addAll(runReplace);
+        host.prefs().edit().putString(PREF_RUN_QUEUED, encodeIds(all)).apply();
+    }
+
+    static String encodeIds(java.util.Set<Long> ids) {
+        StringBuilder sb = new StringBuilder();
+        for (Long id : ids) {
+            if (id == null || id.longValue() == 0) continue;
+            if (sb.length() > 0) sb.append(',');
+            sb.append(id.longValue());
+        }
+        return sb.toString();
+    }
+
+    static java.util.Set<Long> decodeIds(String s) {
+        java.util.Set<Long> out = new java.util.HashSet<Long>();
+        if (s == null || s.isEmpty()) return out;
+        for (String part : s.split(",")) {
+            try {
+                long v = Long.parseLong(part.trim());
+                if (v != 0) out.add(Long.valueOf(v));
+            } catch (NumberFormatException ignored) {}
+        }
+        return out;
     }
 
     public int uiMode() { return uiMode; }
@@ -452,6 +491,7 @@ public final class DiscoveryScreen {
         discoveryIds.add(Long.valueOf(fromId));
         runReplace = queuedIds;
         queuedIds = new java.util.HashSet<Long>();
+        saveRunQueued();
         runResolving = false;
         playingDeezerId = fromId;
         topUp(generation);
@@ -641,6 +681,7 @@ public final class DiscoveryScreen {
                             queuedIds.add(id);
                             discoveryIds.add(id);
                         }
+                        if (!found.isEmpty()) saveRunQueued();
                         // Still short when songs failed to resolve, or when
                         // playback moved on while this was searching.
                         topUp(generation);
@@ -660,6 +701,7 @@ public final class DiscoveryScreen {
         if (runReplace != null) {
             java.util.Set<Long> replace = runReplace;
             runReplace = null;
+            saveRunQueued();
             host.queueDeezerTracks(found, replace);
             return true;
         }
@@ -672,6 +714,7 @@ public final class DiscoveryScreen {
         if (runReplace == null) return;
         java.util.Set<Long> replace = runReplace;
         runReplace = null;
+        saveRunQueued();
         if (!replace.isEmpty()) host.queueDeezerTracks(new ArrayList<DeezerResult>(), replace);
     }
 
