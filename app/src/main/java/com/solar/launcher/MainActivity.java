@@ -4486,6 +4486,7 @@ public class MainActivity extends Activity {
         // #endregion
 // 🚀 앱이 켜지면 자기 자신을 변수에 등록합니다.
         instance = this;
+        remoteStatusHandler.postDelayed(remoteStatusTick, 5000L);
         WifiOfflinePowerReceiver.setUiPolicyActive(true);
         // 2026-08-05 — Embedded Wolfius TLS 1.3 proxy runs automatically on rooted targets (no toggle).
         WolfiusTlsService.ensureStarted(this);
@@ -19475,6 +19476,123 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         // #endregion
         changeScreen(STATE_WIFI_KEYBOARD);
+    }
+
+    // ---- 2026-10-27 — Remote control + status for nookTunes (the Flipper app) ----
+
+    /** A command from {@link com.solar.launcher.remote.RemoteControlReceiver}; UI thread. */
+    public void handleRemoteCommand(String cmd, int level) {
+        android.util.Log.i("SolarRemote", "command " + cmd + (level >= 0 ? " " + level : ""));
+        try {
+            PlayQueue.QueueItem cur = playback.currentItem();
+            com.solar.launcher.discovery.DiscoveryClient.Track dt =
+                    cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM && discoveryScreen != null
+                            ? discoveryScreen.playingTrackFor(cur.deezerTrackId) : null;
+            AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+            if ("next".equals(cmd)) nextTrack();
+            else if ("prev".equals(cmd)) prevTrack();
+            else if ("playpause".equals(cmd)) playOrPauseMusic();
+            else if ("heart".equals(cmd) && cur != null) heartHeldSong(cur, dt);
+            else if ("notforme".equals(cmd) && cur != null)
+                notForMeHeldSong(cur, dt != null ? dt.key : null, heldSongTags(cur, dt)[0]);
+            else if ("volup".equals(cmd) && am != null)
+                am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+            else if ("voldown".equals(cmd) && am != null)
+                am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0);
+            else if ("volume".equals(cmd) && am != null && level >= 0)
+                am.setStreamVolume(AudioManager.STREAM_MUSIC,
+                        Math.min(level, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)), 0);
+        } catch (Exception e) {
+            android.util.Log.w("SolarRemote", "command " + cmd + " failed", e);
+        }
+        remoteStatusLast = "";                      // report the result right away
+        remoteStatusHandler.removeCallbacks(remoteStatusTick);
+        remoteStatusHandler.postDelayed(remoteStatusTick, 600L);
+    }
+
+    private final Handler remoteStatusHandler = new Handler();
+    /** What was last reported, without the position: a change sends at once. */
+    private String remoteStatusLast = "";
+    private long remoteStatusSentAt;
+    static final long REMOTE_STATUS_TICK_MS = 2000L;
+    static final long REMOTE_STATUS_PLAYING_EVERY_MS = 10000L;
+    static final long REMOTE_STATUS_IDLE_EVERY_MS = 60000L;
+
+    /**
+     * Pure send rule (unit-testable): on any change, else every 10 s while
+     * playing (the position) and every 60 s otherwise (still here).
+     */
+    static boolean remoteStatusDueForTest(boolean changed, boolean playing, long sinceMs) {
+        return changed || sinceMs >= (playing ? REMOTE_STATUS_PLAYING_EVERY_MS : REMOTE_STATUS_IDLE_EVERY_MS);
+    }
+
+    private final Runnable remoteStatusTick = new Runnable() {
+        @Override public void run() {
+            try {
+                sendRemoteStatusIfDue();
+            } catch (Exception e) {
+                android.util.Log.w("SolarRemote", "status failed", e);
+            }
+            remoteStatusHandler.postDelayed(this, REMOTE_STATUS_TICK_MS);
+        }
+    };
+
+    private static String textOf(TextView v) {
+        return v != null && v.getText() != null ? v.getText().toString().trim() : "";
+    }
+
+    private void sendRemoteStatusIfDue() throws org.json.JSONException {
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        if (base.isEmpty()) return;
+        PlayQueue.QueueItem cur = playback.currentItem();
+        String title = textOf(tvPlayerTitle), artist = textOf(tvPlayerArtist), album = textOf(tvPlayerAlbum);
+        if (title.isEmpty() && cur != null && cur.deezerMeta != null) {
+            int dash = cur.deezerMeta.indexOf(" - ");
+            artist = dash > 0 ? cur.deezerMeta.substring(0, dash) : "";
+            title = dash > 0 ? cur.deezerMeta.substring(dash + 3) : cur.deezerMeta;
+        }
+        String list = cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM && discoveryScreen != null
+                ? discoveryScreen.runNameFor(cur.deezerTrackId) : "";
+        boolean playing = isActiveAudioPlaying();
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        int vol = am != null ? am.getStreamVolume(AudioManager.STREAM_MUSIC) : -1;
+        int volMax = am != null ? am.getStreamMaxVolume(AudioManager.STREAM_MUSIC) : -1;
+        int battery = -1;
+        Intent b = registerReceiver(null, new android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (b != null) {
+            int lvl = b.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1);
+            int scale = b.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100);
+            if (lvl >= 0 && scale > 0) battery = lvl * 100 / scale;
+        }
+        String sig = title + "|" + artist + "|" + list + "|" + playing + "|" + vol + "|" + battery;
+        long now = SystemClock.uptimeMillis();
+        if (!remoteStatusDueForTest(!sig.equals(remoteStatusLast), playing, now - remoteStatusSentAt)) return;
+        remoteStatusLast = sig;
+        remoteStatusSentAt = now;
+        final org.json.JSONObject o = new org.json.JSONObject();
+        o.put("title", title).put("artist", artist).put("album", album).put("list", list)
+                .put("playing", playing).put("pos_ms", activeAudioPositionMs())
+                .put("dur_ms", activeAudioDurationMs()).put("battery", battery)
+                .put("volume", vol).put("vol_max", volMax);
+        new Thread(new Runnable() {
+            @Override public void run() {
+                java.net.HttpURLConnection c = null;
+                try {
+                    c = (java.net.HttpURLConnection) new java.net.URL(
+                            base.replaceAll("/+$", "") + "/api/y1/status").openConnection();
+                    c.setConnectTimeout(4000);
+                    c.setReadTimeout(4000);
+                    c.setDoOutput(true);
+                    c.setRequestProperty("Content-Type", "application/json");
+                    c.getOutputStream().write(o.toString().getBytes("UTF-8"));
+                    c.getResponseCode();
+                } catch (Exception ignored) {
+                    // asleep or off Wi-Fi; the next change or tick tries again
+                } finally {
+                    if (c != null) c.disconnect();
+                }
+            }
+        }, "RemoteStatus").start();
     }
 
     // ---- 2026-10-21 — "Play on Y1" from nookTunes (RemotePlayReceiver) ----
@@ -63855,6 +63973,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         abortForegroundStemPrep();
         stemPrepRetryHandler.removeCallbacks(stemPrepRetryRunnable);
         if (instance == this) instance = null;
+        remoteStatusHandler.removeCallbacks(remoteStatusTick);
         // 2026-07-20 — Clear MemoryRelease host so trim doesn’t touch a dead Activity.
         MemoryRelease.setHost(null);
         if (usbFocusHelper != null) usbFocusHelper.onDestroy();

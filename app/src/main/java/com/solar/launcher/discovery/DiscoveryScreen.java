@@ -477,8 +477,17 @@ public final class DiscoveryScreen {
      * goes in behind it as placeholders and downloads in sequence -- the same
      * path a Deezer album takes -- but only {@link #QUEUE_AHEAD} at a time.
      */
+    /** 2026-10-27 — The list the current run plays, for the remote's status report. */
+    private String runName = "";
+
+    /** The run's list name when this Deezer id is one of its songs, else "". */
+    public String runNameFor(long deezerTrackId) {
+        return runTracks.containsKey(Long.valueOf(deezerTrackId)) ? runName : "";
+    }
+
     private void beginRun(DiscoveryClient.Track from, long fromId) {
         final int generation = ++queueGeneration;
+        runName = openPlaylist != null && openPlaylist.name != null ? openPlaylist.name : "";
         runPlaylist.clear();
         runPlaylist.addAll(tracks);
         runPending.clear();
