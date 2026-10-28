@@ -65,6 +65,49 @@ public final class DeezerSearch {
         return out;
     }
 
+    /**
+     * 2026-10-28 — Find an album by artist and title; 0 when none matches. The
+     * artist must match (ignoring case) so a same-named album by someone else
+     * is never played instead.
+     */
+    public long findAlbumId(String artist, String album) throws IOException {
+        String a = artist == null ? "" : artist.trim();
+        String al = album == null ? "" : album.trim();
+        if (a.isEmpty() || al.isEmpty()) return 0;
+        try {
+            JSONObject root = new JSONObject(new String(searchPublic("search/album?q="
+                    + encodeQuery("artist:\"" + a + "\" album:\"" + al + "\"")), utf8()));
+            JSONArray data = root.optJSONArray("data");
+            if (data == null) return 0;
+            long loose = 0;
+            for (int i = 0; i < data.length(); i++) {
+                JSONObject item = data.optJSONObject(i);
+                if (item == null) continue;
+                JSONObject ar = item.optJSONObject("artist");
+                if (ar == null || !a.equalsIgnoreCase(ar.optString("name", "").trim())) continue;
+                if (al.equalsIgnoreCase(item.optString("title", "").trim())) {
+                    return item.optLong("id", 0);
+                }
+                if (loose == 0) loose = item.optLong("id", 0);
+            }
+            return loose;
+        } catch (org.json.JSONException e) {
+            throw new IOException(e.getMessage() != null ? e.getMessage() : "Album search failed");
+        }
+    }
+
+    /** 2026-10-28 — The Deezer album a track is on; 0 when Deezer does not say. */
+    public long albumIdForTrack(long trackId) throws IOException {
+        if (trackId <= 0) return 0;
+        try {
+            JSONObject root = new JSONObject(new String(searchPublic("track/" + trackId), utf8()));
+            JSONObject album = root.optJSONObject("album");
+            return album != null ? album.optLong("id", 0) : 0;
+        } catch (org.json.JSONException e) {
+            throw new IOException(e.getMessage() != null ? e.getMessage() : "Track lookup failed");
+        }
+    }
+
     public List<DeezerResult> listAlbumTracks(long albumId) throws IOException {
         List<DeezerResult> out = new ArrayList<DeezerResult>();
         if (albumId <= 0) return out;

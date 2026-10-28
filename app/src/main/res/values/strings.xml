@@ -579,12 +579,13 @@
     <string name="discovery_keep_failed">Could not keep %1$s</string>
     <!-- 2026-10-21 — Q9: the Play/Pause hold menu on the playing song. -->
     <string name="heart_menu_heart">Heart</string>
-    <string name="heart_menu_heart_album">Heart album</string>
+    <string name="heart_menu_unheart">Unheart</string>
+    <string name="heart_menu_play_album">Play album</string>
     <string name="heart_menu_not_for_me">Not for me</string>
-    <string name="heart_menu_album_ok">Album hearted · downloading</string>
-    <string name="heart_menu_album_pending">Will send when online</string>
-    <string name="heart_menu_album_failed">Album: %1$s</string>
-    <string name="heart_menu_album_unknown">No album to heart</string>
+    <string name="heart_menu_unhearted">Unhearted %1$s</string>
+    <string name="heart_menu_album_starting">Playing %1$s</string>
+    <string name="heart_menu_album_not_found">Couldn\'t find the album</string>
+    <string name="heart_menu_album_unknown">This song has no album</string>
     <string name="heart_menu_not_for_me_done">Won\'t come back</string>
     <!-- 2026-11-09 — Learn it: Songs to Learn + a chord sheet in nookTunes' Songbook -->
     <string name="heart_menu_learn">Learn it</string>

@@ -309,6 +309,53 @@ public final class NavidromeClient {
             }
         });
     }
+    /** 2026-10-28 — Take a heart back: Subsonic unstar.view, the reverse of {@link #star}. */
+    public void unstar(final String songId, final Callback<Boolean> cb) {
+        executor.execute(new Runnable() {
+            @Override public void run() {
+                try {
+                    JSONObject root = fetchJson(buildUrl("unstar", "id=" + enc(songId)));
+                    JSONObject sr = root.getJSONObject("subsonic-response");
+                    if (!"ok".equals(sr.getString("status"))) {
+                        postError(cb, extractError(root));
+                        return;
+                    }
+                    postSuccess(cb, Boolean.TRUE);
+                } catch (final Exception e) {
+                    postError(cb, e.getMessage());
+                }
+            }
+        });
+    }
+
+    /**
+     * 2026-10-28 — The album a song belongs to (getSong.view's albumId), for the
+     * hold menu's Play album. Errors when the server gives none.
+     */
+    public void getSongAlbumId(final String songId, final Callback<String> cb) {
+        executor.execute(new Runnable() {
+            @Override public void run() {
+                try {
+                    JSONObject root = fetchJson(buildUrl("getSong", "id=" + enc(songId)));
+                    JSONObject sr = root.getJSONObject("subsonic-response");
+                    if (!"ok".equals(sr.getString("status"))) {
+                        postError(cb, extractError(root));
+                        return;
+                    }
+                    JSONObject song = sr.optJSONObject("song");
+                    String albumId = song != null ? song.optString("albumId", "") : "";
+                    if (albumId.isEmpty()) {
+                        postError(cb, "no album for this song");
+                        return;
+                    }
+                    postSuccess(cb, albumId);
+                } catch (final Exception e) {
+                    postError(cb, e.getMessage());
+                }
+            }
+        });
+    }
+
     /** 2026-07-06: Flat song catalog — search3 wildcard, songs only (cap 500). */
     public void getAllTracks(final Callback<List<NavidromeSong>> cb) {
         executor.execute(new Runnable() {

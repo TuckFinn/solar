@@ -1379,7 +1379,7 @@ public class MainActivity extends Activity {
             }
         }
         final PlayQueue.QueueItem cur = playback.currentItem();
-        // 2026-10-21 — Tucker (Q9): the hold opens Heart / Heart album / Not for
+        // 2026-10-21 — Tucker (Q9): the hold opens Heart / Play album / Not for
         // me instead of hearting at once. Heart is preselected, so hold then
         // click center hearts exactly as the hold used to. Which songs the hold
         // takes is unchanged: a Discovery song, a song from the device's own
@@ -1430,23 +1430,34 @@ public class MainActivity extends Activity {
             final com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack) {
         if (themedContextMenu == null || themedContextMenu.isShowing()) return false;
         final String[] tags = heldSongTags(cur, discoveryTrack);
+        // 2026-10-28 — Tucker: a hearted song offers Unheart; Play album (which
+        // hearts the song too) replaced Heart album, which hadn't proved useful.
+        final boolean hearted = isHeldSongHearted(cur, tags);
         final String[] labels = new String[] {
-                getString(R.string.heart_menu_heart),
-                getString(R.string.heart_menu_heart_album),
+                getString(hearted ? R.string.heart_menu_unheart : R.string.heart_menu_heart),
+                getString(R.string.heart_menu_play_album),
                 getString(R.string.heart_menu_not_for_me),
                 getString(R.string.heart_menu_learn) };
         final java.util.List<Runnable> actions = new java.util.ArrayList<Runnable>();
         actions.add(new Runnable() {
             @Override public void run() {
                 dismissThemedContextMenu(true, false, null);
-                heartHeldSong(cur, discoveryTrack);
+                if (hearted) {
+                    unheartHeldSong(cur, tags);
+                } else {
+                    rememberHeartState(tags, true);
+                    heartHeldSong(cur, discoveryTrack);
+                }
             }
         });
         actions.add(new Runnable() {
             @Override public void run() {
                 dismissThemedContextMenu(true, false, null);
-                heartHeldSong(cur, discoveryTrack);
-                heartHeldAlbum(tags[0], tags[2]);
+                if (!hearted) {
+                    rememberHeartState(tags, true);
+                    heartHeldSong(cur, discoveryTrack);
+                }
+                playHeldAlbum(cur, tags);
             }
         });
         actions.add(new Runnable() {
@@ -1698,36 +1709,252 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * 2026-10-21 — Q9 "Heart album": nookTunes favourites the album and
-     * downloads all of it lossless. Asked directly so the toast can say what
-     * it answered; unreachable, it waits in DiscoveryClient's offline queue.
+     * 2026-10-28 — What nookTunes said about the playing song's heart, asked
+     * as it started (prefetchHeartState), so the hold menu opens at once.
+     * Touched on the UI thread only.
      */
-    private void heartHeldAlbum(final String artist, final String album) {
-        if (artist.isEmpty() || album.isEmpty()) {
+    private String heartStateKey = null;
+    private boolean heartStateHearted = false;
+
+    private static String heartStateKeyFor(String[] tags) {
+        if (tags == null || tags[0].isEmpty() || tags[1].isEmpty()) return null;
+        return tags[0].toLowerCase(java.util.Locale.ROOT) + "\n"
+                + tags[1].toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private void rememberHeartState(String[] tags, boolean hearted) {
+        String key = heartStateKeyFor(tags);
+        if (key == null) return;
+        heartStateKey = key;
+        heartStateHearted = hearted;
+    }
+
+    /**
+     * A song on the device's own storage is hearted when it is a favourite
+     * here; any other song when nookTunes said so as it started. Unknown
+     * reads as not hearted, and hearting twice does no harm.
+     */
+    private boolean isHeldSongHearted(PlayQueue.QueueItem cur, String[] tags) {
+        if (cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE && cur.file != null) {
+            return favoritePaths.contains(cur.file.getAbsolutePath());
+        }
+        String key = heartStateKeyFor(tags);
+        return key != null && key.equals(heartStateKey) && heartStateHearted;
+    }
+
+    /** A stream or Discovery song started: ask nookTunes whether it is hearted. */
+    private void prefetchHeartState(PlayQueue.QueueItem cur) {
+        if (cur == null) return;
+        com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack =
+                cur.kind == PlayQueue.ItemKind.DEEZER_STREAM && discoveryScreen != null
+                        ? discoveryScreen.playingTrackFor(cur.deezerTrackId) : null;
+        if (cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM && discoveryTrack == null) return;
+        final String[] tags = heldSongTags(cur, discoveryTrack);
+        final String key = heartStateKeyFor(tags);
+        if (key == null || key.equals(heartStateKey)) return;
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final Boolean h = com.solar.launcher.discovery.DiscoveryClient.isHearted(
+                        base, tags[0], tags[1]);
+                if (h == null) return;
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        heartStateKey = key;
+                        heartStateHearted = h.booleanValue();
+                    }
+                });
+            }
+        }, "HeartState").start();
+    }
+
+    /**
+     * 2026-10-28 — Unheart: a local song stops being a favourite (Hearts
+     * playlist and nookTunes follow); any other song is taken back from
+     * nookTunes' favourites, and a Navidrome stream is unstarred too.
+     */
+    private void unheartHeldSong(final PlayQueue.QueueItem cur, final String[] tags) {
+        rememberHeartState(tags, false);
+        if (cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE && cur.file != null) {
+            String path = cur.file.getAbsolutePath();
+            MusicLibraryStore.getInstance(this).setFavorite(path, false);
+            favoritePaths.remove(path);
+            onLocalFavoritesChanged(java.util.Collections.singletonList(cur.file), false, true);
+            return;
+        }
+        heartVibrate(120L);
+        Toast.makeText(this, getString(R.string.heart_menu_unhearted, tags[1]),
+                Toast.LENGTH_SHORT).show();
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        new Thread(new Runnable() {
+            @Override public void run() {
+                boolean told = com.solar.launcher.discovery.DiscoveryClient.unheart(
+                        base, tags[0], tags[1], tags[2]);
+                android.util.Log.i("SolarHeart", "unheart " + tags[0] + " - " + tags[1]
+                        + (told ? " sent" : " kept for later"));
+            }
+        }, "Unheart").start();
+        if (cur != null && cur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM
+                && cur.navidromeSongId != null && !cur.navidromeSongId.isEmpty()) {
+            final String id = cur.navidromeSongId;
+            com.solar.launcher.navidrome.NavidromeClient.getInstance().unstar(id,
+                    new com.solar.launcher.navidrome.NavidromeClient.Callback<Boolean>() {
+                @Override public void onSuccess(Boolean ok) {
+                    android.util.Log.i("SolarHeart", "unstarred " + id);
+                }
+                @Override public void onError(String message) {
+                    android.util.Log.w("SolarHeart", "unstar failed for " + id + ": " + message);
+                }
+            });
+        }
+    }
+
+    /**
+     * 2026-10-28 — Play album: the held song's album from its first track. A
+     * local song plays the album from this player's library, a Navidrome
+     * stream the album from the server, a Discovery song the album on Deezer.
+     * When that finds nothing, the album is looked up on Deezer by artist and
+     * title.
+     */
+    private void playHeldAlbum(final PlayQueue.QueueItem cur, final String[] tags) {
+        final String artist = tags[0], album = tags[2];
+        if (album.isEmpty()) {
             Toast.makeText(this, getString(R.string.heart_menu_album_unknown),
                     Toast.LENGTH_SHORT).show();
             return;
         }
-        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        Toast.makeText(this, getString(R.string.heart_menu_album_starting, album),
+                Toast.LENGTH_SHORT).show();
+        if (cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE && cur.file != null) {
+            final File held = cur.file;
+            final SongItem si = findSongItem(held);
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    final java.util.List<File> files = localAlbumFiles(held, si, artist, album);
+                    runOnUiThread(new Runnable() {
+                        @Override public void run() {
+                            android.util.Log.i("SolarHeart", "play album " + artist + " - "
+                                    + album + ": " + files.size() + " local");
+                            if (files.isEmpty()) {
+                                playDeezerAlbumByName(artist, album);
+                            } else {
+                                playTrackList(files, 0);
+                            }
+                        }
+                    });
+                }
+            }, "PlayAlbumLocal").start();
+            return;
+        }
+        if (cur != null && cur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM
+                && cur.navidromeSongId != null && !cur.navidromeSongId.isEmpty()) {
+            final com.solar.launcher.navidrome.NavidromeClient nd =
+                    com.solar.launcher.navidrome.NavidromeClient.getInstance();
+            nd.getSongAlbumId(cur.navidromeSongId,
+                    new com.solar.launcher.navidrome.NavidromeClient.Callback<String>() {
+                @Override public void onSuccess(String albumId) {
+                    nd.getAlbumSongs(albumId, new com.solar.launcher.navidrome.NavidromeClient
+                            .Callback<java.util.List<com.solar.launcher.navidrome.NavidromeSong>>() {
+                        @Override public void onSuccess(
+                                java.util.List<com.solar.launcher.navidrome.NavidromeSong> songs) {
+                            android.util.Log.i("SolarHeart", "play album " + album + ": "
+                                    + (songs == null ? 0 : songs.size()) + " from Navidrome");
+                            if (songs == null || songs.isEmpty()) {
+                                playDeezerAlbumByName(artist, album);
+                            } else {
+                                playNavidromeSongs(songs, 0, album);
+                            }
+                        }
+                        @Override public void onError(String message) {
+                            android.util.Log.w("SolarHeart", "album songs failed: " + message);
+                            playDeezerAlbumByName(artist, album);
+                        }
+                    });
+                }
+                @Override public void onError(String message) {
+                    android.util.Log.w("SolarHeart", "album id failed: " + message);
+                    playDeezerAlbumByName(artist, album);
+                }
+            });
+            return;
+        }
+        final long deezerTrackId = cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                ? cur.deezerTrackId : 0L;
+        playDeezerAlbum(deezerTrackId, artist, album);
+    }
+
+    private void playDeezerAlbumByName(String artist, String album) {
+        playDeezerAlbum(0L, artist, album);
+    }
+
+    /** The album on Deezer: by the track's own album when known, else by name. */
+    private void playDeezerAlbum(final long trackId, final String artist, final String album) {
         new Thread(new Runnable() {
             @Override public void run() {
-                final com.solar.launcher.discovery.DiscoveryClient.AlbumAnswer a =
-                        com.solar.launcher.discovery.DiscoveryClient.heartAlbumNow(
-                                base, artist, album);
-                android.util.Log.i("SolarHeart", "heart album " + artist + " - " + album
-                        + ": ok=" + a.ok + " pending=" + a.pending + " queued=" + a.queued
-                        + (a.error != null ? " error=" + a.error : ""));
+                List<DeezerResult> tracks = new ArrayList<DeezerResult>();
+                try {
+                    DeezerSearch search = new DeezerSearch(new DeezerClient(prefs));
+                    long albumId = trackId > 0 ? search.albumIdForTrack(trackId) : 0L;
+                    if (albumId <= 0) albumId = search.findAlbumId(artist, album);
+                    if (albumId > 0) tracks = search.listAlbumTracks(albumId);
+                } catch (Exception e) {
+                    android.util.Log.w("SolarHeart", "deezer album lookup failed: " + e);
+                }
+                final List<DeezerResult> found = tracks;
                 runOnUiThread(new Runnable() {
                     @Override public void run() {
-                        String msg = a.ok ? getString(R.string.heart_menu_album_ok)
-                                : a.pending ? getString(R.string.heart_menu_album_pending)
-                                : getString(R.string.heart_menu_album_failed,
-                                        a.error != null ? a.error : "");
-                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                        android.util.Log.i("SolarHeart", "play album " + artist + " - " + album
+                                + ": " + found.size() + " from Deezer");
+                        if (found.isEmpty()) {
+                            Toast.makeText(MainActivity.this,
+                                    getString(R.string.heart_menu_album_not_found),
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        startDeezerAlbumTransfer(found, DeezerScreen.ACTION_PLAY, true);
                     }
                 });
             }
-        }, "HeartAlbum").start();
+        }, "PlayAlbumDeezer").start();
+    }
+
+    /**
+     * The local album's songs in order: by album artist (else artist) and
+     * album, else any same-named album in the song's own folder. Copies in
+     * playlist folders (Hearts) are left out; the album is the real thing.
+     * Disc folders keep their order: folder, then track number, then name.
+     */
+    private java.util.List<File> localAlbumFiles(File held, SongItem si, String artist,
+            String album) {
+        MusicLibraryStore store = MusicLibraryStore.getInstance(this);
+        String albumArtist = si != null && si.albumArtist != null && !si.albumArtist.isEmpty()
+                ? si.albumArtist : artist;
+        java.util.List<MusicLibraryStore.Track> rows = albumArtist.isEmpty()
+                ? new java.util.ArrayList<MusicLibraryStore.Track>()
+                : store.loadTracksByArtistAlbum(albumArtist, album, 0, 500);
+        if (rows.isEmpty()) {
+            String dir = held.getParent();
+            for (MusicLibraryStore.Track t : store.loadTracksByAlbum(album, 0, 500)) {
+                if (dir != null && dir.equals(new File(t.path).getParent())) rows.add(t);
+            }
+        }
+        java.util.List<MusicLibraryStore.Track> keep = new java.util.ArrayList<MusicLibraryStore.Track>();
+        for (MusicLibraryStore.Track t : rows) {
+            if (t.path == null || t.path.contains("/playlists/")) continue;
+            if (new File(t.path).isFile()) keep.add(t);
+        }
+        java.util.Collections.sort(keep, new java.util.Comparator<MusicLibraryStore.Track>() {
+            @Override public int compare(MusicLibraryStore.Track a, MusicLibraryStore.Track b) {
+                File fa = new File(a.path), fb = new File(b.path);
+                int c = String.valueOf(fa.getParent()).compareToIgnoreCase(String.valueOf(fb.getParent()));
+                if (c != 0) return c;
+                if (a.trackNumber != b.trackNumber) return a.trackNumber < b.trackNumber ? -1 : 1;
+                return compareAlphanumeric(fa.getName(), fb.getName());
+            }
+        });
+        java.util.List<File> out = new java.util.ArrayList<File>();
+        for (MusicLibraryStore.Track t : keep) out.add(new File(t.path));
+        return out;
     }
 
     /**
@@ -1852,9 +2079,10 @@ public class MainActivity extends Activity {
                         }
                         if (!feedback) return;
                         heartVibrate(fOk ? 120L : 600L);
-                        Toast.makeText(MainActivity.this, fOk
-                                ? getString(R.string.navidrome_hearted, firstTitle)
-                                : getString(R.string.navidrome_heart_failed),
+                        Toast.makeText(MainActivity.this, !fOk
+                                ? getString(R.string.navidrome_heart_failed)
+                                : on ? getString(R.string.navidrome_hearted, firstTitle)
+                                : getString(R.string.heart_menu_unhearted, firstTitle),
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -61845,6 +62073,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         title, artist, album, duration, position, playing, trackChanged,
                         podcastActive, cur, mediaSuite != null && mediaSuite.isVideoPlaying());
             } catch (Exception ignored) {}
+            // 2026-10-28 — Ask nookTunes whether the new song is hearted, for the hold menu.
+            if (trackChanged && !podcastActive) prefetchHeartState(cur);
 
             if (avrcpTrackInfoWriter == null) return;
             if (connectedA2dpAddress != null) {

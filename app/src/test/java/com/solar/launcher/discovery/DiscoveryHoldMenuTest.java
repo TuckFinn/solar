@@ -5,22 +5,22 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 /**
- * 2026-10-21 — Q9: the Play/Pause hold menu's two nookTunes calls. Not for me
- * goes by the Discovery key when there is one, else by artist; Heart album
- * always sends both artist and album, encoded.
+ * 2026-10-21 — Q9: the Play/Pause hold menu's nookTunes calls. Not for me
+ * goes by the Discovery key when there is one, else by artist; the hearted
+ * lookup always sends both artist and title, encoded.
  */
 public class DiscoveryHoldMenuTest {
 
     @Test
-    public void heartAlbumEncodesArtistAndAlbum() {
-        assertEquals("/api/albums/heart?artist=Tegan+and+Sara&album=So+Jealous+%26+More",
-                DiscoveryClient.heartAlbumPath("Tegan and Sara", "So Jealous & More"));
+    public void heartedEncodesArtistAndTitle() {
+        assertEquals("/api/y1/hearted?artist=Tegan+and+Sara&title=Walking+with+a+Ghost+%26+More",
+                DiscoveryClient.heartedPath(" Tegan and Sara ", "Walking with a Ghost & More"));
     }
 
     @Test
-    public void heartAlbumWithNoAlbumStillSendsTheField() {
-        assertEquals("/api/albums/heart?artist=Robyn&album=",
-                DiscoveryClient.heartAlbumPath("Robyn", null));
+    public void heartedWithNoTitleStillSendsTheField() {
+        assertEquals("/api/y1/hearted?artist=Robyn&title=",
+                DiscoveryClient.heartedPath("Robyn", null));
     }
 
     @Test

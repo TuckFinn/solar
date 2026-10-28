@@ -218,30 +218,35 @@ public final class DiscoveryClient {
 
     // ─── The Play/Pause hold menu (Q9) ─────────────────────────────────────
     //
-    // 2026-10-21 — Tucker: holding Play/Pause opens Heart / Heart album / Not
-    // for me. Both new calls are reports like the rest, so one made with the
-    // Wi-Fi asleep goes when it wakes.
+    // 2026-10-21 — Tucker: holding Play/Pause opens a small menu. 2026-10-28 —
+    // Heart / Play album / Not for me, and Heart reads Unheart for a song
+    // already hearted, which nookTunes is asked about as each song starts.
 
-    /** What nookTunes said to a heart-album, when it answered. */
-    public static final class AlbumAnswer {
-        /** True when nookTunes took it; false with {@link #error} when it refused. */
-        public final boolean ok;
-        /** True when it could not be reached and the report waits to be sent. */
-        public final boolean pending;
-        public final String error;
-        public final int queued;
+    static String heartedPath(String artist, String title) {
+        return "/api/y1/hearted?artist=" + enc(artist == null ? "" : artist.trim())
+                + "&title=" + enc(title == null ? "" : title.trim());
+    }
 
-        AlbumAnswer(boolean ok, boolean pending, String error, int queued) {
-            this.ok = ok;
-            this.pending = pending;
-            this.error = error;
-            this.queued = queued;
+    /**
+     * Whether nookTunes has this song as a favourite; null when it could not
+     * be asked. Blocks: call it off the UI thread.
+     */
+    public static Boolean isHearted(String base, String artist, String title) {
+        if (base == null || base.trim().length() == 0) return null;
+        try {
+            return getJson(url(base, heartedPath(artist, title))).optBoolean("hearted", false);
+        } catch (Exception e) {
+            return null;
         }
     }
 
-    static String heartAlbumPath(String artist, String album) {
-        return "/api/albums/heart?artist=" + enc(artist == null ? "" : artist)
-                + "&album=" + enc(album == null ? "" : album);
+    /**
+     * Take a heart back, whatever kind of song it was: nookTunes drops the
+     * favourite, so the Hearts playlists stop carrying it.
+     */
+    public static boolean unheart(String base, String artist, String title, String album) {
+        return heartLocal(base, artist == null ? "" : artist, title == null ? "" : title,
+                album == null ? "" : album, false);
     }
 
     /**
@@ -253,54 +258,6 @@ public final class DiscoveryClient {
             return "/api/discovery/not-for-me?key=" + enc(key.trim());
         }
         return "/api/discovery/not-for-me?artist=" + enc(artist == null ? "" : artist.trim());
-    }
-
-    /**
-     * Heart the whole album: nookTunes marks it a favourite and downloads all
-     * of it lossless.
-     */
-    public static boolean heartAlbum(String base, String artist, String album) {
-        return report(base, heartAlbumPath(artist, album));
-    }
-
-    /**
-     * Heart the album and say what nookTunes answered, for the toast. When it
-     * cannot be reached the request is kept like any report and goes when the
-     * Wi-Fi is back; the answer then says {@link AlbumAnswer#pending}. Blocks:
-     * call it off the UI thread.
-     */
-    public static AlbumAnswer heartAlbumNow(String base, String artist, String album) {
-        if (base == null || base.trim().length() == 0) {
-            return new AlbumAnswer(false, false, "nookTunes is not set up", 0);
-        }
-        String path = heartAlbumPath(artist, album);
-        HttpURLConnection c = null;
-        try {
-            c = (HttpURLConnection) new URL(url(base, path)).openConnection();
-            c.setConnectTimeout(CONNECT_TIMEOUT_MS);
-            c.setReadTimeout(READ_TIMEOUT_MS);
-            c.setRequestProperty("Accept", "application/json");
-            int code = c.getResponseCode();
-            InputStream in = code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream();
-            JSONObject doc = null;
-            try {
-                doc = in == null ? null : new JSONObject(readBody(in));
-            } catch (org.json.JSONException ignored) {}
-            boolean ok = code >= 200 && code < 300 && (doc == null || doc.optBoolean("ok", true));
-            if (ok) flushPendingAsync(base);
-            String error = doc != null ? doc.optString("error", "") : "";
-            if (!ok && error.length() == 0) error = "HTTP " + code;
-            return new AlbumAnswer(ok, false, ok ? null : error,
-                    doc != null ? doc.optInt("queued", 0) : 0);
-        } catch (java.io.IOException e) {
-            // Unreachable, as report() would find it: keep it for later.
-            keepPending(path);
-            return new AlbumAnswer(false, true, null, 0);
-        } catch (Exception e) {
-            return new AlbumAnswer(false, false, String.valueOf(e.getMessage()), 0);
-        } finally {
-            if (c != null) c.disconnect();
-        }
     }
 
     /**
