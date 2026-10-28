@@ -1399,7 +1399,11 @@ public class MainActivity extends Activity {
         final boolean navidromeStream = cur != null
                 && cur.kind == PlayQueue.ItemKind.NAVIDROME_STREAM
                 && cur.navidromeSongId != null && !cur.navidromeSongId.isEmpty();
-        if (discoveryTrack == null && !localFile && !navidromeStream) return;
+        // 2026-10-28 — A Deezer song that isn't Discovery's (Play on Y1, the Flipper's
+        // Start music, Play album) used to fall through here and the hold did nothing.
+        final boolean deezerSong = cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM
+                && discoveryTrack == null;
+        if (discoveryTrack == null && !localFile && !navidromeStream && !deezerSong) return;
         globalPpLongFlowHandled = true; // consume the hold: no play/pause toggle on key-up
         clearFlowHoldThrobber();
         hideNpLiveHoldHint();
@@ -1649,6 +1653,11 @@ public class MainActivity extends Activity {
             title = si != null && si.title != null && !si.title.trim().isEmpty()
                     ? si.title : (dot > 0 ? n.substring(0, dot) : n);
             album = si != null ? si.album : "";
+        } else if (cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM) {
+            String[] t = deezerSongTags(cur);
+            artist = t[0];
+            title = t[1];
+            album = t[2];
         } else if (cur != null) {
             artist = cur.navidromeArtist;
             title = cur.navidromeTitle;
@@ -1658,6 +1667,32 @@ public class MainActivity extends Activity {
                 artist != null ? artist.trim() : "",
                 title != null ? title.trim() : "",
                 album != null ? album.trim() : "" };
+    }
+
+    /**
+     * 2026-10-28 — Artist, title and album of a Deezer song outside Discovery: the
+     * tags Solar wrote into its download, else its "Artist - Title" queue label.
+     */
+    private String[] deezerSongTags(PlayQueue.QueueItem cur) {
+        String artist = "", title = "", album = "";
+        if (cur.file != null && cur.file.isFile()) {
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            try {
+                mmr.setDataSource(cur.file.getAbsolutePath());
+                artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+                album = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+            } catch (Exception ignored) {
+            } finally {
+                try { mmr.release(); } catch (Exception ignored) {}
+            }
+        }
+        String meta = cur.deezerMeta != null ? cur.deezerMeta : "";
+        int dash = meta.indexOf(" - ");
+        if ((artist == null || artist.trim().isEmpty()) && dash > 0) artist = meta.substring(0, dash);
+        if ((title == null || title.trim().isEmpty())) title = dash > 0 ? meta.substring(dash + 3) : meta;
+        return new String[] { artist != null ? artist : "", title != null ? title : "",
+                album != null ? album : "" };
     }
 
     /**
@@ -1684,6 +1719,29 @@ public class MainActivity extends Activity {
         // used to fall through the checks below and do nothing at all.
         if (cur != null && cur.kind == PlayQueue.ItemKind.MUSIC_FILE && cur.file != null) {
             heartLocalFile(cur.file);
+            return;
+        }
+        // 2026-10-28 — A Deezer song outside Discovery: nookTunes favourites it by
+        // name, as it does a local heart (Get Music history, the lossless download).
+        if (cur != null && cur.kind == PlayQueue.ItemKind.DEEZER_STREAM) {
+            final String[] tags = heldSongTags(cur, null);
+            if (tags[0].isEmpty() || tags[1].isEmpty()) {
+                heartVibrate(600L);
+                Toast.makeText(this, getString(R.string.navidrome_heart_failed), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            heartVibrate(120L);
+            Toast.makeText(this, getString(R.string.navidrome_hearted, tags[1]), Toast.LENGTH_SHORT).show();
+            GetMusicSearchHistory.remember(prefs, tags[0]);
+            final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    boolean told = com.solar.launcher.discovery.DiscoveryClient.heartLocal(
+                            base, tags[0], tags[1], tags[2], true);
+                    android.util.Log.i("SolarHeart", "deezer heart " + tags[0] + " - " + tags[1]
+                            + (told ? " sent" : " kept for later"));
+                }
+            }, "HeartDeezer").start();
             return;
         }
         if (cur == null || cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
@@ -1748,7 +1806,8 @@ public class MainActivity extends Activity {
         com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack =
                 cur.kind == PlayQueue.ItemKind.DEEZER_STREAM && discoveryScreen != null
                         ? discoveryScreen.playingTrackFor(cur.deezerTrackId) : null;
-        if (cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM && discoveryTrack == null) return;
+        if (cur.kind != PlayQueue.ItemKind.NAVIDROME_STREAM
+                && cur.kind != PlayQueue.ItemKind.DEEZER_STREAM) return;
         final String[] tags = heldSongTags(cur, discoveryTrack);
         final String key = heartStateKeyFor(tags);
         if (key == null || key.equals(heartStateKey)) return;
