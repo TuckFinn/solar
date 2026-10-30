@@ -10,6 +10,9 @@ import com.solar.launcher.MainActivity;
 /**
  * 2026-10-27 — Remote control from nookTunes (the Flipper app): next, prev,
  * playpause, heart, notforme, volup, voldown, volume (+ "level").
+ * 2026-10-30 — Queue: cmd "queue" reports it; cmd "qedit" with "op"
+ * (remove|move|play|clear|heart|notforme), "key", "index", "to" edits it; both
+ * carry "req", which the report sent back to nookTunes repeats.
  *
  *   adb shell am broadcast -a com.solar.launcher.action.REMOTE --es cmd next
  *
@@ -27,6 +30,11 @@ public final class RemoteControlReceiver extends BroadcastReceiver {
         if (intent == null || !ACTION.equals(intent.getAction())) return;
         final String cmd = intent.getStringExtra("cmd");
         final int level = intent.getIntExtra("level", -1);
+        final String req = intent.getStringExtra("req");
+        final String op = intent.getStringExtra("op");
+        final String key = intent.getStringExtra("key");
+        final int index = intent.getIntExtra("index", -1);
+        final int to = intent.getIntExtra("to", -1);
         final MainActivity a = MainActivity.instance;
         if (cmd == null || a == null) {
             Log.w(TAG, "dropped " + cmd + (a == null ? " (Solar not running)" : ""));
@@ -34,7 +42,11 @@ public final class RemoteControlReceiver extends BroadcastReceiver {
         }
         a.runOnUiThread(new Runnable() {
             @Override public void run() {
-                a.handleRemoteCommand(cmd, level);
+                if ("queue".equals(cmd) || "qedit".equals(cmd)) {
+                    a.handleRemoteQueue(cmd, req, op, key, index, to);
+                } else {
+                    a.handleRemoteCommand(cmd, level);
+                }
             }
         });
     }

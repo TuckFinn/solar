@@ -20110,6 +20110,157 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         remoteStatusHandler.postDelayed(remoteStatusTick, 600L);
     }
 
+    // ---- 2026-10-30 — the Flipper's Queue (via nookTunes) ----------------------------
+
+    /** A queue item's identity for remote edits; position alone goes stale. */
+    static String remoteQueueKey(PlayQueue.QueueItem q) {
+        if (q == null) return "";
+        switch (q.kind) {
+            case DEEZER_STREAM: return "dz:" + q.deezerTrackId;
+            case NAVIDROME_STREAM: return "nd:" + q.navidromeSongId;
+            default:
+                if (q.file != null) return "f:" + Integer.toHexString(q.file.getAbsolutePath().hashCode());
+                return "x:" + q.kind + ":" + String.valueOf(q.streamMeta()).hashCode();
+        }
+    }
+
+    /** The queue position of key nearest to hint, or -1 when it is gone. */
+    static int remoteQueueFind(PlayQueue q, String key, int hint) {
+        if (q == null || key == null || key.isEmpty()) return -1;
+        int best = -1;
+        for (int i = 0; i < q.size(); i++) {
+            if (!key.equals(remoteQueueKey(q.items().get(i)))) continue;
+            if (best < 0 || Math.abs(i - hint) < Math.abs(best - hint)) best = i;
+        }
+        return best;
+    }
+
+    /** Title, artist, album of a queue row without touching its file: a 58-song queue
+     *  would otherwise read 58 tag blocks. */
+    private String[] remoteQueueTags(PlayQueue.QueueItem q) {
+        if (q.kind == PlayQueue.ItemKind.NAVIDROME_STREAM) {
+            return new String[] { q.navidromeTitle, q.navidromeArtist, q.navidromeAlbum };
+        }
+        if (q.kind == PlayQueue.ItemKind.DEEZER_STREAM) {
+            String meta = q.deezerMeta != null ? q.deezerMeta : "";
+            int dash = meta.indexOf(" - ");
+            return new String[] { dash > 0 ? meta.substring(dash + 3) : meta,
+                    dash > 0 ? meta.substring(0, dash) : "", "" };
+        }
+        if (q.file != null) {
+            SongItem si = findSongItem(q.file);
+            String n = q.file.getName();
+            int dot = n.lastIndexOf('.');
+            return new String[] {
+                    si != null && si.title != null && !si.title.isEmpty() ? si.title : (dot > 0 ? n.substring(0, dot) : n),
+                    si != null ? si.artist : "", si != null ? si.album : "" };
+        }
+        return new String[] { q.streamMeta(), "", "" };
+    }
+
+    /**
+     * cmd "queue": report it. cmd "qedit": find the song by key (its place may
+     * have moved), make the edit, then report the queue with the result, so
+     * nookTunes can answer the Flipper with what happened.
+     */
+    public void handleRemoteQueue(String cmd, String req, String op, String key, int index, int to) {
+        String result = "ok", error = "";
+        try {
+            PlayQueue q = playback.unifiedQueue();
+            if ("qedit".equals(cmd)) {
+                int at = q == null ? -1 : remoteQueueFind(q, key, index);
+                int cur = q == null ? -1 : q.index();
+                if (q == null || at < 0) {
+                    result = "stale";
+                    error = "that song left the queue";
+                } else if ("remove".equals(op)) {
+                    if (at == cur) {
+                        result = "refused";
+                        error = "it's playing: skip it instead";
+                    } else {
+                        playback.removeQueueItemAt(at);
+                    }
+                } else if ("move".equals(op)) {
+                    // to: a position, or -1 right after the playing song, -2 last
+                    int dest = to == -1 ? (at > cur ? cur + 1 : cur) : to == -2 ? q.size() - 1 : to;
+                    dest = Math.max(0, Math.min(dest, q.size() - 1));
+                    if (dest != at) playback.moveQueueItem(at, dest);
+                } else if ("play".equals(op)) {
+                    playUnifiedQueueItemAt(at);
+                } else if ("clear".equals(op)) {
+                    for (int i = q.size() - 1; i > cur; i--) playback.removeQueueItemAt(i);
+                } else if ("heart".equals(op) || "notforme".equals(op)) {
+                    PlayQueue.QueueItem it = q.items().get(at);
+                    com.solar.launcher.discovery.DiscoveryClient.Track dt =
+                            it.kind == PlayQueue.ItemKind.DEEZER_STREAM && discoveryScreen != null
+                                    ? discoveryScreen.playingTrackFor(it.deezerTrackId) : null;
+                    if ("heart".equals(op)) {
+                        heartHeldSong(it, dt);
+                    } else {
+                        notForMeHeldSong(it, dt != null ? dt.key : null, heldSongTags(it, dt)[0]);
+                        // An upcoming song is also taken out; the playing one skips itself.
+                        int again = remoteQueueFind(playback.unifiedQueue(), key, at);
+                        if (again >= 0 && again != playback.unifiedQueue().index()) {
+                            playback.removeQueueItemAt(again);
+                        }
+                    }
+                } else {
+                    result = "refused";
+                    error = "unknown edit " + op;
+                }
+                android.util.Log.i("SolarRemote", "queue " + op + " " + key + " -> " + result);
+            }
+        } catch (Exception e) {
+            android.util.Log.w("SolarRemote", "queue " + cmd + " failed", e);
+            result = "failed";
+            error = String.valueOf(e.getMessage());
+        }
+        postRemoteQueue(req, result, error);
+    }
+
+    private void postRemoteQueue(final String req, String result, String error) {
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        if (base.isEmpty()) return;
+        PlayQueue q = playback.unifiedQueue();
+        final org.json.JSONObject o = new org.json.JSONObject();
+        try {
+            org.json.JSONArray items = new org.json.JSONArray();
+            int n = q == null ? 0 : Math.min(q.size(), 300);
+            for (int i = 0; i < n; i++) {
+                PlayQueue.QueueItem it = q.items().get(i);
+                String[] t = remoteQueueTags(it);
+                items.put(new org.json.JSONObject().put("key", remoteQueueKey(it))
+                        .put("title", t[0] != null ? t[0] : "").put("artist", t[1] != null ? t[1] : "")
+                        .put("album", t[2] != null ? t[2] : "")
+                        .put("deezer_id", it.kind == PlayQueue.ItemKind.DEEZER_STREAM ? String.valueOf(it.deezerTrackId) : "")
+                        .put("kind", String.valueOf(it.kind)));
+            }
+            o.put("req", req != null ? req : "").put("result", result).put("error", error)
+                    .put("index", q == null ? -1 : q.index()).put("items", items);
+        } catch (org.json.JSONException e) {
+            return;
+        }
+        new Thread(new Runnable() {
+            @Override public void run() {
+                java.net.HttpURLConnection c = null;
+                try {
+                    c = (java.net.HttpURLConnection) new java.net.URL(
+                            base.replaceAll("/+$", "") + "/api/y1/queue").openConnection();
+                    c.setConnectTimeout(4000);
+                    c.setReadTimeout(4000);
+                    c.setDoOutput(true);
+                    c.setRequestProperty("Content-Type", "application/json");
+                    c.getOutputStream().write(o.toString().getBytes("UTF-8"));
+                    c.getResponseCode();
+                } catch (Exception e) {
+                    android.util.Log.w("SolarRemote", "queue report failed: " + e);
+                } finally {
+                    if (c != null) c.disconnect();
+                }
+            }
+        }, "RemoteQueue").start();
+    }
+
     /** The Settings shuffle row's toggle, for the remote. */
     private void toggleShuffleFromRemote() {
         isShuffleMode = !isShuffleMode;
@@ -20360,12 +20511,17 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         PlayQueue q = playback.unifiedQueue();
                         if (found.isEmpty() || q == null) return;
                         int after = "next".equals(mode) ? Math.max(0, q.index()) : q.size() - 1;
+                        if (mode.startsWith("after:")) {   // the Flipper's Queue › Add, 2026-10-30
+                            int at = remoteQueueFind(q, mode.substring(6), q.index());
+                            if (at >= 0) after = at;
+                        }
                         for (DeezerResult r : found) remotePlayIds.add(Long.valueOf(r.id));
                         startDeezerBackgroundQueue(found, after, false);
                         android.util.Log.i("SolarRemotePlay", "queued " + found.size() + " (" + mode + ")");
-                        Toast.makeText(MainActivity.this, getString("next".equals(mode)
-                                ? R.string.remote_queue_next : R.string.remote_queue_end, found.size()),
+                        Toast.makeText(MainActivity.this, getString("end".equals(mode)
+                                ? R.string.remote_queue_end : R.string.remote_queue_next, found.size()),
                                 Toast.LENGTH_SHORT).show();
+                        if (mode.startsWith("after:")) postRemoteQueue("", "ok", "");
                     }
                 });
             }

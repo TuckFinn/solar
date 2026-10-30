@@ -45,8 +45,12 @@ public final class RemotePlayRequest {
      */
     public static final String EXTRA_MODE = "mode";
 
-    /** The mode as one of now/next/end. */
+    /**
+     * The mode as one of now/next/end, or after:<queue key> (2026-10-30, the
+     * Flipper's Queue › Add: right after that song).
+     */
     public static String mode(String raw) {
+        if (raw != null && raw.startsWith("after:") && raw.length() > 6) return raw;
         return "next".equals(raw) || "end".equals(raw) ? raw : "now";
     }
 
