@@ -50,6 +50,8 @@ public final class HomeMenuConfig {
      * starts from a file still downloading.
      */
     public static final String ID_DISCOVERY = "discovery";
+    /** 2026-11-03 — Walkie-Talkie: nookLine's walkie room (sip/WalkieScreen). */
+    public static final String ID_WALKIE = "walkie";
     /** @deprecated migrated to {@link #ID_THEMES} */
     public static final String ID_GET_THEMES = "get_themes";
     public static final String ID_THEMES = "themes";
@@ -72,7 +74,7 @@ public final class HomeMenuConfig {
      * Was: pc_upload, podcasts, soulseek, themes, apps. Reversal: restore that list.
      */
     private static final List<String> SOLAR_HOME_EXTRAS = Arrays.asList(
-            ID_PC_UPLOAD, ID_PODCASTS, ID_SOULSEEK, ID_NAVIDROME, ID_DISCOVERY,
+            ID_PC_UPLOAD, ID_PODCASTS, ID_SOULSEEK, ID_NAVIDROME, ID_DISCOVERY, ID_WALKIE,
             ID_THEMES, ID_APPS);
 
     /**
@@ -292,6 +294,7 @@ public final class HomeMenuConfig {
             new Entry(ID_APPS, R.string.home_menu_apps, null, R.drawable.setting_circle, "Apps", false),
             new Entry(ID_NAVIDROME, R.string.home_menu_navidrome, null, R.drawable.music_list, "Navidrome", false),
             new Entry(ID_DISCOVERY, R.string.home_menu_discovery, null, R.drawable.music_list, "Discovery", false),
+            new Entry(ID_WALKIE, R.string.home_menu_walkie, null, R.drawable.music_list, "Walkie-Talkie", false),
     };
 
     /**
@@ -302,7 +305,7 @@ public final class HomeMenuConfig {
         if (id == null) return null;
         id = migrateId(id);
         if (ID_SOULSEEK.equals(id) || ID_YOUTUBE_AUDIO.equals(id) || ID_NAVIDROME.equals(id)
-                || ID_DISCOVERY.equals(id)) return "music";
+                || ID_DISCOVERY.equals(id) || ID_WALKIE.equals(id)) return "music";
         if (ID_PODCASTS.equals(id) || ID_AUDIOBOOKS.equals(id)) return "audiobooks";
         if (ID_PHOTOS.equals(id)) return "photos";
         return null;

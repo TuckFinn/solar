@@ -587,6 +587,20 @@
     <string name="heart_menu_album_unknown">No album to heart</string>
     <string name="heart_menu_not_for_me_done">Won\'t come back</string>
     <!-- 2026-11-03 — Q22 Pack for the road: a Discovery list kept on the Y1 for offline -->
+    <!-- 2026-11-03 — Walkie-Talkie (nookLine walkie room) -->
+    <string name="home_menu_walkie">Walkie-Talkie</string>
+    <string name="walkie_not_set_up">Not set up: nookTunes sends this Y1 its nookLine extension</string>
+    <string name="walkie_connecting">Connecting to nookLine…</string>
+    <string name="walkie_joining">Joining the walkie channel…</string>
+    <string name="walkie_in_room">On the walkie channel as %1$s</string>
+    <string name="walkie_no_server">Can\'t reach nookLine (Wi-Fi or Tailscale off?)</string>
+    <string name="walkie_no_room">nookLine answered, but the walkie channel didn\'t</string>
+    <string name="walkie_room_closed">The walkie channel closed. Open Walkie-Talkie again to rejoin.</string>
+    <string name="walkie_error">Walkie stopped: %1$s</string>
+    <string name="walkie_hint_wait">Talk opens once connected</string>
+    <string name="walkie_hint_talk">Hold Play/Pause to talk</string>
+    <string name="walkie_talking">● Talking: let go to listen</string>
+    <string name="walkie_leave">Leave the channel</string>
     <string name="pack_menu_title">Pack %1$s</string>
     <string name="pack_menu_hours">Pack %1$d hours</string>
     <string name="pack_started">Packing %1$s. Its songs download here; keep the Y1 charging.</string>

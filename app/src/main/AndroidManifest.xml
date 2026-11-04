@@ -142,6 +142,15 @@
                 <action android:name="com.solar.launcher.action.PLAY_REMOTE" />
             </intent-filter>
         </receiver>
+        <!-- 2026-11-03 — nookLine account for Walkie-Talkie, set from nookTunes over adb; DUMP as above. -->
+        <receiver
+            android:name=".sip.SipConfigReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.solar.launcher.action.SIP_CONFIG" />
+            </intent-filter>
+        </receiver>
         <!-- 2026-11-03 — Q22 Pack for the road, started from nookTunes over adb; DUMP as above. -->
         <receiver
             android:name=".remote.PackReceiver"
