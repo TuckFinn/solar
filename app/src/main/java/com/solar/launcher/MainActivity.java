@@ -6735,25 +6735,35 @@ public class MainActivity extends Activity {
         }
     }
 
+    // 2026-11-04 — one owner of FLAG_KEEP_SCREEN_ON: the blocking overlay (scan / first
+    // ready) and the Walkie-Talkie screen each ask for it; the screen stays on while
+    // either does (Tucker: keep it awake while Walkie-Talkie is open).
+    private boolean overlayKeepsScreenOn, walkieKeepsScreenOn;
+
+    private void applyKeepScreenOn() {
+        if (overlayKeepsScreenOn || walkieKeepsScreenOn) getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
     private void refreshBlockingOverlayVisible() {
         if (layoutLoadingOverlay == null) return;
         if (blockingOverlayOwners == 0) {
             layoutLoadingOverlay.setVisibility(View.GONE);
-            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            overlayKeepsScreenOn = false; applyKeepScreenOn();
             return;
         }
         boolean libScanOnly = (blockingOverlayOwners & OVERLAY_LIB_SCAN) != 0
                 && (blockingOverlayOwners & ~OVERLAY_LIB_SCAN) == 0;
         if (libScanOnly && !libraryScanOverlayAllowedHere()) {
             layoutLoadingOverlay.setVisibility(View.GONE);
-            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            overlayKeepsScreenOn = false; applyKeepScreenOn();
             return;
         }
         layoutLoadingOverlay.setVisibility(View.VISIBLE);
         if ((blockingOverlayOwners & (OVERLAY_LIB_SCAN | OVERLAY_FIRST_READY)) != 0) {
-            getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            overlayKeepsScreenOn = true; applyKeepScreenOn();
         } else {
-            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            overlayKeepsScreenOn = false; applyKeepScreenOn();
         }
     }
 
@@ -15485,6 +15495,7 @@ public class MainActivity extends Activity {
         if (otaSystemReplaceInProgress) return;
         // 2026-11-03 — leaving Walkie-Talkie leaves nookLine's walkie room
         if (state != STATE_WALKIE && walkieScreen != null && walkieScreen.active()) walkieScreen.leave();
+        if (state != STATE_WALKIE && walkieKeepsScreenOn) { walkieKeepsScreenOn = false; applyKeepScreenOn(); }
         screenChangeIsBack = isBack;
         if (isBack && state == STATE_MENU && moreChildState >= 0
                 && currentScreenState == moreChildState) {
@@ -16346,6 +16357,8 @@ public class MainActivity extends Activity {
         } else if (state == STATE_WALKIE) {
             applyReachBrowseLayoutMode();
             if (walkieScreen != null) walkieScreen.open();
+            walkieKeepsScreenOn = true;
+            applyKeepScreenOn();
         } else if (state == STATE_DISCOVERY) {
             applyReachBrowseLayoutMode();
             // 2026-09-19 — Back from Now Playing returns to the list the song came from.
