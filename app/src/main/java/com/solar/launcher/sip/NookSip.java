@@ -95,6 +95,31 @@ public final class NookSip {
         localPort = sock.getLocalPort();
     }
 
+    /**
+     * 2026-11-04 — the route to the PBX can change under us: at boot Solar starts before
+     * Tailscale, so the first probe answers with the Wi-Fi address and the socket stayed
+     * bound to it — every REGISTER then left with a source the PBX drops, until Solar
+     * restarted (2Y1 never registered after a reboot). Re-probe before each REGISTER and
+     * rebind when the address changed, unless a call or a page is in progress.
+     */
+    private void refreshTransport() {
+        if (sock == null || callId != null || incoming != null) return;
+        try {
+            DatagramSocket probe = new DatagramSocket();
+            probe.connect(serverAddr, port);
+            String now = probe.getLocalAddress().getHostAddress();
+            probe.close();
+            if (now != null && !now.equals(localIp) && !"0.0.0.0".equals(now)) {
+                Log.i(TAG, "route to the PBX now from " + now + " (was " + localIp + "); rebinding");
+                sock.close();
+                sock = null;
+                open();
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "route check: " + e.getMessage());
+        }
+    }
+
     public void close() {
         hangup();
         if (incoming != null) {
@@ -206,6 +231,7 @@ public final class NookSip {
     /** REGISTER (expires seconds; 0 unregisters). True on 200 OK. */
     public boolean register(int expires) throws Exception {
         open();
+        refreshTransport();
         String uri = "sip:" + server;
         String auth = null;
         for (int attempt = 0; attempt < 3; attempt++) {
