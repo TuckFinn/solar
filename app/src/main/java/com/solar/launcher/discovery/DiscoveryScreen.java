@@ -347,6 +347,14 @@ public final class DiscoveryScreen {
                 } catch (Exception e) {
                     err = String.valueOf(e.getMessage());
                 }
+                // 2026-11-03 — Q22: no nookTunes (no Wi-Fi): the packed lists still play.
+                if (err != null) {
+                    DiscoveryFolders offline = packedCatalog();
+                    if (offline.hasFolders()) {
+                        got = offline;
+                        err = null;
+                    }
+                }
                 final String fErr = err;
                 final DiscoveryFolders fGot = got;
                 host.runOnUi(new Runnable() {
@@ -383,6 +391,21 @@ public final class DiscoveryScreen {
                 } catch (Exception e) {
                     err = String.valueOf(e.getMessage());
                 }
+                // 2026-11-03 — Q22: a packed list plays its packed songs first (all
+                // there is offline), then whatever else the live list has.
+                PackStore.Pack pack = PackStore.forList(p.id);
+                if (pack != null) {
+                    List<DiscoveryClient.Track> merged = pack.tracks();
+                    java.util.Set<String> seen = new java.util.HashSet<String>();
+                    for (DiscoveryClient.Track t : merged) seen.add(t.key);
+                    if (got != null) {
+                        for (DiscoveryClient.Track t : got) if (seen.add(t.key)) merged.add(t);
+                    }
+                    if (!merged.isEmpty()) {
+                        got = merged;
+                        err = null;
+                    }
+                }
                 final List<DiscoveryClient.Track> fGot = got;
                 final String fErr = err;
                 host.runOnUi(new Runnable() {
@@ -415,7 +438,8 @@ public final class DiscoveryScreen {
     private int pickGeneration;
 
     private void play(final DiscoveryClient.Track t) {
-        if (!host.requireInternet(R.string.deezer_wifi_required)) return;
+        boolean packed = t.deezerId > 0 && PackStore.find(t.deezerId) != null;   // Q22
+        if (!packed && !host.requireInternet(R.string.deezer_wifi_required)) return;
         final int pick = ++pickGeneration;
         if (t.deezerId > 0) {
             start(t, new DeezerResult(t.deezerId, t.title, t.artist, t.album,
@@ -919,7 +943,8 @@ public final class DiscoveryScreen {
             return;
         }
         for (final DiscoveryClient.Playlist p : playlists) {
-            Button b = host.createListButton(p.name);
+            Button b = host.createListButton(packLabel(p));
+            b.setTag(p);
             b.setOnClickListener(new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     host.clickFeedback();
@@ -928,6 +953,54 @@ public final class DiscoveryScreen {
             });
             container.addView(b);
         }
+    }
+
+    /**
+     * 2026-11-03 — Q22: "↓ Afropop" when packed, "↓ 12/75 Afropop" while packing.
+     */
+    private static String packLabel(DiscoveryClient.Playlist p) {
+        PackRunner.Progress pr = PackRunner.progress();
+        if (pr != null && p.id.equals(pr.listId)) return "\u2193 " + pr.done + "/" + pr.total + " " + p.name;
+        if (p.name.startsWith("\u2193 ")) return p.name;
+        return PackStore.forList(p.id) != null ? "\u2193 " + p.name : p.name;
+    }
+
+    /** Offline: one "Packed" folder of the lists packed on this Y1. */
+    private static DiscoveryFolders packedCatalog() {
+        try {
+            org.json.JSONArray lists = new org.json.JSONArray();
+            for (PackStore.Pack pk : PackStore.all()) {
+                lists.put(new org.json.JSONObject().put("id", pk.listId).put("name", pk.name)
+                        .put("kind", "pack").put("count", pk.have()).put("group", "Packed"));
+            }
+            if (lists.length() == 0) return DiscoveryFolders.EMPTY;
+            return DiscoveryFolders.parse(new org.json.JSONObject().put("playlists", lists)
+                    .put("groups", new org.json.JSONArray().put("Packed")));
+        } catch (org.json.JSONException e) {
+            return DiscoveryFolders.EMPTY;
+        }
+    }
+
+    /**
+     * 2026-11-03 — Q22: the list a Play/Pause hold would pack: the focused row
+     * on the lists tier, or the open list on its songs. Null elsewhere.
+     */
+    public DiscoveryClient.Playlist packTarget() {
+        if (uiMode == UI_TRACKS) return openPlaylist;
+        if (uiMode != UI_PLAYLISTS) return null;
+        LinearLayout c = host.containerBrowserItems();
+        View f = c != null ? c.findFocus() : null;
+        return f != null && f.getTag() instanceof DiscoveryClient.Playlist
+                ? (DiscoveryClient.Playlist) f.getTag() : null;
+    }
+
+    /** Start packing {@code p} for {@code hours}; the list row shows the progress. */
+    public void startPack(DiscoveryClient.Playlist p, double hours) {
+        if (!host.requireInternet(R.string.deezer_wifi_required)) return;
+        PackRunner.start(host.context(), host.prefs(), baseUrl(), p.id, hours);
+        Toast.makeText(host.context(), host.string(R.string.pack_started, p.name),
+                Toast.LENGTH_LONG).show();
+        if (host.isDiscoveryScreen() && uiMode == UI_PLAYLISTS) render();
     }
 
     private void renderTracks(LinearLayout container) {

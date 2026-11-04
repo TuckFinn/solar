@@ -142,6 +142,16 @@
                 <action android:name="com.solar.launcher.action.PLAY_REMOTE" />
             </intent-filter>
         </receiver>
+        <!-- 2026-11-03 — Q22 Pack for the road, started from nookTunes over adb; DUMP as above. -->
+        <receiver
+            android:name=".remote.PackReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.solar.launcher.action.PACK" />
+                <action android:name="com.solar.launcher.action.PACKS_CHANGED" />
+            </intent-filter>
+        </receiver>
         <!-- 2026-10-27 — Remote control from nookTunes (the Flipper app) over adb; DUMP as above. -->
         <receiver
             android:name=".remote.RemoteControlReceiver"

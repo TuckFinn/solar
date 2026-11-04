@@ -120,7 +120,21 @@ public final class DiscoveryClient {
         JSONObject doc = getJson(url(base,
                 "/api/discovery/native/playlist/" + enc(playlistId)));
         flushPendingAsync(base);
-        JSONArray arr = doc.optJSONArray("tracks");
+        return parseTracks(doc.optJSONArray("tracks"), base);
+    }
+
+    /**
+     * 2026-11-03 — Q22 Pack for the road: the list's next unheard songs, enough
+     * for {@code hours}, as nookTunes picks them. The whole document is what
+     * pack.json keeps, so its "tracks" parse with {@link #parseTracks}.
+     */
+    public static JSONObject packJson(String base, String playlistId, double hours) throws Exception {
+        return getJson(url(base, "/api/discovery/native/pack/" + enc(playlistId)
+                + "?hours=" + hours));
+    }
+
+    /** Rows of a native playlist (or a pack); {@code base} resolves relative stream URLs. */
+    public static List<Track> parseTracks(JSONArray arr, String base) {
         List<Track> out = new ArrayList<Track>();
         if (arr == null) return out;
         for (int i = 0; i < arr.length(); i++) {

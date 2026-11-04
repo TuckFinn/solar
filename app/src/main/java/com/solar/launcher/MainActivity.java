@@ -1363,6 +1363,18 @@ public class MainActivity extends Activity {
                 + " navId=" + (curDbg == null ? "-" : String.valueOf(curDbg.navidromeSongId))
                 + " screen=" + currentScreenState);
         if (globalPpLongFlowHandled) return;
+        // 2026-11-03 — Q22 Pack for the road: a hold on a Discovery list (or in its
+        // songs) offers to pack that list, whatever is playing.
+        if (currentScreenState == STATE_DISCOVERY && discoveryScreen != null) {
+            final com.solar.launcher.discovery.DiscoveryClient.Playlist packList = discoveryScreen.packTarget();
+            if (packList != null) {
+                globalPpLongFlowHandled = true;
+                clearFlowHoldThrobber();
+                hideNpLiveHoldHint();
+                showPackHoldMenu(packList);
+                return;
+            }
+        }
         final PlayQueue.QueueItem cur = playback.currentItem();
         // 2026-10-21 — Tucker (Q9): the hold opens Heart / Heart album / Not for
         // me instead of hearting at once. Heart is preselected, so hold then
@@ -1414,15 +1426,11 @@ public class MainActivity extends Activity {
     private boolean showHeartHoldMenu(final PlayQueue.QueueItem cur,
             final com.solar.launcher.discovery.DiscoveryClient.Track discoveryTrack) {
         if (themedContextMenu == null || themedContextMenu.isShowing()) return false;
-        ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
-        if (root == null) return false;
         final String[] tags = heldSongTags(cur, discoveryTrack);
         final String[] labels = new String[] {
                 getString(R.string.heart_menu_heart),
                 getString(R.string.heart_menu_heart_album),
                 getString(R.string.heart_menu_not_for_me) };
-        final String[] states = new String[] { null, null, null };
-        final boolean[] headers = new boolean[] { false, false, false };
         final java.util.List<Runnable> actions = new java.util.ArrayList<Runnable>();
         actions.add(new Runnable() {
             @Override public void run() {
@@ -1443,6 +1451,47 @@ public class MainActivity extends Activity {
                 notForMeHeldSong(cur, discoveryTrack != null ? discoveryTrack.key : null, tags[0]);
             }
         });
+        boolean shown = showHoldMenu(tags[1].isEmpty() ? null : tags[1], labels, actions);
+        if (shown) {
+            android.util.Log.i("SolarHeart", "hold menu open for " + tags[0] + " - " + tags[1]
+                    + (discoveryTrack != null ? " (discovery " + discoveryTrack.key + ")" : ""));
+        }
+        return shown;
+    }
+
+    /** 2026-11-03 — Q22: Pack 2 / 5 / 10 hours of a Discovery list. */
+    private static final int[] PACK_HOURS = { 2, 5, 10 };
+
+    private void showPackHoldMenu(final com.solar.launcher.discovery.DiscoveryClient.Playlist p) {
+        final String[] labels = new String[PACK_HOURS.length];
+        final java.util.List<Runnable> actions = new java.util.ArrayList<Runnable>();
+        for (int i = 0; i < PACK_HOURS.length; i++) {
+            final int h = PACK_HOURS[i];
+            labels[i] = getString(R.string.pack_menu_hours, h);
+            actions.add(new Runnable() {
+                @Override public void run() {
+                    dismissThemedContextMenu(true, false, null);
+                    discoveryScreen.startPack(p, h);
+                }
+            });
+        }
+        if (showHoldMenu(getString(R.string.pack_menu_title, p.name), labels, actions)) {
+            android.util.Log.i("SolarPack", "pack menu open for " + p.id);
+        }
+    }
+
+    /**
+     * The Play/Pause hold menu, drawn as Solar's own context modal with no quick
+     * bar (Q9; shared with Q22's pack menu since 2026-11-03).
+     *
+     * @return false when it could not be shown.
+     */
+    private boolean showHoldMenu(String title, final String[] labels, final java.util.List<Runnable> actions) {
+        if (themedContextMenu == null || themedContextMenu.isShowing()) return false;
+        ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+        if (root == null) return false;
+        final String[] states = new String[labels.length];
+        final boolean[] headers = new boolean[labels.length];
 
         volumeHandler.removeCallbacks(hideVolumeContextTask);
         contextMenuInVolumeSlider = false;
@@ -1475,7 +1524,7 @@ public class MainActivity extends Activity {
         }
         heartMenuOpen = true;
         heartMenuSwallowPpUp = true;
-        themedContextMenu.show(root, tags[1].isEmpty() ? null : tags[1], null, labels, null,
+        themedContextMenu.show(root, title, null, labels, null,
                 states, headers,
                 new ThemedContextMenu.Listener() {
                     @Override
@@ -1498,12 +1547,10 @@ public class MainActivity extends Activity {
         }
         clearContextHoldThrobber();
         themedContextMenu.setSubmenuTierOpen(true);
-        themedContextMenu.focusSubmenuList();   // first row: Heart
+        themedContextMenu.focusSubmenuList();   // first row
         themedContextMenu.requestOverlayFocus();
         contextMenuOpenedAtMs = System.currentTimeMillis();
         clickFeedback();
-        android.util.Log.i("SolarHeart", "hold menu open for " + tags[0] + " - " + tags[1]
-                + (discoveryTrack != null ? " (discovery " + discoveryTrack.key + ")" : ""));
         return true;
     }
 
@@ -5022,6 +5069,7 @@ public class MainActivity extends Activity {
         migrateLegacyPrefs();
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         prefs.registerOnSharedPreferenceChangeListener(solarConfigWritebackListener);
+        com.solar.launcher.discovery.PackRunner.resume(this, prefs);   // Q22
         applyMediaRootPreference();
         playbackSpeed = prefs.getFloat("playback_speed", 1.0f);
         mediaSuite = new MediaSuiteHost(new MediaSuiteHostAdapter(this));
@@ -19584,8 +19632,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             int scale = b.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100);
             if (lvl >= 0 && scale > 0) battery = lvl * 100 / scale;
         }
+        com.solar.launcher.discovery.PackRunner.Progress pack =
+                com.solar.launcher.discovery.PackRunner.progress();
         String sig = title + "|" + artist + "|" + list + "|" + playing + "|" + vol + "|" + battery
-                + "|" + isShuffleMode + "|" + repeatMode;
+                + "|" + isShuffleMode + "|" + repeatMode
+                + "|" + (pack == null ? "" : pack.listId + pack.done);
         long now = SystemClock.uptimeMillis();
         if (!remoteStatusDueForTest(!sig.equals(remoteStatusLast), playing, now - remoteStatusSentAt)) return;
         remoteStatusLast = sig;
@@ -19595,7 +19646,13 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 .put("playing", playing).put("pos_ms", activeAudioPositionMs())
                 .put("dur_ms", activeAudioDurationMs()).put("battery", battery)
                 .put("volume", vol).put("vol_max", volMax)
-                .put("shuffle", isShuffleMode).put("repeat", repeatMode);
+                .put("shuffle", isShuffleMode).put("repeat", repeatMode)
+                // 2026-11-03 — what this build can do, so nookTunes offers only that
+                .put("caps", new org.json.JSONArray().put("pack"));
+        if (pack != null) {
+            o.put("packing", new org.json.JSONObject().put("list", pack.listId).put("name", pack.name)
+                    .put("done", pack.done).put("total", pack.total));
+        }
         new Thread(new Runnable() {
             @Override public void run() {
                 java.net.HttpURLConnection c = null;

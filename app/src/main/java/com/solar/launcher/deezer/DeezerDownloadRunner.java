@@ -39,6 +39,11 @@ public final class DeezerDownloadRunner {
     public static String downloadWithFallback(SharedPreferences prefs, final DeezerResult result,
             final File dest, final String ext, final Progress progress) {
         if (result == null || dest == null) return "Invalid track";
+        // 2026-11-03 — Q22: a packed song is copied from Packed/, no network.
+        File packed = com.solar.launcher.discovery.PackStore.find(result.id);
+        if (packed != null && !packed.equals(dest)) {
+            return com.solar.launcher.discovery.PackStore.copyTo(packed, dest) ? null : "Pack copy failed";
+        }
         String direct = DirectStreams.get(result.id);
         if (direct != null) {
             // 2026-10-25 — a nookTunes-served song: no ARL tiers, just the file.

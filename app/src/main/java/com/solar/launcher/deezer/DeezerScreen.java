@@ -730,6 +730,7 @@ public final class DeezerScreen {
     }
 
     public void startTransfer(final DeezerResult r, final int action) {
+        if (action == ACTION_PLAY && playPacked(r)) return;
         if (!host.requireInternet(R.string.deezer_wifi_required)) return;
         if (!DeezerAccount.hasUsableDeezer(host.prefs())) {
             Toast.makeText(host.context(), host.string(R.string.deezer_not_configured), Toast.LENGTH_LONG).show();
@@ -920,6 +921,33 @@ public final class DeezerScreen {
                     r, DeezerBackgroundQueue.cacheFileFor(host.deezerCacheDir(), r, ext),
                     transferListener);
         }
+    }
+
+    /**
+     * 2026-11-03 — Q22 Pack for the road: a song packed on this Y1 plays from a
+     * copy in the stream cache (Discovery empties played songs' audio, so the
+     * pack file itself is never queued), with no download and no Wi-Fi.
+     *
+     * @return true when it was packed and is now playing
+     */
+    private boolean playPacked(DeezerResult r) {
+        File packed = com.solar.launcher.discovery.PackStore.find(r.id);
+        if (packed == null) return false;
+        File dest = DeezerBackgroundQueue.cacheFileFor(host.deezerCacheDir(), r,
+                com.solar.launcher.discovery.PackStore.extOf(packed));
+        if (!(dest.isFile() && dest.length() == packed.length())
+                && !com.solar.launcher.discovery.PackStore.copyTo(packed, dest)) {
+            return false;
+        }
+        if (downloader != null) downloader.cancel();
+        activeDownload = null;
+        pendingAction = 0;
+        DeezerMetadata.saveForResult(host.context(), dest, r);
+        host.prefetchDeezerCover(dest);
+        host.playDeezerPartial(dest, r.displayTitle(), r.id);
+        host.onDeezerStreamDownloadComplete(dest);
+        host.persistPlaybackQueue();
+        return true;
     }
 
     private void afterDownloadComplete(DeezerResult r) {
