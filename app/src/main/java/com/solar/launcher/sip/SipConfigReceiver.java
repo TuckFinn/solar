@@ -29,6 +29,7 @@ public final class SipConfigReceiver extends BroadcastReceiver {
         SharedPreferences.Editor e = p.edit();
         if (user.isEmpty()) {
             e.remove(WalkieScreen.PREF_USER).remove(WalkieScreen.PREF_PASSWORD).apply();
+            WalkieService.get(context).stop();
             Log.i("SolarWalkie", "nookLine account cleared");
             return;
         }
@@ -40,6 +41,7 @@ public final class SipConfigReceiver extends BroadcastReceiver {
         addToHomeMenu(p, e);
         e.commit();
         Log.i("SolarWalkie", "nookLine account set: " + user + " @ " + p.getString(WalkieScreen.PREF_SERVER, ""));
+        WalkieService.get(context).start();    // 2026-11-04: register for pages
         com.solar.launcher.MainActivity a = com.solar.launcher.MainActivity.instance;
         if (a != null) {
             a.runOnUiThread(new Runnable() {

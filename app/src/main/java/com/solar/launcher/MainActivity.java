@@ -1462,6 +1462,60 @@ public class MainActivity extends Activity {
         return shown;
     }
 
+    // ---- 2026-11-04 — Walkie paging ----
+    private boolean walkiePageOpen = false;
+
+    private void walkieUiRefresh() {
+        runOnUiThread(new Runnable() {
+            @Override public void run() {
+                if (currentScreenState == STATE_WALKIE && walkieScreen != null) walkieScreen.render();
+            }
+        });
+    }
+
+    /** The other Y1 opened Walkie-Talkie to an empty channel: offer to join it. */
+    private void showWalkiePage(String from) {
+        final com.solar.launcher.sip.WalkieService svc = com.solar.launcher.sip.WalkieService.get(this);
+        try {   // light the screen for the prompt (the vibration already started)
+            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+            @SuppressWarnings("deprecation")
+            android.os.PowerManager.WakeLock wl = pm.newWakeLock(android.os.PowerManager.FULL_WAKE_LOCK
+                    | android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP, "SolarWalkiePage");
+            wl.acquire(10000);
+        } catch (Exception ignored) {}
+        if (currentScreenState == STATE_WALKIE) {   // already on the screen: just take it
+            svc.accept();
+            return;
+        }
+        final String[] labels = { getString(R.string.walkie_page_join), getString(R.string.walkie_page_ignore) };
+        final java.util.List<Runnable> actions = new java.util.ArrayList<Runnable>();
+        actions.add(new Runnable() {
+            @Override public void run() {
+                walkiePageOpen = false;
+                dismissThemedContextMenu(true, false, null);
+                svc.accept();
+                changeScreen(STATE_WALKIE);
+            }
+        });
+        actions.add(new Runnable() {
+            @Override public void run() {
+                walkiePageOpen = false;
+                dismissThemedContextMenu(true, false, null);
+                svc.declinePage();
+            }
+        });
+        if (themedContextMenu != null && themedContextMenu.isShowing()) dismissThemedContextMenu(true, false, null);
+        walkiePageOpen = showHoldMenu(getString(R.string.walkie_page_title), labels, actions);
+        android.util.Log.i("SolarWalkie", "page from " + from + (walkiePageOpen ? " (prompt up)" : " (no prompt)"));
+    }
+
+    private void dismissWalkiePage() {
+        if (walkiePageOpen) {
+            walkiePageOpen = false;
+            dismissThemedContextMenu(true, false, null);
+        }
+    }
+
     /** 2026-11-03 — Q22: Pack 2 / 5 / 10 hours of a Discovery list. */
     private static final int[] PACK_HOURS = { 2, 5, 10 };
 
@@ -5805,6 +5859,18 @@ public class MainActivity extends Activity {
                     @Override public void pauseMusicForWalkie() { pauseActiveAudio(); }
                     @Override public void leaveWalkieScreen() { changeScreen(STATE_MENU, true); }
                 });
+        // 2026-11-04 — Walkie paging: stay registered with nookLine in the background
+        com.solar.launcher.sip.WalkieService.get(this).setUi(new com.solar.launcher.sip.WalkieService.Ui() {
+            @Override public void onStatus(String st) { walkieUiRefresh(); }
+            @Override public void onCallChanged(boolean on) { walkieUiRefresh(); }
+            @Override public void onPage(final String from) {
+                runOnUiThread(new Runnable() { @Override public void run() { showWalkiePage(from); } });
+            }
+            @Override public void onPageGone() {
+                runOnUiThread(new Runnable() { @Override public void run() { dismissWalkiePage(); } });
+            }
+        });
+        com.solar.launcher.sip.WalkieService.get(this).start();
         if (deezerActive() && DeezerAccount.hasArl(prefs)) {
             new Thread(new Runnable() {
                 @Override public void run() {
@@ -19631,6 +19697,16 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             else if ("walkie_leave".equals(cmd) && currentScreenState == STATE_WALKIE) changeScreen(STATE_MENU, true);
             else if ("walkie_talk".equals(cmd) && walkieScreen != null && currentScreenState == STATE_WALKIE)
                 walkieScreen.pushToTalk(level == 1);
+            // 2026-11-04 — paging (tests): take or turn away a ringing page
+            else if ("walkie_accept".equals(cmd) && com.solar.launcher.sip.WalkieService.get(this).ringing()) {
+                dismissWalkiePage();
+                com.solar.launcher.sip.WalkieService.get(this).accept();
+                changeScreen(STATE_WALKIE);
+            }
+            else if ("walkie_decline".equals(cmd)) {
+                dismissWalkiePage();
+                com.solar.launcher.sip.WalkieService.get(this).declinePage();
+            }
         } catch (Exception e) {
             android.util.Log.w("SolarRemote", "command " + cmd + " failed", e);
         }

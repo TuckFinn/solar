@@ -12,16 +12,17 @@ import com.solar.launcher.R;
 import com.solar.launcher.deezer.DeezerScreen;
 
 /**
- * 2026-11-03 — Walkie-Talkie on the home menu (Tucker): the Y1 joins nookLine's
- * walkie room (7000, a ConfBridge on familynook) while this screen is open.
- * Hold Play/Pause to talk, let go to listen; Back leaves the room.
+ * 2026-11-03 — Walkie-Talkie on the home menu (Tucker): while this screen is open the
+ * Y1 is in nookLine's walkie room (7000, a ConfBridge on familynook). Hold Play/Pause
+ * to talk, let go to listen; Back leaves the room.
  *
- * The account comes from SOLAR_SETTINGS (sip_server, sip_user, sip_password,
- * sip_room), set by nookTunes over adb with the SIP_CONFIG broadcast
- * ({@link SipConfigReceiver}). It is drawn in the shared browser list, like
- * Discovery. Registration and the call live on a worker thread for as long as
- * the screen is open; nothing listens in the background, so the Y1's Wi-Fi can
- * sleep the rest of the time.
+ * 2026-11-04 — paging: the SIP side moved to {@link WalkieService}, which stays
+ * registered in the background. Opening this screen dials the room; arriving here
+ * from a page's Join answers the page instead (the page is the room). Opening it to
+ * an empty room makes Asterisk page the other Y1.
+ *
+ * The account comes from SOLAR_SETTINGS (sip_server, sip_user, sip_password, sip_room),
+ * set by nookTunes over adb with the SIP_CONFIG broadcast ({@link SipConfigReceiver}).
  */
 public final class WalkieScreen {
     private static final String TAG = "SolarWalkie";
@@ -29,7 +30,6 @@ public final class WalkieScreen {
     public static final String PREF_USER = "sip_user";
     public static final String PREF_PASSWORD = "sip_password";
     public static final String PREF_ROOM = "sip_room";
-    private static final int REREGISTER_MS = 300 * 1000;
 
     /** What MainActivity lends this screen beyond Discovery's host. */
     public interface Shell {
@@ -40,10 +40,7 @@ public final class WalkieScreen {
 
     private final DeezerScreen.Host host;
     private final Shell shell;
-    private volatile NookSip sip;
-    private volatile Thread worker;
     private volatile boolean wanted;
-    private volatile String status = "";
     private volatile boolean talking;
     private int savedAudioMode = AudioManager.MODE_NORMAL;
     private boolean savedSpeaker;
@@ -58,39 +55,36 @@ public final class WalkieScreen {
                 && !p.getString(PREF_SERVER, "").isEmpty() && !p.getString(PREF_PASSWORD, "").isEmpty();
     }
 
-    /** Entering the screen: join the room. */
+    private WalkieService svc() {
+        return WalkieService.get(host.context());
+    }
+
+    /** Entering the screen: join the room (or take the page that brought us here). */
     public void open() {
         talking = false;
         if (!isConfigured(host.prefs())) {
-            status = host.string(R.string.walkie_not_set_up);
             render();
             return;
         }
-        if (worker != null && worker.isAlive()) {
-            render();
-            return;
+        WalkieService s = svc();
+        s.start();
+        if (!wanted) {
+            wanted = true;
+            shell.pauseMusicForWalkie();
+            audioForCall(true);
         }
-        wanted = true;
-        status = host.string(R.string.walkie_connecting);
-        shell.pauseMusicForWalkie();
-        audioForCall(true);
+        if (!s.inCall() && !s.answering()) {
+            if (s.ringing()) s.accept();     // opened from the menu while paged: same thing
+            else s.join();
+        }
         render();
-        final SharedPreferences p = host.prefs();
-        worker = new Thread(new Runnable() {
-            @Override public void run() {
-                runCall(p.getString(PREF_SERVER, ""), p.getString(PREF_USER, ""),
-                        p.getString(PREF_PASSWORD, ""), p.getString(PREF_ROOM, "7000"));
-            }
-        }, "SolarWalkie");
-        worker.start();
     }
 
     /** Leaving the screen (Back, Home, anything): leave the room. */
     public void leave() {
         wanted = false;
         talking = false;
-        Thread w = worker;
-        if (w != null) w.interrupt();
+        svc().leave();
         audioForCall(false);
     }
 
@@ -100,8 +94,8 @@ public final class WalkieScreen {
 
     /** Play/Pause pressed (true) or released (false). */
     public void pushToTalk(boolean down) {
-        NookSip s = sip;
-        if (s == null || !s.inCall()) {
+        WalkieService s = svc();
+        if (!s.inCall()) {
             if (down) host.clickFeedback();
             return;
         }
@@ -109,55 +103,6 @@ public final class WalkieScreen {
         talking = down;
         s.talk(down);
         render();
-    }
-
-    private void runCall(String server, String user, String password, String room) {
-        NookSip s = new NookSip(server, 5060, user, password);
-        sip = s;
-        try {
-            if (!s.register(600)) {
-                setStatus(host.string(R.string.walkie_no_server));
-                return;
-            }
-            setStatus(host.string(R.string.walkie_joining));
-            if (!s.call(room)) {
-                setStatus(host.string(R.string.walkie_no_room));
-                return;
-            }
-            setStatus(host.string(R.string.walkie_in_room, user));
-            long nextRegister = System.currentTimeMillis() + REREGISTER_MS;
-            while (wanted && s.inCall()) {
-                s.service(500);
-                if (System.currentTimeMillis() > nextRegister) {
-                    s.register(600);
-                    nextRegister = System.currentTimeMillis() + REREGISTER_MS;
-                }
-            }
-            if (wanted && !s.inCall()) setStatus(host.string(R.string.walkie_room_closed));
-        } catch (Exception e) {
-            Log.w(TAG, "walkie stopped", e);
-            setStatus(host.string(R.string.walkie_error, String.valueOf(e.getMessage())));
-        } finally {
-            try { s.hangup(); } catch (Exception ignored) {}
-            try { s.register(0); } catch (Exception ignored) {}
-            s.close();
-            sip = null;
-            talking = false;
-            host.runOnUi(new Runnable() {
-                @Override public void run() {
-                    if (!wanted) audioForCall(false);
-                    render();
-                }
-            });
-        }
-    }
-
-    private void setStatus(String s) {
-        status = s;
-        Log.i(TAG, s);
-        host.runOnUi(new Runnable() {
-            @Override public void run() { render(); }
-        });
     }
 
     /**
@@ -186,6 +131,18 @@ public final class WalkieScreen {
         }
     }
 
+    private String statusLine() {
+        if (!isConfigured(host.prefs())) return host.string(R.string.walkie_not_set_up);
+        WalkieService s = svc();
+        if (s.inCall()) return host.string(R.string.walkie_in_room, host.prefs().getString(PREF_USER, ""));
+        if (s.answering()) return host.string(R.string.walkie_joining);
+        String st = s.status();
+        if (st.startsWith("can't reach")) return host.string(R.string.walkie_no_server);
+        if (st.startsWith("no room")) return host.string(R.string.walkie_no_room);
+        if (st.startsWith("error")) return host.string(R.string.walkie_error, st);
+        return host.string(wanted ? R.string.walkie_joining : R.string.walkie_connecting);
+    }
+
     public void render() {
         if (!shell.isWalkieScreen() || host.isNowPlayingScreen()) return;
         host.prepareBrowserChrome();
@@ -195,9 +152,8 @@ public final class WalkieScreen {
         if (host.tvBrowserPath() != null) host.tvBrowserPath().setText(title);
         LinearLayout c = host.containerBrowserItems();
         c.removeAllViews();
-        c.addView(host.createListButton(status));
-        NookSip s = sip;
-        boolean live = s != null && s.inCall();
+        c.addView(host.createListButton(statusLine()));
+        boolean live = svc().inCall();
         c.addView(host.createListButton(host.string(
                 !live ? R.string.walkie_hint_wait
                         : talking ? R.string.walkie_talking : R.string.walkie_hint_talk)));

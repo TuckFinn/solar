@@ -601,6 +601,9 @@
     <string name="walkie_hint_talk">Hold Play/Pause to talk</string>
     <string name="walkie_talking">● Talking: let go to listen</string>
     <string name="walkie_leave">Leave the channel</string>
+    <string name="walkie_page_title">Walkie-Talkie: the other Y1 wants to talk</string>
+    <string name="walkie_page_join">Join</string>
+    <string name="walkie_page_ignore">Ignore</string>
     <string name="pack_menu_title">Pack %1$s</string>
     <string name="pack_menu_hours">Pack %1$d hours</string>
     <string name="pack_started">Packing %1$s. Its songs download here; keep the Y1 charging.</string>

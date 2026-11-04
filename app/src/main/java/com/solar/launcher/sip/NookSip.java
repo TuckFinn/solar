@@ -6,7 +6,6 @@ import android.net.rtp.AudioStream;
 import android.net.rtp.RtpStream;
 import android.util.Log;
 
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -20,21 +19,25 @@ import java.util.Map;
 /**
  * 2026-11-03 — A small SIP user agent for nookLine (Asterisk 20 on familynook,
  * Tailscale-only, plain UDP, digest auth). The Y1's ROM has no SipService, so
- * Solar carries its own: REGISTER, one call at a time (INVITE / ACK / BYE), and
- * answers to the requests Asterisk sends mid-call. Media is Android's own
- * android.net.rtp (librtp_jni: G.711 / GSM, echo suppression), joined to an
- * AudioGroup whose mode is the push-to-talk switch: MUTED while listening,
- * NORMAL while the button is held.
+ * Solar carries its own: REGISTER, one call at a time — placed (INVITE / ACK / BYE)
+ * or, since 2026-11-04, received (a walkie page: 180 Ringing, then 200 with an SDP
+ * answer, or 603) — and answers to whatever Asterisk sends mid-call. Media is
+ * Android's own android.net.rtp (librtp_jni: G.711 / GSM, echo suppression), joined
+ * to an AudioGroup whose mode is the push-to-talk switch: MUTED while listening,
+ * ECHO_SUPPRESSION while the button is held.
  *
- * Deliberately narrow: one registrar, UDP only, no TLS/SRTP, no re-INVITE
- * handling beyond answering 200. That is all nookLine asks of an endpoint.
- * Blocking calls; run it off the UI thread.
+ * Deliberately narrow: one registrar, UDP only, no TLS/SRTP. Not thread-safe: one
+ * thread (WalkieService's worker) owns it.
  */
 public final class NookSip {
     private static final String TAG = "NookSip";
 
     public interface Listener {
         void onState(String state);          // "registered", "in call", "ended", "error: ..."
+        /** A call is ringing here (a walkie page); answer() or decline(). */
+        void onIncoming(String from);
+        /** The ringing call went away before it was answered. */
+        void onIncomingGone();
     }
 
     private final String server;            // e.g. 100.126.143.83
@@ -52,11 +55,14 @@ public final class NookSip {
     private final String regCallId;
     private final String regTag;
 
-    // the call
-    private String callId, fromTag, toTag, remoteTarget, calleeUri;
+    // the call (either direction): dialog identity as this side writes it
+    private String callId, dlgLocal, dlgRemote, remoteTarget, calleeUri;
     private int callCseq;
     private AudioStream audio;
     private AudioGroup group;
+    // a ringing incoming call
+    private Msg incoming;
+    private String incomingTag;
 
     public NookSip(String server, int port, String user, String password) {
         this.server = server;
@@ -91,6 +97,9 @@ public final class NookSip {
 
     public void close() {
         hangup();
+        if (incoming != null) {
+            try { decline(); } catch (Exception ignored) {}
+        }
         if (sock != null) sock.close();
         sock = null;
     }
@@ -100,7 +109,11 @@ public final class NookSip {
         sock.send(new DatagramPacket(b, b.length, serverAddr, port));
     }
 
-    /** Next SIP message, or null on timeout. Answers stray requests (OPTIONS, BYE, re-INVITE) itself. */
+    private String contact() {
+        return "<sip:" + user + "@" + localIp + ":" + localPort + ">";
+    }
+
+    /** Next SIP response, or null on timeout. Requests are handled here as they come. */
     private Msg receive(int timeoutMs) throws Exception {
         long until = System.currentTimeMillis() + timeoutMs;
         byte[] buf = new byte[8192];
@@ -117,29 +130,74 @@ public final class NookSip {
             Msg m = Msg.parse(new String(p.getData(), 0, p.getLength(), "UTF-8"));
             if (m == null) continue;
             if (m.isRequest()) {
-                answerRequest(m);
-                if ("BYE".equals(m.method) && callId != null && callId.equals(m.header("Call-ID"))) {
-                    stopMedia();
-                    callId = null;
-                    state("ended (remote hung up)");
-                }
+                handleRequest(m);
                 continue;
             }
             return m;
         }
     }
 
-    private void answerRequest(Msg req) throws Exception {
-        StringBuilder r = new StringBuilder("SIP/2.0 200 OK\r\n");
+    private void handleRequest(Msg req) throws Exception {
+        String cid = req.header("Call-ID");
+        boolean ours = callId != null && callId.equals(cid);
+        boolean ringing = incoming != null && cid != null && cid.equals(incoming.header("Call-ID"));
+        if ("ACK".equals(req.method)) return;                       // never answered
+        if ("INVITE".equals(req.method)) {
+            if (ours) {                                             // re-INVITE / session refresh
+                respond(req, 200, "OK", null, sdp(audio != null ? audio.getLocalPort() : 0));
+            } else if (ringing) {                                   // retransmission
+                respond(req, 180, "Ringing", incomingTag, null);
+            } else if (callId != null || incoming != null) {
+                respond(req, 486, "Busy Here", hex(6), null);
+            } else {
+                incoming = req;
+                incomingTag = hex(6);
+                respond(req, 100, "Trying", null, null);
+                respond(req, 180, "Ringing", incomingTag, null);
+                String from = req.header("From");
+                String name = from != null && from.startsWith("\"") ? between(from, "\"", "\"") : null;
+                state("ringing");
+                if (listener != null) listener.onIncoming(name != null ? name : from);
+            }
+            return;
+        }
+        if ("CANCEL".equals(req.method)) {
+            respond(req, 200, "OK", null, null);
+            if (ringing) {
+                Msg inv = incoming;
+                incoming = null;
+                respond(inv, 487, "Request Terminated", incomingTag, null);
+                state("page withdrawn");
+                if (listener != null) listener.onIncomingGone();
+            }
+            return;
+        }
+        respond(req, 200, "OK", null, null);                        // BYE, OPTIONS, NOTIFY, UPDATE...
+        if ("BYE".equals(req.method) && ours) {
+            stopMedia();
+            callId = null;
+            state("ended (remote hung up)");
+        }
+    }
+
+    /** A response to {@code req}; {@code toTag} is added when its To has none. */
+    private void respond(Msg req, int code, String reason, String toTag, String body) throws Exception {
+        StringBuilder r = new StringBuilder("SIP/2.0 ").append(code).append(' ').append(reason).append("\r\n");
         for (String v : req.all("Via")) r.append("Via: ").append(v).append("\r\n");
         r.append("From: ").append(req.header("From")).append("\r\n");
         String to = req.header("To");
-        if (to != null && !to.contains("tag=")) to += ";tag=" + hex(6);
+        if (to != null && !to.contains("tag=") && code > 100) to += ";tag=" + (toTag != null ? toTag : hex(6));
         r.append("To: ").append(to).append("\r\n");
         r.append("Call-ID: ").append(req.header("Call-ID")).append("\r\n");
         r.append("CSeq: ").append(req.header("CSeq")).append("\r\n");
-        r.append("Contact: <sip:").append(user).append('@').append(localIp).append(':').append(localPort).append(">\r\n");
-        r.append("Content-Length: 0\r\n\r\n");
+        if (code < 300 && code > 100) r.append("Contact: ").append(contact()).append("\r\n");
+        r.append("User-Agent: Solar (Innioasis Y1)\r\n");
+        if (body != null) {
+            r.append("Content-Type: application/sdp\r\n");
+            r.append("Content-Length: ").append(body.getBytes("UTF-8").length).append("\r\n\r\n").append(body);
+        } else {
+            r.append("Content-Length: 0\r\n\r\n");
+        }
         send(r.toString());
     }
 
@@ -160,7 +218,7 @@ public final class NookSip {
             m.append("To: <sip:").append(user).append('@').append(server).append(">\r\n");
             m.append("Call-ID: ").append(regCallId).append("\r\n");
             m.append("CSeq: ").append(n).append(" REGISTER\r\n");
-            m.append("Contact: <sip:").append(user).append('@').append(localIp).append(':').append(localPort).append(">\r\n");
+            m.append("Contact: ").append(contact()).append("\r\n");
             m.append("Expires: ").append(expires).append("\r\n");
             if (auth != null) m.append("Authorization: ").append(auth).append("\r\n");
             m.append("User-Agent: Solar (Innioasis Y1)\r\n");
@@ -190,7 +248,7 @@ public final class NookSip {
         }
     }
 
-    // ---- a call ----------------------------------------------------------------
+    // ---- placing a call ---------------------------------------------------------
 
     /**
      * Call {@code ext} (7000 = the walkie room). Joins media with the mic muted;
@@ -204,10 +262,9 @@ public final class NookSip {
         String uri = "sip:" + ext + "@" + server;
         calleeUri = uri;
         callId = hex(12) + "@solar";
-        fromTag = hex(6);
-        toTag = null;
+        String fromTag = hex(6);
         String auth = null;
-        String sdp = sdpOffer(audio.getLocalPort());
+        String offer = sdp(audio.getLocalPort());
         for (int attempt = 0; attempt < 3; attempt++) {
             callCseq = cseq++;
             String branch = "z9hG4bK" + hex(8);
@@ -219,30 +276,30 @@ public final class NookSip {
             m.append("To: <").append(uri).append(">\r\n");
             m.append("Call-ID: ").append(callId).append("\r\n");
             m.append("CSeq: ").append(callCseq).append(" INVITE\r\n");
-            m.append("Contact: <sip:").append(user).append('@').append(localIp).append(':').append(localPort).append(">\r\n");
+            m.append("Contact: ").append(contact()).append("\r\n");
             if (auth != null) m.append("Authorization: ").append(auth).append("\r\n");
             m.append("User-Agent: Solar (Innioasis Y1)\r\n");
             m.append("Content-Type: application/sdp\r\n");
-            m.append("Content-Length: ").append(sdp.getBytes("UTF-8").length).append("\r\n\r\n");
-            m.append(sdp);
+            m.append("Content-Length: ").append(offer.getBytes("UTF-8").length).append("\r\n\r\n");
+            m.append(offer);
             send(m.toString());
             Msg r = finalResponse(15000);
             if (r == null) { state("error: INVITE timed out"); endCallLocal(); return false; }
             if ((r.code == 401 || r.code == 407) && auth == null) {
-                ack(r, uri, branch);                    // a final response to INVITE is ACKed
+                ackFinal(r, uri, branch, fromTag);          // a final response to INVITE is ACKed
                 auth = digest(r, "INVITE", uri);
                 continue;
             }
             if (r.code != 200) {
-                ack(r, uri, branch);
+                ackFinal(r, uri, branch, fromTag);
                 state("error: INVITE " + r.code + " " + r.reason);
                 endCallLocal();
                 return false;
             }
-            toTag = param(r.header("To"), "tag");
-            String contact = r.header("Contact");
-            remoteTarget = contact != null ? between(contact, "<", ">") : uri;
-            if (remoteTarget == null) remoteTarget = contact;
+            dlgLocal = "<sip:" + user + "@" + server + ">;tag=" + fromTag;
+            dlgRemote = r.header("To");
+            String c = r.header("Contact");
+            remoteTarget = c != null && between(c, "<", ">") != null ? between(c, "<", ">") : uri;
             ack2xx();
             if (!startMedia(r.body)) {
                 hangup();
@@ -256,6 +313,45 @@ public final class NookSip {
         return false;
     }
 
+    // ---- receiving a call (a walkie page) --------------------------------------
+
+    public boolean ringing() { return incoming != null; }
+
+    /** Answer the ringing call: join its media (mic muted), 200 OK with our SDP. */
+    public boolean answer() throws Exception {
+        Msg inv = incoming;
+        if (inv == null || callId != null) return false;
+        incoming = null;
+        audio = new AudioStream(InetAddress.getByName(localIp));
+        audio.setMode(RtpStream.MODE_NORMAL);
+        if (!startMedia(inv.body)) {
+            respond(inv, 488, "Not Acceptable Here", incomingTag, null);
+            stopMedia();
+            state("error: the page offered no usable audio");
+            return false;
+        }
+        callId = inv.header("Call-ID");
+        String to = inv.header("To");
+        dlgLocal = to != null && !to.contains("tag=") ? to + ";tag=" + incomingTag : to;
+        dlgRemote = inv.header("From");
+        String c = inv.header("Contact");
+        remoteTarget = c != null && between(c, "<", ">") != null ? between(c, "<", ">") : "sip:" + server;
+        calleeUri = remoteTarget;
+        respond(inv, 200, "OK", incomingTag, sdp(audio.getLocalPort()));
+        state("in call (answered)");
+        return true;
+    }
+
+    /** Turn the ringing call away. */
+    public void decline() throws Exception {
+        Msg inv = incoming;
+        incoming = null;
+        if (inv != null) respond(inv, 603, "Decline", incomingTag, null);
+        state("page declined");
+    }
+
+    // ---- in a call -------------------------------------------------------------
+
     /** Push-to-talk: the mic goes out only while {@code on}. */
     public void talk(boolean on) {
         if (group != null) group.setMode(on ? AudioGroup.MODE_ECHO_SUPPRESSION : AudioGroup.MODE_MUTED);
@@ -263,7 +359,7 @@ public final class NookSip {
 
     public boolean inCall() { return callId != null; }
 
-    /** Pump the socket for {@code ms}, answering whatever Asterisk sends (call this while a call is up). */
+    /** Pump the socket for {@code ms}, handling whatever Asterisk sends. */
     public void service(int ms) throws Exception {
         if (sock != null) receive(ms);
     }
@@ -276,8 +372,8 @@ public final class NookSip {
             m.append("BYE ").append(remoteTarget).append(" SIP/2.0\r\n");
             m.append(via());
             m.append("Max-Forwards: 70\r\n");
-            m.append("From: <sip:").append(user).append('@').append(server).append(">;tag=").append(fromTag).append("\r\n");
-            m.append("To: <").append(calleeUri).append(">").append(toTag != null ? ";tag=" + toTag : "").append("\r\n");
+            m.append("From: ").append(dlgLocal).append("\r\n");
+            m.append("To: ").append(dlgRemote).append("\r\n");
             m.append("Call-ID: ").append(callId).append("\r\n");
             m.append("CSeq: ").append(n).append(" BYE\r\n");
             m.append("Content-Length: 0\r\n\r\n");
@@ -295,7 +391,7 @@ public final class NookSip {
         callId = null;
     }
 
-    private void ack(Msg resp, String uri, String branch) throws Exception {
+    private void ackFinal(Msg resp, String uri, String branch, String fromTag) throws Exception {
         StringBuilder m = new StringBuilder();
         m.append("ACK ").append(uri).append(" SIP/2.0\r\n");
         m.append("Via: SIP/2.0/UDP ").append(localIp).append(':').append(localPort).append(";branch=").append(branch).append(";rport\r\n");
@@ -313,8 +409,8 @@ public final class NookSip {
         m.append("ACK ").append(remoteTarget).append(" SIP/2.0\r\n");
         m.append(via());
         m.append("Max-Forwards: 70\r\n");
-        m.append("From: <sip:").append(user).append('@').append(server).append(">;tag=").append(fromTag).append("\r\n");
-        m.append("To: <").append(calleeUri).append(">;tag=").append(toTag).append("\r\n");
+        m.append("From: ").append(dlgLocal).append("\r\n");
+        m.append("To: ").append(dlgRemote).append("\r\n");
         m.append("Call-ID: ").append(callId).append("\r\n");
         m.append("CSeq: ").append(callCseq).append(" ACK\r\n");
         m.append("Content-Length: 0\r\n\r\n");
@@ -323,7 +419,7 @@ public final class NookSip {
 
     // ---- media -----------------------------------------------------------------
 
-    private String sdpOffer(int rtpPort) {
+    private String sdp(int rtpPort) {
         long id = System.currentTimeMillis() / 1000;
         return "v=0\r\n"
                 + "o=solar " + id + " " + id + " IN IP4 " + localIp + "\r\n"
@@ -340,6 +436,7 @@ public final class NookSip {
                 + "a=sendrecv\r\n";
     }
 
+    /** Connect our AudioStream to the far end's SDP (an answer or an offer). */
     private boolean startMedia(String sdp) {
         try {
             String ip = null;
@@ -347,7 +444,7 @@ public final class NookSip {
             for (String line : sdp.split("\r?\n")) {
                 if (line.startsWith("c=IN IP4 ")) ip = line.substring(9).trim();
                 if (line.startsWith("m=audio ")) {
-                    String[] f = line.split(" ");
+                    String[] f = line.trim().split(" ");
                     rport = Integer.parseInt(f[1]);
                     for (int i = 3; i < f.length; i++) {
                         int p = Integer.parseInt(f[i].trim());
