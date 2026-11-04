@@ -45404,7 +45404,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 MusicLibraryStore.Track t = sample.get(i);
                 if (t == null) return false;
                 File f = new File(t.path);
-                if (!f.isFile() || t.mtime != f.lastModified() || t.size != f.length()) {
+                if (!f.isFile() || !MusicLibraryStore.sameMtime(t.mtime, f.lastModified()) || t.size != f.length()) {
                     return false;
                 }
             }

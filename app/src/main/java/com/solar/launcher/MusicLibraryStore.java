@@ -781,13 +781,22 @@ public class MusicLibraryStore extends SolarDbHelper {
         if (t == null) return null;
         // 2026-07-06: year=0 means pre-v4 row — force one ID3 re-read to backfill year.
         if (t.year == 0) return null;
-        return t.mtime == file.lastModified() && t.size == file.length() ? t : null;
+        return sameMtime(t.mtime, file.lastModified()) && t.size == file.length() ? t : null;
     }
 
     /**
      * 2026-07-05 — Batch freshness lookup for library scan partition (one query per chunk).
      * Returns map path → fresh Track; missing or stale paths omitted.
      */
+    /**
+     * 2026-11-04 — FAT keeps modified times in 2-second steps. A file written at an odd
+     * second reports that second until the card remounts, then the rounded one, so after
+     * a reboot freshly synced files looked changed and forced a full library walk.
+     */
+    public static boolean sameMtime(long stored, long now) {
+        return Math.abs(stored - now) <= 2000L;
+    }
+
     public java.util.HashMap<String, Track> getFreshBatch(java.util.List<File> files) {
         purgeStemLibraryArtifacts();
         java.util.HashMap<String, Track> out = new java.util.HashMap<String, Track>();
@@ -822,7 +831,7 @@ public class MusicLibraryStore extends SolarDbHelper {
                     File f = new File(t.path);
                     // 2026-07-06: year=0 = legacy cache before year column — re-tag once.
                     if (f.isFile() && t.year != 0
-                            && t.mtime == f.lastModified() && t.size == f.length()) {
+                            && sameMtime(t.mtime, f.lastModified()) && t.size == f.length()) {
                         out.put(t.path, t);
                     }
                 }
@@ -842,7 +851,7 @@ public class MusicLibraryStore extends SolarDbHelper {
         if (t == null) return false;
         // 2026-07-06: year=0 rows need one metadata pass after DB v4 upgrade.
         if (t.year == 0) return false;
-        return t.mtime == file.lastModified() && t.size == file.length();
+        return sameMtime(t.mtime, file.lastModified()) && t.size == file.length();
     }
 
     /** v1/v2 rows used 0 for unknown track — treat as -1 so isFresh does not force full re-ID3. */
