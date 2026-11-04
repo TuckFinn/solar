@@ -209,7 +209,13 @@ public final class PackStore {
 
     /** pack.json, written on one line (nookTunes reads it line by line). */
     static boolean writeMeta(File dir, JSONObject doc) {
-        dir.mkdirs();
+        boolean made = dir.mkdirs();
+        if (!dir.isDirectory()) {
+            android.util.Log.w("SolarPack", "mkdirs " + dir + " failed (made=" + made
+                    + ", parent exists=" + (dir.getParentFile() != null && dir.getParentFile().exists())
+                    + ", parent writable=" + (dir.getParentFile() != null && dir.getParentFile().canWrite())
+                    + ", root writable=" + root().getParentFile().canWrite() + ")");
+        }
         File tmp = new File(dir, META + ".tmp");
         OutputStream out = null;
         try {
@@ -217,8 +223,11 @@ public final class PackStore {
             out.write(doc.toString().replace("\n", " ").getBytes("UTF-8"));
             out.close();
             out = null;
-            return tmp.renameTo(new File(dir, META));
+            boolean ok = tmp.renameTo(new File(dir, META));
+            if (!ok) android.util.Log.w("SolarPack", "rename " + tmp + " failed");
+            return ok;
         } catch (Exception e) {
+            android.util.Log.w("SolarPack", "write " + dir + "/" + META + " failed", e);
             return false;
         } finally {
             try { if (out != null) out.close(); } catch (Exception ignored) {}
