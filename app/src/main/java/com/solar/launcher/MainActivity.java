@@ -19625,6 +19625,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             else if ("volume".equals(cmd) && am != null && level >= 0)
                 am.setStreamVolume(AudioManager.STREAM_MUSIC,
                         Math.min(level, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)), 0);
+            // 2026-11-03 — Walkie-Talkie from nookTunes / tests: open it (joins the room),
+            // leave it, or talk/listen (level 1 = talk, 0 = listen) while it is open.
+            else if ("walkie".equals(cmd)) changeScreen(STATE_WALKIE);
+            else if ("walkie_leave".equals(cmd) && currentScreenState == STATE_WALKIE) changeScreen(STATE_MENU, true);
+            else if ("walkie_talk".equals(cmd) && walkieScreen != null && currentScreenState == STATE_WALKIE)
+                walkieScreen.pushToTalk(level == 1);
         } catch (Exception e) {
             android.util.Log.w("SolarRemote", "command " + cmd + " failed", e);
         }
