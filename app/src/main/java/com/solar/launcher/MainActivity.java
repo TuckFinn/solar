@@ -64201,6 +64201,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     @Override
     protected void onResume() {
         super.onResume();
+        // 2026-11-04 — walkie paging: a Y1 whose SIP account arrived after Solar
+        // started never began registering (start() ran only in onCreate). start()
+        // is a no-op while the worker is already running on the same account.
+        try { com.solar.launcher.sip.WalkieService.get(this).start(); } catch (Exception ignored) {}
         // #region agent log
         if (com.solar.launcher.debug.DebugGate.ON) {
         try {
