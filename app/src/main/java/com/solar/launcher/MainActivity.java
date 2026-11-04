@@ -45068,6 +45068,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
         }
         if (!userInitiated && tryFinishScanFromFreshCache(gen, userInitiated)) {
+            libraryBreadcrumb("fast path: saved library is current (" + store.countTracks() + " songs)");
             // #region agent log
             if (com.solar.launcher.debug.DebugGate.ON) {
             try {
@@ -45095,6 +45096,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         } catch (Exception ignored) {}
         }
         // #endregion
+        libraryBreadcrumb("full walk" + (userInitiated ? " (asked for)" : "") + ", saved songs: " + store.countTracks());
         // Full walk needed — show blocking overlay (skipped for silent cold-start fast-path). 2026-07-19
         if (!userInitiated) {
             runOnUiThread(new Runnable() {
@@ -46117,6 +46119,24 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private volatile boolean libraryWaitingForStorage;
     private int libraryStorageRetries;
 
+    /**
+     * 2026-11-04 — one line per library decision in files/library-boot.log (uptime, wall
+     * time, what happened), so "did it rescan at boot?" has an answer. Capped at 64 KB.
+     */
+    private void libraryBreadcrumb(String what) {
+        try {
+            File f = new File(getFilesDir(), "library-boot.log");
+            if (f.length() > 65536L) f.delete();
+            java.io.FileWriter w = new java.io.FileWriter(f, true);
+            try {
+                w.write(new java.text.SimpleDateFormat("MM-dd HH:mm:ss", java.util.Locale.US).format(new java.util.Date())
+                        + " up=" + (android.os.SystemClock.elapsedRealtime() / 1000) + "s " + what + "\n");
+            } finally {
+                w.close();
+            }
+        } catch (Exception ignored) {}
+    }
+
     /** True when the saved library has songs and none of a sample of their files exist. */
     private boolean storedLibraryLooksUnmounted(MusicLibraryStore store) {
         java.util.List<MusicLibraryStore.Track> sample = store.loadRange(0, 24);
@@ -46131,6 +46151,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
     private void onLibraryStorageNotReady(final int gen, String why) {
         libraryWaitingForStorage = true;
         android.util.Log.i("SolarLibrary", "music storage not ready (" + why + "); keeping the saved library");
+        libraryBreadcrumb("waiting for music storage (" + why + ")");
         abortLibraryScanWorker(gen);
         if (libraryStorageRetries >= 10) return;   // ~10 min; after that, the mount broadcast or a manual rescan
         libraryStorageRetries++;
