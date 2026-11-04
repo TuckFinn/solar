@@ -45026,6 +45026,15 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             // 2026-07-20 — SEGMENTED: count + DISTINCT indexes only (no loadAll → full RAM).
             // Was: always store.loadAll() into customLibrary. Reversal: loadAll + applyCachedTracks.
             int dbCount = store.countTracks();
+            // 2026-11-04 — Y1: at boot /storage/sdcard0 is the small internal partition until
+            // vold swaps the 122 GB chip in (~40-70 s later). Scanning then found 0 songs, wiped
+            // the saved library and favourites, and re-read every tag after the mount. Now:
+            // saved songs but none of their files present → wait for the mount, touch nothing.
+            if (!userInitiated && dbCount > 0 && storedLibraryLooksUnmounted(store)) {
+                onLibraryStorageNotReady(gen, "saved songs missing at hydrate");
+                return;
+            }
+            libraryWaitingForStorage = false;
             com.solar.launcher.library.LibraryMemoryBudget.Mode hydrateMode =
                     com.solar.launcher.library.LibraryMemoryBudget.chooseMode(dbCount);
             // #region agent log
@@ -45192,6 +45201,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         } catch (Exception ignored) {}
         }
         // #endregion        // Perf log: full scan timing is recorded after album-art ingest below.
+        if (!userInitiated && scanned.isEmpty() && store.countTracks() > 0) {
+            onLibraryStorageNotReady(gen, "walk found no songs");
+            return;
+        }
         store.deleteExcept(seenPaths);
         reconcileCustomLibrary(scanned);
         normalizeLibraryAlbumTitles();
@@ -46098,6 +46111,37 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }
         }
         // Flow rebind runs from precookCatalogAfterLibraryScan completion — skip duplicate rebuild.
+    }
+
+    // 2026-11-04 — see runLibraryScanWorker: the music storage may not be mounted yet at boot.
+    private volatile boolean libraryWaitingForStorage;
+    private int libraryStorageRetries;
+
+    /** True when the saved library has songs and none of a sample of their files exist. */
+    private boolean storedLibraryLooksUnmounted(MusicLibraryStore store) {
+        java.util.List<MusicLibraryStore.Track> sample = store.loadRange(0, 24);
+        if (sample == null || sample.isEmpty()) return false;
+        for (MusicLibraryStore.Track t : sample) {
+            if (t != null && t.path != null && new File(t.path).isFile()) return false;
+        }
+        return true;
+    }
+
+    /** Keep the saved library untouched; the storage mount (or a retry) scans again. */
+    private void onLibraryStorageNotReady(final int gen, String why) {
+        libraryWaitingForStorage = true;
+        android.util.Log.i("SolarLibrary", "music storage not ready (" + why + "); keeping the saved library");
+        abortLibraryScanWorker(gen);
+        if (libraryStorageRetries >= 10) return;   // ~10 min; after that, the mount broadcast or a manual rescan
+        libraryStorageRetries++;
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override public void run() {
+                if (libraryWaitingForStorage && customLibrary.isEmpty() && !libraryScanRunning
+                        && !isFinishing()) {
+                    startLibraryScan(false);
+                }
+            }
+        }, 60000L);
     }
 
     private void abortLibraryScanWorker(final int gen) {
