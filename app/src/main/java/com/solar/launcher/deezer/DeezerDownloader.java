@@ -208,8 +208,12 @@ public final class DeezerDownloader {
                 .url(url)
                 .header("User-Agent", DeezerClient.USER_AGENT)
                 .build();
+        // 2026-11-05 (#39) — was 5 minutes. A read timeout is the longest gap between
+        // bytes, not the whole download, so a slow transfer is unaffected; a dead one
+        // held the Discovery queue for up to 5 min per account tier and attempt (2Y1
+        // sat on "Loading" 07:32-07:44 on 10-29 with nothing arriving).
         OkHttpClient http = TlsHelper.client().newBuilder()
-                .readTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+                .readTimeout(45, java.util.concurrent.TimeUnit.SECONDS)
                 .build();
         Response resp = http.newCall(req).execute();
         InputStream in = null;

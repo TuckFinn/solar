@@ -35455,7 +35455,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // seconds are in. Waiting for all of it left a long classical piece on
         // "Loading" for minutes at the Y1's ~150 KB/s (1Y1, Schubert, 21 MB).
         if (deezerBackgroundQueue != null && deezerBackgroundQueue.prioritize(file)) {
-            android.util.Log.i("SolarDiscovery", "fetching next: " + item.deezerMeta);
+            // 2026-11-05 (#39) — and don't wait behind a download already under way
+            if (deezerBackgroundQueue.fetchNow(file)) {
+                android.util.Log.i("SolarDiscovery", "fetching now, alongside the queue: " + item.deezerMeta);
+            } else {
+                android.util.Log.i("SolarDiscovery", "fetching next: " + item.deezerMeta);
+            }
         }
         if (file.length() >= DEEZER_BG_PLAY_FROM_BYTES) {
             startDeezerBgGrowingPlayback(file);

@@ -32,6 +32,10 @@ public final class DeezerBackgroundQueue {
     private final List<Job> jobs = new ArrayList<Job>();
     private final AtomicBoolean cancel = new AtomicBoolean(false);
     private Thread worker;
+    /** The job the worker is downloading now (null between jobs). */
+    private volatile Job current;
+    /** The file extension the worker settled on (mp3 until it asked Deezer). */
+    private volatile String ext = "mp3";
 
     public DeezerBackgroundQueue(SharedPreferences prefs, Listener listener) {
         this.prefs = prefs;
@@ -96,6 +100,30 @@ public final class DeezerBackgroundQueue {
         return false;
     }
 
+    /**
+     * 2026-11-05 (#39) — The song on screen is waiting for {@code dest} while the worker
+     * is busy downloading a different song: fetch it now on its own thread instead of
+     * after that one. prioritize() alone only moved it to the front of the line, so a
+     * stalled download ahead of it held "Loading" for as long as the stall lasted.
+     *
+     * @return true when a dedicated download was started
+     */
+    public synchronized boolean fetchNow(File dest) {
+        if (dest == null || cancel.get()) return false;
+        Job busy = current;
+        if (busy == null || dest.equals(busy.dest)) return false;   // idle, or already on it
+        Job mine = null;
+        for (int i = 0; i < jobs.size(); i++) {
+            if (dest.equals(jobs.get(i).dest)) { mine = jobs.remove(i); break; }
+        }
+        if (mine == null) return false;
+        final Job j = mine;
+        new Thread(new Runnable() {
+            @Override public void run() { runJob(j, ext); }
+        }, "DeezerFetchNow").start();
+        return true;
+    }
+
     private synchronized Job takeNext() {
         if (jobs.isEmpty()) {
             if (worker == Thread.currentThread()) worker = null;
@@ -105,7 +133,6 @@ public final class DeezerBackgroundQueue {
     }
 
     private void runQueue() {
-        String ext = "mp3";
         try {
             DeezerClient probe = new DeezerClient(prefs);
             if (!probe.isSessionValid()) probe.initSession();
@@ -117,6 +144,18 @@ public final class DeezerBackgroundQueue {
                 if (listener != null) listener.onAlbumComplete();
                 return;
             }
+            current = j;
+            try {
+                runJob(j, ext);
+            } finally {
+                current = null;
+            }
+        }
+    }
+
+    /** Download one job (worker or fetchNow), reporting through the listener. */
+    private void runJob(final Job j, String ext) {
+        {
             // Placeholders are created empty, and a failed download deletes its file,
             // so bytes here mean a finished download -- possibly the one playing right
             // now. Fetching it again would truncate it under the player.
@@ -125,7 +164,7 @@ public final class DeezerBackgroundQueue {
                     listener.onTrackProgress(j, 100);
                     listener.onTrackComplete(j);
                 }
-                continue;
+                return;
             }
             DeezerDownloadRunner.Progress progress = new DeezerDownloadRunner.Progress() {
                 @Override public void onProgress(int percent, long done, long total) {
