@@ -1203,21 +1203,42 @@ public class ThemeManager {
                 }
             }
         } else {
-            InputStream in = new java.io.FileInputStream(sourceLocation);
             if (targetLocation.isFile()
                     && targetLocation.length() == sourceLocation.length()
-                    && targetLocation.lastModified() >= sourceLocation.lastModified()) {
-                in.close();
+                    && targetLocation.lastModified() >= sourceLocation.lastModified() - 2000L) {
                 return;
             }
-            OutputStream out = new java.io.FileOutputStream(targetLocation);
-            byte[] buf = new byte[8192];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
+            // 2026-11-05 — write a temp file and swap it in; keep the source's mtime.
+            // Was: FileOutputStream straight onto the target. A theme font is memory-mapped
+            // once loaded (Typeface.createFromFile), so rewriting it in place truncated the
+            // mapping under the running UI: SIGBUS in libharfbuzz_ng while drawing text
+            // (1Y1 x4, 2Y1 x1 on 11-04/05, each right after Solar started and this sync ran).
+            // And copies got "now" as mtime, so the reverse pass saw them as newer and
+            // copied the library back and forth on every sync.
+            File tmp = new File(targetLocation.getParentFile(),
+                    ".~" + targetLocation.getName() + ".solartmp");
+            InputStream in = new java.io.FileInputStream(sourceLocation);
+            OutputStream out = new java.io.FileOutputStream(tmp);
+            try {
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            } finally {
+                in.close();
+                out.close();
             }
-            in.close();
-            out.close();
+            if (!tmp.renameTo(targetLocation)) {
+                // FAT may refuse to rename over an existing file: unlink, then rename.
+                // A mapped font keeps reading its old (now unlinked) copy until released.
+                targetLocation.delete();
+                if (!tmp.renameTo(targetLocation)) {
+                    tmp.delete();
+                    throw new java.io.IOException("could not replace " + targetLocation);
+                }
+            }
+            targetLocation.setLastModified(sourceLocation.lastModified());
         }
     }
 
