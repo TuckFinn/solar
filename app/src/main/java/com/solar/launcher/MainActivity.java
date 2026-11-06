@@ -19687,7 +19687,10 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             else if ("prev".equals(cmd)) prevTrack();
             else if ("playpause".equals(cmd)) playOrPauseMusic();
             // 2026-10-27 — Phase 3: pause only pauses (the sleep timer must never resume)
-            else if ("pause".equals(cmd)) { if (isActiveAudioPlaying()) playOrPauseMusic(); }
+            else if ("pause".equals(cmd)) {
+                if (isActiveAudioPlaying()) playOrPauseMusic();
+                else if (deezerAwaitingFile != null && !deezerAwaitPaused) setDeezerAwaitPaused(true);
+            }
             else if ("shuffle".equals(cmd)) toggleShuffleFromRemote();
             else if ("repeat".equals(cmd)) {
                 repeatMode = (repeatMode + 1) % 3;
@@ -35418,6 +35421,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
 
     /** The queued Deezer song on screen waiting for its download to land, if any. */
     private File deezerAwaitingFile;
+    /**
+     * 2026-11-05 — Play/Pause pressed while the song on screen was still loading.
+     * Was ignored: nothing was playing to pause, and the song started by itself when
+     * enough had downloaded (1Y1 test). Now the download carries on and the song waits.
+     */
+    private boolean deezerAwaitPaused;
 
     /**
      * 2026-09-18 — A queued Deezer song with no audio yet waits for it.
@@ -35467,6 +35476,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return true;
         }
         deezerAwaitingFile = file;
+        deezerAwaitPaused = false;
         android.util.Log.i("SolarDiscovery", "waiting for: " + file.getName()
                 + " at " + (file.length() / 1024) + " KB");
         String t = item.streamMeta();
@@ -35543,9 +35553,38 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         }, DEEZER_403_RETRY_MS);
     }
 
+    /** Pause or resume the song on screen that is still loading. */
+    private void setDeezerAwaitPaused(boolean paused) {
+        deezerAwaitPaused = paused;
+        android.util.Log.i("SolarDiscovery", (paused ? "paused while loading: " : "resumed while loading: ")
+                + (deezerAwaitingFile != null ? deezerAwaitingFile.getName() : "?"));
+        if (tvPlayerArtist != null) {
+            tvPlayerArtist.setText(getString(paused ? R.string.reach_loading_paused : R.string.reach_loading_track));
+        }
+        if (!paused) resumeAwaitedDeezer();
+    }
+
+    /** Play pressed again: start the waiting song now if it can, else when it can. */
+    private void resumeAwaitedDeezer() {
+        File f = deezerAwaitingFile;
+        if (f == null) return;
+        PlayQueue.QueueItem cur = playback.currentItem();
+        if (cur == null || !f.equals(cur.file)) return;
+        Integer pct = deezerQueueProgressByPath.get(f.getAbsolutePath());
+        boolean fetching = pct != null && pct.intValue() >= 0 && pct.intValue() < 100;
+        if (!fetching && f.length() > 0) {
+            // landed while paused
+            deezerAwaitingFile = null;
+            prepareMusicTrack(playback.musicIndex());
+        } else {
+            maybeStartAwaitedDeezerGrowing(f);
+        }
+    }
+
     /** The awaited song has enough downloaded to start. */
     private void maybeStartAwaitedDeezerGrowing(File dest) {
         if (dest == null || !dest.equals(deezerAwaitingFile)) return;
+        if (deezerAwaitPaused) return;
         if (dest.length() < DEEZER_BG_PLAY_FROM_BYTES) return;
         PlayQueue.QueueItem cur = playback.currentItem();
         if (cur == null || !dest.equals(cur.file)) return;
@@ -35815,6 +35854,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                                 }
                                 // The song on screen was waiting for exactly this.
                                 if (job.dest.equals(deezerAwaitingFile)) {
+                                    if (deezerAwaitPaused) {
+                                        android.util.Log.i("SolarDiscovery", "landed, paused: "
+                                                + job.dest.getName() + " plays on Play");
+                                        return;
+                                    }
                                     deezerAwaitingFile = null;
                                     PlayQueue.QueueItem cur = playback.currentItem();
                                     if (cur != null && job.dest.equals(cur.file)) {
@@ -61881,6 +61925,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             if (currentScreenState == MediaSuiteHost.STATE_VIDEO_PLAYER && mediaSuite != null) {
                 mediaSuite.toggleVideoPlayPause();
+                clickFeedback();
+                return;
+            }
+            if (deezerAwaitingFile != null) {
+                setDeezerAwaitPaused(!deezerAwaitPaused);
                 clickFeedback();
                 return;
             }

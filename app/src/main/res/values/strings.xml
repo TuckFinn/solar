@@ -1533,6 +1533,7 @@ Press Back to cancel and restore the original order.</string>
     <string name="path_podcasts_saved_show">Podcasts › Saved › %1$s</string>
     <string name="toast_added_to_queue">Added to queue</string>
     <string name="reach_loading_track">Loading…</string>
+    <string name="reach_loading_paused">Paused · loading…</string>
     <string name="reach_buffering_track">Buffering…</string>
     <string name="reach_buffering_pct">Buffering · %1$d%%</string>
     <string name="podcasts_no_results">No podcasts found.</string>
