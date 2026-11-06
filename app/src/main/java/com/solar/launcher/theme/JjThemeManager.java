@@ -153,7 +153,7 @@ public final class JjThemeManager {
                     File fontFile = new File(subFolder, json.getString("font"));
                     if (fontFile.isFile()) {
                         try {
-                            parsedFont = Typeface.createFromFile(fontFile);
+                            parsedFont = Typeface.createFromFile(ThemeManager.stableFontCopy(fontFile));
                         } catch (Exception ignored) {}
                     }
                 }

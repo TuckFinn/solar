@@ -2551,6 +2551,70 @@ public class ThemeManager {
 
     private static Typeface auraFont = null;
 
+    /**
+     * 2026-11-06 — the file a theme font should be loaded (memory-mapped) from: a
+     * private copy in files/fontcache that nothing else ever writes, named by size +
+     * CRC32 of the contents. Typeface.createFromFile maps the file; any writer that
+     * rewrote it underneath (theme sync, zip extraction, a copy from the card) made the
+     * next text draw fault: SIGBUS in libharfbuzz_ng / libskia FreeType, Solar killed
+     * (1Y1 x5, 2Y1 x1 on 11-04..06, the last right after the temp+rename sync fix,
+     * in files/Themes/Melody Munchkin/font.ttf). Falls back to the original file.
+     */
+    public static File stableFontCopy(File f) {
+        Context ctx = assetContext;
+        if (f == null || !f.isFile() || ctx == null) return f;
+        try {
+            File dir = new File(ctx.getFilesDir(), "fontcache");
+            if (!dir.isDirectory() && !dir.mkdirs()) return f;
+            java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+            InputStream in = new java.io.FileInputStream(f);
+            try {
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = in.read(buf)) > 0) crc.update(buf, 0, n);
+            } finally {
+                in.close();
+            }
+            String name = f.getName();
+            String ext = name.lastIndexOf('.') > 0 ? name.substring(name.lastIndexOf('.')) : ".ttf";
+            File out = new File(dir, f.length() + "-" + Long.toHexString(crc.getValue()) + ext);
+            if (out.isFile() && out.length() == f.length()) return out;
+            File tmp = new File(dir, ".~" + out.getName() + ".solartmp");
+            InputStream src = new java.io.FileInputStream(f);
+            OutputStream dst = new java.io.FileOutputStream(tmp);
+            try {
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = src.read(buf)) > 0) dst.write(buf, 0, n);
+            } finally {
+                src.close();
+                dst.close();
+            }
+            if (tmp.length() != f.length() || !tmp.renameTo(out)) {
+                tmp.delete();
+                return f;   // the source changed while we read it: use it as before
+            }
+            pruneFontCache(dir, out);
+            return out;
+        } catch (Exception e) {
+            return f;
+        }
+    }
+
+    /** Keep the 12 newest cached fonts (a deleted one stays valid while mapped). */
+    private static void pruneFontCache(File dir, File keep) {
+        File[] all = dir.listFiles();
+        if (all == null || all.length <= 12) return;
+        java.util.Arrays.sort(all, new java.util.Comparator<File>() {
+            @Override public int compare(File a, File b) {
+                return Long.valueOf(b.lastModified()).compareTo(a.lastModified());
+            }
+        });
+        for (int i = 12; i < all.length; i++) {
+            if (!all[i].equals(keep)) all[i].delete();
+        }
+    }
+
     public static Typeface getThemeFont(ThemeEntry t) {
         if (t == null) return Typeface.DEFAULT;
         String fontKey = t.folderPath;
@@ -2566,7 +2630,7 @@ public class ThemeManager {
         if (shouldSkipExternalThemeFile(f.getAbsolutePath())) return Typeface.DEFAULT;
         if (f.isFile()) {
             try {
-                return Typeface.createFromFile(f);
+                return Typeface.createFromFile(stableFontCopy(f));
             } catch (Exception ignored) {}
         }
         return Typeface.DEFAULT;

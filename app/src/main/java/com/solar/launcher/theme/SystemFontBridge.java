@@ -127,7 +127,7 @@ public final class SystemFontBridge {
     static boolean canLoadFont(File file) {
         if (file == null || !file.isFile()) return false;
         try {
-            Typeface tf = Typeface.createFromFile(file);
+            Typeface tf = Typeface.createFromFile(ThemeManager.stableFontCopy(file));
             return tf != null;
         } catch (Exception ignored) {
             return false;
