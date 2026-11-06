@@ -3167,6 +3167,15 @@ public class MainActivity extends Activity {
      */
     private volatile boolean mediaPlayerPreparing;
     /**
+     * 2026-11-06 — a prepare is in flight and its onPrepared will start playback
+     * (unless isPausedByHand). Set before every prepareAsync, cleared by every
+     * onPrepared; trusted for 15 s so a prepare that dies without a callback can't
+     * leave Play/Pause stuck. Lets a pause pressed while a song is getting ready
+     * stick (1Y1 test: it was lost, the song started, and every later toggle ran
+     * one step behind what the user pressed).
+     */
+    private volatile long startPendingSince;
+    /**
      * 2026-09-15 — Which prepare owns the shared MediaPlayer's callbacks.
      *
      * mediaPlayerPreparing answers "is A prepare in flight", which is not the
@@ -19690,6 +19699,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             else if ("pause".equals(cmd)) {
                 if (isActiveAudioPlaying()) playOrPauseMusic();
                 else if (deezerAwaitingFile != null && !deezerAwaitPaused) setDeezerAwaitPaused(true);
+                else if (startPendingSince > 0L && !isPausedByHand
+                        && android.os.SystemClock.uptimeMillis() - startPendingSince < 15000L) {
+                    isPausedByHand = true;
+                    updatePlayerUI();
+                }
             }
             else if ("shuffle".equals(cmd)) toggleShuffleFromRemote();
             else if ("repeat".equals(cmd)) {
@@ -47033,6 +47047,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             final int gen = ++mediaPrepareGen;
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override public void onPrepared(MediaPlayer mp) {
+                    startPendingSince = 0L;
                     if (gen != mediaPrepareGen) {
                         return; // Abandoned by a skip; it must not start playing now.
                     }
@@ -47112,6 +47127,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             // #endregion
             mediaPlayer.setDataSource(navUrl);
             mediaPlayerPreparing = true;
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             mediaPlayer.prepareAsync();
             applyNavidromeNowPlaying(navidromeSongFromQueueItem(item));
             isPausedByHand = false;
@@ -47377,6 +47393,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             attachMediaPlayerBufferListeners(mediaPlayer);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override public void onPrepared(MediaPlayer mp) {
+                    startPendingSince = 0L;
                     // #region agent log
                     if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
@@ -47472,6 +47489,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             mediaPlayer.setDataSource(streamUrl);
             mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             mediaPlayer.prepareAsync();
             applyPlexNowPlaying(plexSongFromQueueItem(item));
             isPausedByHand = false;
@@ -47640,6 +47658,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             attachMediaPlayerBufferListeners(mediaPlayer);
                             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override public void onPrepared(MediaPlayer mp) {
+                                    startPendingSince = 0L;
                                     // #region agent log
                                     if (com.solar.launcher.debug.DebugGate.ON) {
                                     try {
@@ -47704,6 +47723,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             });
                             mediaPlayer.setDataSource(url);
                             mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
+                            startPendingSince = android.os.SystemClock.uptimeMillis();
                             mediaPlayer.prepareAsync();
                             syncAvrcpTrackInfo(true);
                         } catch (Exception e) {
@@ -58517,6 +58537,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
+                    startPendingSince = 0L;
                     if (prepareGen != reachGrowingPrepareGen) return;
                     reachGrowingReprepareInFlight = false;
                     int dur = mp.getDuration();
@@ -58617,6 +58638,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             });
             mediaPlayer.setDataSource(growingFile.getAbsolutePath());
             mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             mediaPlayer.prepareAsync();
         } catch (Exception e) {
             reachGrowingReprepareInFlight = false;
@@ -59667,6 +59689,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             ijk.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             attachPodcastPlayerListeners(ijk, index, gen, true, urlVariant);
             ijk.setDataSource(url);
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             ijk.prepareAsync();
         } catch (Exception e) {
             tryPodcastStream(index, ep, gen, urlVariant + 1);
@@ -59978,6 +60001,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             ijk.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             attachPodcastPlayerListeners(ijk, index, gen, false, 0);
             ijk.setDataSource(growingFile.getAbsolutePath());
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             ijk.prepareAsync();
         } catch (Exception e) {
             podcastGrowingReprepareInFlight = false;
@@ -59999,6 +60023,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         ijk.setOnPreparedListener(new com.solar.launcher.podcast.PodcastIjkPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(com.solar.launcher.podcast.PodcastIjkPlayer mp) {
+                startPendingSince = 0L;
                 if (gen != podcastLoadGeneration || !playback.isPodcastActive()) return;
                 finishPodcastEpisodeLoading();
                 podcastGrowingReprepareInFlight = false;
@@ -60105,6 +60130,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             ijk.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             attachPodcastPlayerListeners(ijk, index, gen, false, 0);
             ijk.setDataSource(audioFile);
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             ijk.prepareAsync();
         } catch (Exception e) {
             finishPodcastEpisodeLoading();
@@ -61002,6 +61028,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
+                    startPendingSince = 0L;
                     try {
                         setupVisualizer();
                         // 2026-07-15 — OEM preset EQ retired for Settings UI; release any leftover session EQ.
@@ -61111,6 +61138,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
             });
             mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             mediaPlayer.prepareAsync();
         } catch (Throwable e) {
             // #region agent log
@@ -61171,6 +61199,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             ijk.setOnPreparedListener(new com.solar.launcher.podcast.PodcastIjkPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(com.solar.launcher.podcast.PodcastIjkPlayer mp) {
+                    startPendingSince = 0L;
                     try {
                         tvPlayerTimeTotal.setText(formatTime(mp.getDuration()));
                         updateMusicTrackCountUi();
@@ -61223,6 +61252,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
             });
             ijk.setDataSource(track);
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             ijk.prepareAsync();
             return true;
         } catch (Throwable t) {
@@ -61259,6 +61289,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
+                    startPendingSince = 0L;
                     try {
                         tvPlayerTimeTotal.setText(formatTime(mp.getDuration()));
                         if (!isPausedByHand) {
@@ -61283,6 +61314,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 }
             });
             mediaPlayerPreparing = false; // 2026-09-14 — this path has its own listeners (#78)
+            startPendingSince = android.os.SystemClock.uptimeMillis();
             mediaPlayer.prepareAsync();
         } catch (Throwable t) {
             // #region agent log
@@ -61930,6 +61962,16 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             if (deezerAwaitingFile != null) {
                 setDeezerAwaitPaused(!deezerAwaitPaused);
+                clickFeedback();
+                return;
+            }
+            if (startPendingSince > 0L
+                    && android.os.SystemClock.uptimeMillis() - startPendingSince < 15000L
+                    && !isActiveAudioPlaying()) {
+                isPausedByHand = !isPausedByHand;
+                android.util.Log.i("SolarDiscovery", (isPausedByHand ? "paused" : "unpaused")
+                        + " while getting ready to play");
+                updatePlayerUI();
                 clickFeedback();
                 return;
             }
@@ -68492,6 +68534,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 new com.solar.launcher.audio.SolarTransport.Listener() {
                     @Override
                     public void onPrepared(com.solar.launcher.audio.SolarTransport tx) {
+                        startPendingSince = 0L;
                         try {
                             int dur = tx.getDurationMs();
                             if (tvPlayerTimeTotal != null && dur > 0) {
