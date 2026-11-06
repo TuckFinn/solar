@@ -10737,7 +10737,29 @@ public class MainActivity extends Activity {
                     } else if (hasInternetConnection()) {
                         java.util.Set<String> missing = ThemeDownloader.missingAssets(theme.folderName);
                         if (!missing.isEmpty()) {
-                            ThemeDownloader.repairThemeFolderIfInCatalog(theme.folderName, null);
+                            // 2026-11-06 — at most 10 s, then apply anyway (missing art falls back,
+                            // as offline). The catalog fetch goes through the TLS proxy, whose
+                            // connects can hang with no timeout: picking a gallery theme with art
+                            // Solar's catalog lacks (Minecraft) sat on "Loading Library" for good,
+                            // and every retry stacked another stuck fetch (1Y1, Tucker).
+                            final String folder = theme.folderName;
+                            Thread repair = new Thread(new Runnable() {
+                                @Override public void run() {
+                                    try {
+                                        ThemeDownloader.repairThemeFolderIfInCatalog(folder, null);
+                                    } catch (Exception e) {
+                                        ThemeDownloader.dlLogError("integrity repair " + folder, e);
+                                    }
+                                }
+                            }, "ThemeRepair-" + folder);
+                            repair.setDaemon(true);
+                            repair.start();
+                            repair.join(10000L);
+                            if (repair.isAlive()) {
+                                android.util.Log.w("ThemeDownloader", "integrity repair for " + folder
+                                        + " still running after 10 s; applying the theme anyway ("
+                                        + missing.size() + " missing assets fall back)");
+                            }
                         }
                     }
                 } catch (Exception e) {
