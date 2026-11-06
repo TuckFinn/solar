@@ -3176,6 +3176,22 @@ public class MainActivity extends Activity {
      */
     private volatile long startPendingSince;
     /**
+     * 2026-11-06 — a play request is under way (remote play: Deezer search, then a
+     * download-then-play transfer) and no player exists yet; pendingStartPaused is a
+     * pause pressed meanwhile. The play-from-partial starts used to force
+     * isPausedByHand=false, so that pause was lost (third 1Y1 run, Tucker watching).
+     */
+    private volatile long playIntentSince;
+    private volatile boolean pendingStartPaused;
+
+    /** A start is under way (request, transfer or prepare) and nothing plays yet. */
+    private boolean startUnderway() {
+        long now = android.os.SystemClock.uptimeMillis();
+        boolean prep = startPendingSince > 0L && now - startPendingSince < 15000L;
+        boolean intent = playIntentSince > 0L && now - playIntentSince < 60000L;
+        return (prep || intent) && !isActiveAudioPlaying();
+    }
+    /**
      * 2026-09-15 — Which prepare owns the shared MediaPlayer's callbacks.
      *
      * mediaPlayerPreparing answers "is A prepare in flight", which is not the
@@ -19699,9 +19715,9 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             else if ("pause".equals(cmd)) {
                 if (isActiveAudioPlaying()) playOrPauseMusic();
                 else if (deezerAwaitingFile != null && !deezerAwaitPaused) setDeezerAwaitPaused(true);
-                else if (startPendingSince > 0L && !isPausedByHand
-                        && android.os.SystemClock.uptimeMillis() - startPendingSince < 15000L) {
+                else if (!isPausedByHand && startUnderway()) {
                     isPausedByHand = true;
+                    pendingStartPaused = true;
                     updatePlayerUI();
                 }
             }
@@ -19902,6 +19918,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         // A Discovery run in progress would keep queueing behind the song it picked.
         if (discoveryScreen != null) discoveryScreen.abandonRun();
         final int generation = ++remotePlayGeneration;
+        playIntentSince = android.os.SystemClock.uptimeMillis();
+        pendingStartPaused = false;
         remotePlayHeadId = 0L;
         remotePlayHeadStarted = false;
         remotePlayRest = null;
@@ -20081,7 +20099,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         tvPlayerTimeCurrent.setText("00:00");
         tvPlayerTimeTotal.setText("00:00");
         updateMusicTrackCountUi();
-        isPausedByHand = false;
+        isPausedByHand = pendingStartPaused;   // 2026-11-06: a pause pressed while it started
         // 2026-07-19 — Sanitize so Stem/Mix never becomes NP Back target.
         playerReturnScreen = StemOrMixSession.sanitizePlayerReturnScreen(
                 currentScreenState, STATE_STEM_PLAYER, STATE_MIX, STATE_MENU);
@@ -47047,7 +47065,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             final int gen = ++mediaPrepareGen;
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override public void onPrepared(MediaPlayer mp) {
-                    startPendingSince = 0L;
+                    startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                     if (gen != mediaPrepareGen) {
                         return; // Abandoned by a skip; it must not start playing now.
                     }
@@ -47393,7 +47411,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             attachMediaPlayerBufferListeners(mediaPlayer);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override public void onPrepared(MediaPlayer mp) {
-                    startPendingSince = 0L;
+                    startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                     // #region agent log
                     if (com.solar.launcher.debug.DebugGate.ON) {
                     try {
@@ -47658,7 +47676,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             attachMediaPlayerBufferListeners(mediaPlayer);
                             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override public void onPrepared(MediaPlayer mp) {
-                                    startPendingSince = 0L;
+                                    startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                                     // #region agent log
                                     if (com.solar.launcher.debug.DebugGate.ON) {
                                     try {
@@ -58223,7 +58241,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         tvPlayerTimeCurrent.setText("00:00");
         tvPlayerTimeTotal.setText("00:00");
         updateMusicTrackCountUi();
-        isPausedByHand = false;
+        isPausedByHand = pendingStartPaused;   // 2026-11-06: a pause pressed while it started
         // 2026-07-19 — Sanitize so Stem/Mix never becomes NP Back target.
         playerReturnScreen = StemOrMixSession.sanitizePlayerReturnScreen(
                 currentScreenState, STATE_STEM_PLAYER, STATE_MIX, STATE_MENU);
@@ -58537,7 +58555,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    startPendingSince = 0L;
+                    startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                     if (prepareGen != reachGrowingPrepareGen) return;
                     reachGrowingReprepareInFlight = false;
                     int dur = mp.getDuration();
@@ -60023,7 +60041,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         ijk.setOnPreparedListener(new com.solar.launcher.podcast.PodcastIjkPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(com.solar.launcher.podcast.PodcastIjkPlayer mp) {
-                startPendingSince = 0L;
+                startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                 if (gen != podcastLoadGeneration || !playback.isPodcastActive()) return;
                 finishPodcastEpisodeLoading();
                 podcastGrowingReprepareInFlight = false;
@@ -61028,7 +61046,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    startPendingSince = 0L;
+                    startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                     try {
                         setupVisualizer();
                         // 2026-07-15 — OEM preset EQ retired for Settings UI; release any leftover session EQ.
@@ -61199,7 +61217,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             ijk.setOnPreparedListener(new com.solar.launcher.podcast.PodcastIjkPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(com.solar.launcher.podcast.PodcastIjkPlayer mp) {
-                    startPendingSince = 0L;
+                    startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                     try {
                         tvPlayerTimeTotal.setText(formatTime(mp.getDuration()));
                         updateMusicTrackCountUi();
@@ -61289,7 +61307,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    startPendingSince = 0L;
+                    startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                     try {
                         tvPlayerTimeTotal.setText(formatTime(mp.getDuration()));
                         if (!isPausedByHand) {
@@ -61965,12 +61983,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 clickFeedback();
                 return;
             }
-            if (startPendingSince > 0L
-                    && android.os.SystemClock.uptimeMillis() - startPendingSince < 15000L
-                    && !isActiveAudioPlaying()) {
+            if (startUnderway()) {
                 isPausedByHand = !isPausedByHand;
+                pendingStartPaused = isPausedByHand;
                 android.util.Log.i("SolarDiscovery", (isPausedByHand ? "paused" : "unpaused")
-                        + " while getting ready to play");
+                        + " while the song was starting");
                 updatePlayerUI();
                 clickFeedback();
                 return;
@@ -68534,7 +68551,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 new com.solar.launcher.audio.SolarTransport.Listener() {
                     @Override
                     public void onPrepared(com.solar.launcher.audio.SolarTransport tx) {
-                        startPendingSince = 0L;
+                        startPendingSince = 0L; playIntentSince = 0L; pendingStartPaused = false;
                         try {
                             int dur = tx.getDurationMs();
                             if (tvPlayerTimeTotal != null && dur > 0) {
