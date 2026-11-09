@@ -303,6 +303,17 @@ public final class DiscoveryClient {
         }
     }
 
+    /**
+     * 2026-11-09 — Learn it: nookTunes saves the song, adds it to Songs to Learn and
+     * works out a chord sheet. Kept and replayed like a heart when offline (adding
+     * twice changes nothing). False until it has landed.
+     */
+    public static boolean learnIt(String base, String artist, String title, String album) {
+        return report(base, "/api/learn/add?artist=" + enc(artist == null ? "" : artist)
+                + "&title=" + enc(title == null ? "" : title)
+                + "&album=" + enc(album == null ? "" : album));
+    }
+
     /** "Not for me": the song leaves Discovery for good and its artist sinks. */
     public static boolean notForMe(String base, String key, String artist) {
         return report(base, notForMePath(key, artist));

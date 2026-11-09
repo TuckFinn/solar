@@ -586,6 +586,11 @@
     <string name="heart_menu_album_failed">Album: %1$s</string>
     <string name="heart_menu_album_unknown">No album to heart</string>
     <string name="heart_menu_not_for_me_done">Won\'t come back</string>
+    <!-- 2026-11-09 — Learn it: Songs to Learn + a chord sheet in nookTunes' Songbook -->
+    <string name="heart_menu_learn">Learn it</string>
+    <string name="heart_menu_learn_ok">Added to Songs to Learn</string>
+    <string name="heart_menu_learn_pending">Will add when online</string>
+    <string name="heart_menu_learn_failed">Couldn\'t add it to Songs to Learn</string>
     <!-- 2026-11-03 — Q22 Pack for the road: a Discovery list kept on the Y1 for offline -->
     <!-- 2026-11-03 — Walkie-Talkie (nookLine walkie room) -->
     <string name="home_menu_walkie">Walkie-Talkie</string>

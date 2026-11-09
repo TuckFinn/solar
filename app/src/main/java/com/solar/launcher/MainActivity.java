@@ -1433,7 +1433,8 @@ public class MainActivity extends Activity {
         final String[] labels = new String[] {
                 getString(R.string.heart_menu_heart),
                 getString(R.string.heart_menu_heart_album),
-                getString(R.string.heart_menu_not_for_me) };
+                getString(R.string.heart_menu_not_for_me),
+                getString(R.string.heart_menu_learn) };
         final java.util.List<Runnable> actions = new java.util.ArrayList<Runnable>();
         actions.add(new Runnable() {
             @Override public void run() {
@@ -1452,6 +1453,12 @@ public class MainActivity extends Activity {
             @Override public void run() {
                 dismissThemedContextMenu(true, false, null);
                 notForMeHeldSong(cur, discoveryTrack != null ? discoveryTrack.key : null, tags[0]);
+            }
+        });
+        actions.add(new Runnable() {
+            @Override public void run() {
+                dismissThemedContextMenu(true, false, null);
+                learnHeldSong(tags[0], tags[1], tags[2]);
             }
         });
         boolean shown = showHoldMenu(tags[1].isEmpty() ? null : tags[1], labels, actions);
@@ -1721,6 +1728,33 @@ public class MainActivity extends Activity {
                 });
             }
         }, "HeartAlbum").start();
+    }
+
+    /**
+     * 2026-11-09 — Learn it (hold menu): the song goes to nookTunes' Songs to Learn,
+     * which saves it and builds a chord sheet in G / Em for the Songbook. Offline, it
+     * is queued and sent with the next report that gets through.
+     */
+    private void learnHeldSong(final String artist, final String title, final String album) {
+        if (artist.isEmpty() || title.isEmpty()) {
+            Toast.makeText(this, getString(R.string.heart_menu_learn_failed), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String base = prefs != null ? prefs.getString("navidrome_url", "") : "";
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final boolean sent = com.solar.launcher.discovery.DiscoveryClient.learnIt(
+                        base, artist, title, album);
+                android.util.Log.i("SolarHeart", "learn it " + artist + " - " + title + ": sent=" + sent);
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        Toast.makeText(MainActivity.this, getString(sent
+                                ? R.string.heart_menu_learn_ok : R.string.heart_menu_learn_pending),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }, "LearnIt").start();
     }
 
     /**
