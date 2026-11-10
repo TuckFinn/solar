@@ -7800,6 +7800,19 @@ public class MainActivity extends Activity {
      * Layman: leftover clicks after you pause die; clicks while the UI is catching up still count.
      * Technical: {@link WheelNavPolicy#isStaleEvent(long, long)}. Reversal: age-only &gt;90 ms.
      */
+    /** 2026-11-10 — a queued notch older than this moves one row, never a letter. */
+    static final long WHEEL_LETTER_FRESH_MS = 150L;
+
+    /**
+     * 2026-11-10 — When a wheel notch happened (its KeyEvent time), for WheelPhysics,
+     * on the uptime clock both callers share. Handling time made a drained backlog
+     * look like one long fast spin.
+     */
+    private static long wheelNotchNanos(KeyEvent event) {
+        long ms = event != null ? event.getEventTime() : android.os.SystemClock.uptimeMillis();
+        return ms * 1_000_000L;
+    }
+
     private boolean isStaleWheelEvent(KeyEvent event) {
         if (event == null) return false;
         long now = android.os.SystemClock.uptimeMillis();
@@ -9910,7 +9923,7 @@ public class MainActivity extends Activity {
         // Layman: one click of the dial moves one row — never jumps four at once.
         // Still tick so suppressWrapAround sees spin. Was: non-coalesce used signedMenuSteps.
         // Reversal: if (!coalesce) signed = signedMenuSteps(...).
-        wheelPhysics.tick(android.os.SystemClock.elapsedRealtimeNanos(), dir, wheelResult);
+        wheelPhysics.tick(wheelNotchNanos(event), dir, wheelResult);
         int signed = dir;
         scrollIdleGate.markActivity();
         ensureScrollIdleGateListener();
@@ -64337,15 +64350,21 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         return true;
                     }
                     noteLiveWheelOffer();
-                    wheelPhysics.tick(android.os.SystemClock.elapsedRealtimeNanos(),
-                            direction, wheelResult);
+                    // 2026-11-10 — runaway letter jumps (Tucker: "skips through an entire
+                    // list"). Notches were timed when handled, so a backlog drained back
+                    // to back read as one long fast spin and kept letter-jumping; each
+                    // jump redraws, which grew the backlog. Time a notch by when it
+                    // happened, and only fresh notches may jump a letter: a queued one
+                    // moves a row, so a backlog drains instead of racing the alphabet.
+                    wheelPhysics.tick(wheelNotchNanos(event), direction, wheelResult);
                     int listCount = listCountProbe;
                     boolean huge = listCount >= 5000;
+                    boolean freshNotch = faAge <= WHEEL_LETTER_FRESH_MS;
                     int steps;
-                    if ((wheelResult.sectionJump && isFastScrollLetterEligible())
-                            || (wheelResult.sustained && listCount >= SUSTAINED_SCROLL_MIN_ITEMS)) {
+                    if (freshNotch && ((wheelResult.sectionJump && isFastScrollLetterEligible())
+                            || (wheelResult.sustained && listCount >= SUSTAINED_SCROLL_MIN_ITEMS))) {
                         steps = direction * Math.max(3, wheelResult.rowSteps);
-                    } else if (huge && wheelResult.rowSteps >= 3 && isFastScrollLetterEligible()) {
+                    } else if (freshNotch && huge && wheelResult.rowSteps >= 3 && isFastScrollLetterEligible()) {
                         steps = direction * Math.max(3, wheelResult.rowSteps);
                     } else {
                         steps = direction * Math.max(1, wheelResult.rowSteps);
