@@ -20271,6 +20271,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         } else if (!playback.musicPlaylist().isEmpty()) {
             playback.reshuffleMusic(isShuffleMode);
         }
+        armTransportPrepareAhead();   // 2026-11-10 — see rearmAfterShuffleNote
     }
 
     private final Handler remoteStatusHandler = new Handler();
@@ -33114,6 +33115,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                             || !discoveryScreen.handleShuffleChanged(isShuffleMode)) {
                         playback.reshuffleMusic(isShuffleMode);
                     }
+                    // 2026-11-10 — rearmAfterShuffleNote
+                    armTransportPrepareAhead();
                     updatePlayerStatusIndicators();
                     refreshContextQueueTierIfOpen();
                 }
@@ -37679,6 +37682,8 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                 } else if (!playback.musicPlaylist().isEmpty()) {
                     playback.reshuffleMusic(isShuffleMode);
                 }
+                // 2026-11-10 — rearmAfterShuffleNote
+                armTransportPrepareAhead();
                 refreshContextQueueTierIfOpen();
                 refreshSettingsPreview(RowKeys.SHUFFLE);
             }
@@ -68961,6 +68966,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      * Technical: dual-slot TransportDeck; setNextMediaPlayer when both stock MP.
      * Works while layered (next promote is single-file after clearLayers). 2026-07-20
      */
+    // rearmAfterShuffleNote (2026-11-10): toggling shuffle reorders the queue, but
+    // the song already warmed as "next" was the old order's. At the track's end the
+    // warmed song played while Now Playing followed the new order (1Y1: album
+    // started shuffled, shuffle turned off; the screen said Skinny Love, The Wolves
+    // played). Every shuffle toggle now re-arms next from the reordered queue.
     private void armTransportPrepareAhead() {
         try {
             int next = playback.nextIndex(repeatMode > 0);
