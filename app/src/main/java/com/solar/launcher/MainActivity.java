@@ -14183,7 +14183,13 @@ public class MainActivity extends Activity {
         } else if (HomeMenuConfig.ID_NAVIDROME.equals(id)) {
             openNavidrome(); // 2026-09-14 — home shortcut; openNavidrome() handles Wi-Fi/setup gating
         } else if (HomeMenuConfig.ID_DISCOVERY.equals(id)) {
-            if (!requireInternet(R.string.toast_internet_required)) return;
+            // 2026-11-10 — offline with packs on the card: open anyway, and
+            // DiscoveryScreen shows its "Packed" folder (Q22). This gate refused
+            // before the screen's own offline path could run.
+            if (!ConnectivityHelper.isOnline(this)
+                    && com.solar.launcher.discovery.PackStore.all().isEmpty()) {
+                if (!requireInternet(R.string.toast_internet_required)) return;
+            }
             changeScreen(STATE_DISCOVERY);
         } else if (HomeMenuConfig.ID_WALKIE.equals(id)) {
             if (!requireInternet(R.string.toast_internet_required)) return;
