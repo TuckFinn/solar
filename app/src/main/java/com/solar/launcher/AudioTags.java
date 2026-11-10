@@ -73,10 +73,11 @@ public final class AudioTags {
                 info.trackNumber = parseTrackNumberFromFileName(file.getName());
             }
             
-            if (Build.VERSION.SDK_INT >= 19) {
-                info.albumArtist = safe(mmr.extractMetadata(
-                        MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST));
-            }
+            // 2026-11-10 — was gated on API 19, but METADATA_KEY_ALBUMARTIST exists
+            // since API 10; on the Y1 (API 17) no song ever got an album artist, so
+            // albums split per credited artist and artists browsed as flat songs.
+            info.albumArtist = safe(mmr.extractMetadata(
+                    MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST));
             if (!skipArt) {
                 info.embeddedArt = mmr.getEmbeddedPicture();
             }
@@ -87,6 +88,11 @@ public final class AudioTags {
                     mmr.release();
                 } catch (Exception ignored) {}
             }
+        }
+
+        // FLAC: API 17's retriever may not map the Vorbis ALBUMARTIST comment.
+        if (info.albumArtist.isEmpty() && file.getName().toLowerCase(java.util.Locale.US).endsWith(".flac")) {
+            info.albumArtist = flacVorbisComment(file, "ALBUMARTIST", "ALBUM ARTIST");
         }
 
         String path = file.getAbsolutePath();
@@ -121,6 +127,56 @@ public final class AudioTags {
         // #endregion
 
         return info;
+    }
+
+    /**
+     * 2026-11-10 — One Vorbis comment from a FLAC file's metadata blocks (the first
+     * of {@code keys} found), or "". Reads only the header blocks, never the audio;
+     * PICTURE blocks are skipped by length.
+     */
+    static String flacVorbisComment(File file, String... keys) {
+        java.io.RandomAccessFile f = null;
+        try {
+            f = new java.io.RandomAccessFile(file, "r");
+            byte[] magic = new byte[4];
+            f.readFully(magic);
+            if (magic[0] != 'f' || magic[1] != 'L' || magic[2] != 'a' || magic[3] != 'C') return "";
+            boolean last = false;
+            while (!last) {
+                int hdr = f.readUnsignedByte();
+                last = (hdr & 0x80) != 0;
+                int type = hdr & 0x7f;
+                int len = (f.readUnsignedByte() << 16) | (f.readUnsignedByte() << 8) | f.readUnsignedByte();
+                if (type != 4) {                         // not VORBIS_COMMENT
+                    f.seek(f.getFilePointer() + len);
+                    continue;
+                }
+                if (len <= 0 || len > 1 << 20) return "";
+                byte[] b = new byte[len];
+                f.readFully(b);
+                java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(b).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+                int vendor = bb.getInt();
+                bb.position(bb.position() + vendor);
+                int n = bb.getInt();
+                for (int i = 0; i < n && bb.remaining() >= 4; i++) {
+                    int l = bb.getInt();
+                    if (l < 0 || l > bb.remaining()) break;
+                    String kv = new String(b, bb.position(), l, "UTF-8");
+                    bb.position(bb.position() + l);
+                    int eq = kv.indexOf('=');
+                    if (eq <= 0) continue;
+                    String k = kv.substring(0, eq);
+                    for (String want : keys) {
+                        if (k.equalsIgnoreCase(want)) return kv.substring(eq + 1).trim();
+                    }
+                }
+                return "";
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (f != null) try { f.close(); } catch (Exception ignored) {}
+        }
+        return "";
     }
 
     /** True when title and artist are usable for display and Deezer search. */
