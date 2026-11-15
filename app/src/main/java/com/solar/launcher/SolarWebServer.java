@@ -135,11 +135,15 @@ public class SolarWebServer extends Thread {
                 String path = parts[1];
 
                 int contentLength = 0;
+                long uploadLength = 0L;   // 2026-11-14 — a video can exceed 2 GB
                 String host = "";
                 String line;
                 while (!(line = readHeaderLine(is)).isEmpty()) {
                     if (line.toLowerCase().startsWith("content-length:")) {
-                        contentLength = Integer.parseInt(line.split(":")[1].trim());
+                        try {
+                            uploadLength = Long.parseLong(line.split(":")[1].trim());
+                        } catch (NumberFormatException ignored) {}
+                        contentLength = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, uploadLength));
                     }
                     if (line.toLowerCase().startsWith("host:")) {
                         host = line.substring(5).trim();
@@ -151,7 +155,9 @@ public class SolarWebServer extends Thread {
                 }
 
                 if (method.equals("GET") && path.equals("/")) {
-                    StringBuilder foldersHtml = new StringBuilder("<option value=\"ROOT\">[Root Folder] /Music</option>");
+                    StringBuilder foldersHtml = new StringBuilder(
+                            "<option value=\"UPLOADS\" selected>📤 Uploads (videos, anything)</option>"
+                            + "<option value=\"ROOT\">[Root Folder] /Music</option>");
                     File[] files = rootFolder.listFiles();
                     if (files != null) {
                         for (File f : files) {
@@ -185,9 +191,9 @@ public class SolarWebServer extends Thread {
                             "<div class='box'><h3>1. Create Folder</h3>" +
                             "<input type='text' id='fName' placeholder='e.g., Pop, Jazz'>" +
                             "<button onclick='createFolder()'>Create</button></div>" +
-                            "<div class='box'><h3>2. Upload Music</h3>" +
+                            "<div class='box'><h3>2. Upload files</h3>" +
                             "<select id='tFolder'>" + foldersHtml.toString() + "</select>" +
-                            "<input type='file' id='fInput' multiple accept='.mp3,.flac,.wav,.ogg,.m4a,.m4b,.aac,.ape,.wma,.jpg,.png'>" +
+                            "<input type='file' id='fInput' multiple>" +
                             "<button onclick='uploadAll()'>Upload All</button>" +
                             "<div id='status' style='margin-top:10px; color:#0f0;'></div></div>" +
                             "<script>" +
@@ -196,14 +202,25 @@ public class SolarWebServer extends Thread {
                             "  if(!n) return;" +
                             "  fetch('/create_folder?name=' + encodeURIComponent(n)).then(() => location.reload()); " +
                             "}" +
+                            // 2026-11-14 — XHR: progress on big files (a 565 MB video showed
+                            // nothing until done), and iOS Safari is steadier with it than fetch.
+                            "function mb(n){ return n >= 1e9 ? (n/1e9).toFixed(2)+' GB' : Math.round(n/1e6)+' MB'; }" +
+                            "function sendOne(url, file, onp) { return new Promise(function(res, rej) { " +
+                            "  var x = new XMLHttpRequest(); x.open('POST', url); " +
+                            "  x.upload.onprogress = function(e){ onp(e.loaded); }; " +
+                            "  x.onload = function(){ x.status === 200 ? res() : rej(new Error('HTTP ' + x.status)); }; " +
+                            "  x.onerror = function(){ rej(new Error('connection dropped')); }; " +
+                            "  x.send(file); }); }" +
                             "async function uploadAll() { " +
                             "  var files = document.getElementById('fInput').files; " +
                             "  var folder = document.getElementById('tFolder').value; " +
                             "  var st = document.getElementById('status'); " +
                             "  if(files.length === 0) return;" +
                             "  for(var i=0; i<files.length; i++) { " +
-                            "    st.innerText = 'Uploading: ' + files[i].name + ' (' + (i+1) + '/' + files.length + ')'; " +
-                            "    await fetch('/upload?folder=' + encodeURIComponent(folder) + '&name=' + encodeURIComponent(files[i].name), {method:'POST', body:files[i]}); " +
+                            "    var f = files[i], pre = (files.length > 1 ? (i+1) + '/' + files.length + ' ' : ''); " +
+                            "    try { await sendOne('/upload?folder=' + encodeURIComponent(folder) + '&name=' + encodeURIComponent(f.name), f, " +
+                            "      function(b){ st.innerText = 'Uploading ' + pre + f.name + ': ' + mb(b) + ' of ' + mb(f.size); }); } " +
+                            "    catch(e) { st.innerText = '⚠️ ' + f.name + ' failed: ' + e.message; return; } " +
                             "  } " +
                             "  st.innerText = '✅ All uploads completed!'; " +
                             "}" +
@@ -562,6 +579,12 @@ public class SolarWebServer extends Thread {
                     File targetDir;
                     if ("ROOT".equals(folder)) {
                         targetDir = rootFolder;
+                    } else if ("UPLOADS".equals(folder)) {
+                        // 2026-11-14 — <storage>/Uploads, beside Music (same folder
+                        // nookTunes' Devices › Upload fills): videos and anything else
+                        // stay out of the music library.
+                        File parent = rootFolder.getParentFile();
+                        targetDir = parent != null ? new File(parent, "Uploads") : null;
                     } else if ("AUDIOBOOKS".equals(folder)) {
                         targetDir = audiobooksUploadRoot();
                     } else {
@@ -589,8 +612,10 @@ public class SolarWebServer extends Thread {
                     FileOutputStream fos = new FileOutputStream(outFile);
                     byte[] buffer = new byte[8192];
                     int bytesRead;
-                    int totalRead = 0;
-                    while (totalRead < contentLength && (bytesRead = is.read(buffer, 0, Math.min(buffer.length, contentLength - totalRead))) != -1) {
+                    long totalRead = 0L;
+                    byte[] big = new byte[65536];
+                    buffer = big;
+                    while (totalRead < uploadLength && (bytesRead = is.read(buffer, 0, (int) Math.min(buffer.length, uploadLength - totalRead))) != -1) {
                         fos.write(buffer, 0, bytesRead);
                         totalRead += bytesRead;
                     }
