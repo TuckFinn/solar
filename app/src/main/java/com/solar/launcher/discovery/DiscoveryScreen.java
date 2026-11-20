@@ -874,7 +874,7 @@ public final class DiscoveryScreen {
         // reports what the server actually said, whenever it says it.
         host.runOnBg(new Runnable() {
             @Override public void run() {
-                final boolean ok = DiscoveryClient.heart(baseUrl(), t.key);
+                final boolean ok = DiscoveryClient.heart(baseUrl(), t.key, t.artist, t.title);
                 host.runOnUi(new Runnable() {
                     @Override public void run() {
                         host.heartFeedback(ok, t.title);

@@ -165,7 +165,19 @@ public final class DiscoveryClient {
      * is what the archive is built from.
      */
     public static boolean heart(String base, String key) {
-        return report(base, "/api/y1/favorite-current?key=" + enc(key));
+        return heart(base, key, null, null);
+    }
+
+    /**
+     * 2026-11-20 — with the song's artist and title, so nookTunes can still keep it
+     * when it no longer knows the key (its metadata was lost to a restart).
+     */
+    public static boolean heart(String base, String key, String artist, String title) {
+        String q = "/api/y1/favorite-current?key=" + enc(key);
+        if (artist != null && artist.length() > 0 && title != null && title.length() > 0) {
+            q += "&artist=" + enc(artist) + "&title=" + enc(title);
+        }
+        return report(base, q);
     }
 
     /**
