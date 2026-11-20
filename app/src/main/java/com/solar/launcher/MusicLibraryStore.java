@@ -318,6 +318,29 @@ public class MusicLibraryStore extends SolarDbHelper {
     }
 
     /**
+     * 2026-11-20 — Artist, album and album artist of every track, for the artist/album
+     * browse rules ({@link ArtistBrowsePolicy}) when the library is SEGMENTED and
+     * customLibrary is empty: they read customLibrary only, so every artist "owned"
+     * nothing and Artists › name opened as one flat song list (1Y1, 1,699 songs).
+     * Four short strings a song, not SongItems.
+     */
+    public List<ArtistBrowsePolicy.Track> loadPolicyTracks() {
+        List<ArtistBrowsePolicy.Track> out = new ArrayList<ArtistBrowsePolicy.Track>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = null;
+        try {
+            c = db.rawQuery("SELECT artist, album, album_artist, mtime FROM tracks", null);
+            while (c.moveToNext()) {
+                out.add(new ArtistBrowsePolicy.Track(c.getString(0), c.getString(1),
+                        c.getString(2), c.getLong(3)));
+            }
+        } finally {
+            if (c != null) c.close();
+        }
+        return out;
+    }
+
+    /**
      * 2026-07-20 — Row count for SEGMENTED browse (no full materialization).
      * Layman: how many songs are in the library DB without loading them all.
      * 2026-07-31 — Remove legacy Lalal pad rows before counting. Older scans could cache

@@ -29378,6 +29378,16 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                         song.effectiveMtimeMs()));
             }
         }
+        // 2026-11-20 — SEGMENTED (300+ songs) leaves customLibrary empty: read the
+        // same fields from the library DB, or artists lose their albums.
+        if (out.isEmpty()) {
+            try {
+                out = MusicLibraryStore.getInstance(getApplicationContext()).loadPolicyTracks();
+            } catch (Exception e) {
+                android.util.Log.w("SolarLibrary", "policy tracks from DB failed", e);
+            }
+            if (out.isEmpty()) return out;          // still loading: don't cache empty
+        }
         cachedPolicyTracks = out;
         cachedAlbumOwnerIndex = ArtistBrowsePolicy.AlbumOwnerIndex.build(out, libraryBrowsePrefs);
         return cachedPolicyTracks;
@@ -49826,8 +49836,11 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             return;
         }
         java.util.LinkedHashMap<String, String> albumsByKey = new java.util.LinkedHashMap<>();
-        for (SongItem song : customLibrary) {
-            if (!ArtistParser.containsArtist(song.artist, virtualQueryArtist)) continue;
+        // 2026-11-20 — from the policy tracks (customLibrary, or the DB when SEGMENTED
+        // left it empty); was customLibrary only, so the album list could come up empty.
+        for (ArtistBrowsePolicy.Track song : policyTracksFromLibrary()) {
+            if (!ArtistParser.containsArtist(song.artist, virtualQueryArtist)
+                    && !ArtistNames.equals(song.albumArtist, virtualQueryArtist)) continue;
             if (song.album == null || song.album.trim().isEmpty()) continue;
             String key = AlbumNames.matchKey(song.album);
             if (!albumsByKey.containsKey(key)) albumsByKey.put(key, song.album);
