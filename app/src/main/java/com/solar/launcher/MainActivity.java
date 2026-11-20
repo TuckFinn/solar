@@ -29948,7 +29948,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         lastUmsProbeMs = 0L;
         settingsBrowseFullWidth = false;
         ThemeManager.setBlockSdcardThemeAssets(false);
-        UsbMassStorageController.clearUserSession();
+        UsbMassStorageController.clearUserSessionAfterLinkLoss();   // 2026-11-20 re-share window
         int dest = usbReturnScreen;
         usbReturnScreen = STATE_MENU;
         if (usbFocusHelper != null) {
@@ -30169,6 +30169,12 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
             }
             // #endregion
             enterUsbMassStorageLock();
+            return;
+        }
+
+        // 2026-11-20 — a session the user started just ended (host reset): re-share.
+        if (UsbMassStorageController.userSessionEndedWithin(USB_RESHARE_WINDOW_MS)) {
+            enableUsbMassStorageReshare();
             return;
         }
 
@@ -32415,6 +32421,23 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
      */
     private void enableUsbMassStorageAutoConnect() {
         if (!isUsbAutoConnectEnabled()) return;
+        enableUsbMassStorageUnattended("auto.main");
+    }
+
+    /** 2026-11-20 — seconds after a user session ends in which a reconnect re-shares. */
+    static final long USB_RESHARE_WINDOW_MS = 30000L;
+
+    /**
+     * 2026-11-20 — Re-share after a host reset: the user turned USB storage on, the
+     * host (a TV opening its media player) dropped and re-enumerated the link, and
+     * Solar had ended the session as an unplug. Consent was given for this session.
+     */
+    private void enableUsbMassStorageReshare() {
+        UsbMassStorageController.forgetEndedUserSession();
+        enableUsbMassStorageUnattended("user.reshare");
+    }
+
+    private void enableUsbMassStorageUnattended(final String caller) {
         if (!UsbMassStorageExperiment.isEnabled(this)) return;
         if (usbFocusHelper != null) {
             usbFocusHelper.clearHostInterceptDecline();
@@ -32425,7 +32448,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final boolean ok = UsbMassStorageController.enable(MainActivity.this, "auto.main");
+                final boolean ok = UsbMassStorageController.enable(MainActivity.this, caller);
                 final boolean exported = UsbMassStorageController.isMassStorageExported();
                 final boolean kernelUms = UsbMassStorageController.isKernelMassStorageMode();
                 runOnUiThread(new Runnable() {
@@ -32443,7 +32466,7 @@ if (OverlayKeyGate.isOverlayNavigationKey(code) || Y1InputKeys.isBackKey(code)) 
                     }
                 });
             }
-        }, "UsbAutoConnectEnable").start();
+        }, "UsbUnattendedEnable").start();
     }
 
     /**

@@ -94,14 +94,17 @@ public class UmsEnabler {
         invokeSetUsbMassStorageEnabled(mountService, false);
         Thread.sleep(800L);
         setUsbConfig("mass_storage,adb");
-        Thread.sleep(2000L);
+        // 2026-11-20 — the config switch makes the host re-enumerate; sharing before
+        // it is back binds nothing (a TV took longer than the fixed 2 s and Enable
+        // Now failed). Wait until the host is CONFIGURED again, up to 10 s.
+        waitForHostConfigured(10000L);
         invokeSetUsbMassStorageEnabled(mountService, true);
         Thread.sleep(1500L);
         tryVdcShareVolume(volumePath);
         Thread.sleep(800L);
         if (!isLunBound()) {
             setUsbConfig("mass_storage,adb");
-            Thread.sleep(2500L);
+            waitForHostConfigured(10000L);
             invokeSetUsbMassStorageEnabled(mountService, true);
             Thread.sleep(1500L);
             tryVdcShareVolume(volumePath);
@@ -458,6 +461,19 @@ public class UmsEnabler {
     }
 
     /** True when any mass-storage LUN sysfs node lists a backing block device path. */
+    /** 2026-11-20 — Block until the USB host has (re)configured the gadget, or timeout. */
+    static void waitForHostConfigured(long timeoutMs) throws InterruptedException {
+        Thread.sleep(1000L);                       // let the switch start before polling
+        long end = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < end) {
+            if ("CONFIGURED".equals(readFirstLine("/sys/class/android_usb/android0/state"))) {
+                Thread.sleep(500L);                // settle
+                return;
+            }
+            Thread.sleep(250L);
+        }
+    }
+
     static boolean isLunBound() {
         return readLunBackingPath().length() > 0;
     }

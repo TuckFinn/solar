@@ -161,6 +161,33 @@ public final class UsbMassStorageController {
     }
 
     /** Drop user UMS session — Turn Off, sustained unplug, or failed enable. */
+    /** 2026-11-20 — when a user/auto UMS session last ended (elapsedRealtime), 0 = none. */
+    private static volatile long sUserSessionEndedAtMs = 0L;
+
+    /**
+     * 2026-11-20 — A session the user started ended within {@code windowMs}: a TV
+     * resets the USB link when it opens its media player, Solar took that for an
+     * unplug, and the TV found no drive when it reconnected.
+     */
+    public static boolean userSessionEndedWithin(long windowMs) {
+        long t = sUserSessionEndedAtMs;
+        return t > 0L && android.os.SystemClock.elapsedRealtime() - t < windowMs;
+    }
+
+    public static void forgetEndedUserSession() {
+        sUserSessionEndedAtMs = 0L;
+    }
+
+    /**
+     * 2026-11-20 — The link dropped (USB_STATE disconnect / charge lost) while a
+     * session was on: end it, but open the re-share window. Turn Off and failed
+     * enables use {@link #clearUserSession()}, which does not.
+     */
+    public static void clearUserSessionAfterLinkLoss() {
+        if (isUserSessionActive()) sUserSessionEndedAtMs = android.os.SystemClock.elapsedRealtime();
+        clearUserSession();
+    }
+
     public static void clearUserSession() {
         sUserSessionActive = false;
         sEnableArmedAtElapsedMs = 0L;
