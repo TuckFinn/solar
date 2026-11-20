@@ -208,12 +208,29 @@ public final class DiscoveryScreen {
         openFolder = null;
         folderSkipped = false;
         focusIndex = -1;
-        if (playlists.isEmpty() && !loading) {
+        if (!loading && catalogStale()) {
             fetchPlaylists();
         } else {
             render();
         }
     }
+
+    /**
+     * 2026-11-20 — When opening Discovery should ask nookTunes again. It used to
+     * fetch only when the list was empty, so a catalog loaded offline (just the
+     * Packed folder) or at boot stayed until Solar restarted: Tucker had to reboot
+     * the Y1 on Wi-Fi to get the full lists back.
+     */
+    private boolean catalogStale() {
+        if (playlists.isEmpty()) return true;
+        if (catalogOffline) return true;              // try nookTunes again
+        return System.currentTimeMillis() - catalogAt > CATALOG_FRESH_MS;
+    }
+
+    private static final long CATALOG_FRESH_MS = 30L * 60L * 1000L;
+    /** The catalog showing is the offline Packed folder, not nookTunes'. */
+    private boolean catalogOffline;
+    private long catalogAt;
 
     /**
      * 2026-09-19 — Back into Discovery, from Now Playing: the list that was
@@ -338,23 +355,33 @@ public final class DiscoveryScreen {
             @Override public void run() {
                 DiscoveryFolders got = DiscoveryFolders.EMPTY;
                 String err = null;
-                try {
-                    // Everything nookTunes offers. It decides which seed-artist
-                    // rows are worth showing and in what order -- it has the
-                    // play history to rank them and this does not -- so the
-                    // list is taken as given rather than filtered again here.
-                    got = DiscoveryClient.catalog(baseUrl());
-                } catch (Exception e) {
-                    err = String.valueOf(e.getMessage());
+                // 2026-11-20 — no Wi-Fi at all: straight to the Packed folder rather
+                // than waiting out the connect timeout first.
+                boolean online = com.solar.launcher.ConnectivityHelper.isOnline(host.context());
+                if (online) {
+                    try {
+                        // Everything nookTunes offers. It decides which seed-artist
+                        // rows are worth showing and in what order -- it has the
+                        // play history to rank them and this does not -- so the
+                        // list is taken as given rather than filtered again here.
+                        got = DiscoveryClient.catalog(baseUrl());
+                    } catch (Exception e) {
+                        err = String.valueOf(e.getMessage());
+                    }
+                } else {
+                    err = "offline";
                 }
                 // 2026-11-03 — Q22: no nookTunes (no Wi-Fi): the packed lists still play.
+                boolean offlineShown = false;
                 if (err != null) {
                     DiscoveryFolders offline = packedCatalog();
                     if (offline.hasFolders()) {
                         got = offline;
                         err = null;
+                        offlineShown = true;
                     }
                 }
+                final boolean fOffline = offlineShown;
                 final String fErr = err;
                 final DiscoveryFolders fGot = got;
                 host.runOnUi(new Runnable() {
@@ -362,6 +389,8 @@ public final class DiscoveryScreen {
                         loading = false;
                         error = fErr;
                         catalog = fGot;
+                        catalogOffline = fOffline || fErr != null;
+                        catalogAt = System.currentTimeMillis();
                         playlists.clear();
                         playlists.addAll(fGot.all());
                         // 2026-10-21 — Q18: only open() fetches, so this is the
@@ -386,14 +415,20 @@ public final class DiscoveryScreen {
             @Override public void run() {
                 List<DiscoveryClient.Track> got = null;
                 String err = null;
-                try {
-                    got = DiscoveryClient.tracks(baseUrl(), p.id);
-                } catch (Exception e) {
-                    err = String.valueOf(e.getMessage());
+                if (com.solar.launcher.ConnectivityHelper.isOnline(host.context())) {
+                    try {
+                        got = DiscoveryClient.tracks(baseUrl(), p.id);
+                    } catch (Exception e) {
+                        err = String.valueOf(e.getMessage());
+                    }
+                } else {
+                    err = "offline";                       // 2026-11-20 — no connect-timeout wait
                 }
-                // 2026-11-03 — Q22: a packed list plays its packed songs first (all
-                // there is offline), then whatever else the live list has.
-                PackStore.Pack pack = PackStore.forList(p.id);
+                // 2026-11-03 — Q22: offline, a packed list plays its packed songs.
+                // 2026-11-20 — only offline (Tucker: online, nookTunes' list must not
+                // be replaced by the pack). Online the live list is used as served;
+                // a song that is also packed still plays from the card (play()).
+                PackStore.Pack pack = got == null ? PackStore.forList(p.id) : null;
                 if (pack != null) {
                     List<DiscoveryClient.Track> merged = pack.tracks();
                     java.util.Set<String> seen = new java.util.HashSet<String>();
@@ -873,8 +908,15 @@ public final class DiscoveryScreen {
             return;
         }
         if (error != null) {
-            container.addView(host.createListButton(
-                    host.string(R.string.discovery_error, error)));
+            // 2026-11-20 — tap to try again (Wi-Fi is often back a few seconds after a wake)
+            android.view.View row = host.createListButton(host.string(R.string.discovery_error, error));
+            row.setOnClickListener(new android.view.View.OnClickListener() {
+                @Override public void onClick(android.view.View v) {
+                    if (uiMode == UI_TRACKS && openPlaylist != null) fetchTracks(openPlaylist);
+                    else fetchPlaylists();
+                }
+            });
+            container.addView(row);
             renderedFirstRow = container.getChildAt(0);
             return;
         }

@@ -14483,13 +14483,11 @@ public class MainActivity extends Activity {
         } else if (HomeMenuConfig.ID_NAVIDROME.equals(id)) {
             openNavidrome(); // 2026-09-14 — home shortcut; openNavidrome() handles Wi-Fi/setup gating
         } else if (HomeMenuConfig.ID_DISCOVERY.equals(id)) {
-            // 2026-11-10 — offline with packs on the card: open anyway, and
-            // DiscoveryScreen shows its "Packed" folder (Q22). This gate refused
-            // before the screen's own offline path could run.
-            if (!ConnectivityHelper.isOnline(this)
-                    && com.solar.launcher.discovery.PackStore.all().isEmpty()) {
-                if (!requireInternet(R.string.toast_internet_required)) return;
-            }
+            // 2026-11-10 — offline with packs: DiscoveryScreen shows its "Packed" folder.
+            // 2026-11-20 — always open (Tucker: "Discovery still doesn't show
+            // sometimes"): Wi-Fi is often down for a few seconds after a wake, and
+            // this refused outright. The screen shows packs, or why it couldn't
+            // reach nookTunes, and asks again each time it is opened.
             changeScreen(STATE_DISCOVERY);
         } else if (HomeMenuConfig.ID_WALKIE.equals(id)) {
             if (!requireInternet(R.string.toast_internet_required)) return;
